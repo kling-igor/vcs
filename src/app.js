@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react'
 import styled, { createGlobalStyle } from 'styled-components'
 
-import { List, AutoSizer } from 'react-virtualized'
+import { List, AutoSizer, InfiniteLoader } from 'react-virtualized'
 
 const GlobalStyle = createGlobalStyle`
   .List {
@@ -60,25 +60,34 @@ const NoRowsStyle = styled.div`
 `
 
 export default class App extends PureComponent {
+  list = []
+
   state = {
     showScrollingPlaceholder: false
   }
 
   getDatum = index => {
-    return {
-      color: 'green',
-      name: `Name:${index}`
-    }
+    return this.list[index]
   }
 
   rowRenderer = ({ index, isScrolling, key, style }) => {
-    const { showScrollingPlaceholder } = this.state
+    // const { showScrollingPlaceholder } = this.state
 
-    if (showScrollingPlaceholder && isScrolling) {
+    // if (showScrollingPlaceholder && isScrolling) {
+    //   return (
+    //     <ScrollingPlaceholderStyle key={key} style={style}>
+    //       Scrolling...
+    //     </ScrollingPlaceholderStyle>
+    //   )
+    // }
+
+    if (!this.isRowLoaded({ index })) {
       return (
-        <ScrollingPlaceholderStyle key={key} style={style}>
-          Scrolling...
-        </ScrollingPlaceholderStyle>
+        <RowStyle key={key} style={style}>
+          <div>
+            <NameStyle>Loading...</NameStyle>
+          </div>
+        </RowStyle>
       )
     }
 
@@ -105,6 +114,29 @@ export default class App extends PureComponent {
     return <NoRowsStyle>No rows</NoRowsStyle>
   }
 
+  isRowLoaded = ({ index }) => {
+    return !!this.list[index]
+  }
+
+  loadMoreRows = ({ startIndex, stopIndex }) => {
+    console.log('loadMoreRows:', startIndex, stopIndex)
+
+    return new Promise(resolve => {
+      setTimeout(() => {
+        for (let i = startIndex; i < stopIndex; i += 1) {
+          if (!this.list[i]) {
+            this.list.push({
+              color: 'green',
+              name: `Name:${i}`
+            })
+          }
+        }
+
+        resolve()
+      }, 2000)
+    })
+  }
+
   render() {
     return (
       <>
@@ -112,17 +144,26 @@ export default class App extends PureComponent {
         <div style={{ height: '400px' }}>
           <AutoSizer disableHeight>
             {({ width }) => (
-              <List
-                // className={styles.List}
-                height={400}
-                overscanRowCount={10}
-                rowRenderer={this.rowRenderer}
-                noRowsRenderer={this.noRowsRenderer}
-                rowCount={50}
-                rowHeight={/*useDynamicRowHeight ? this._getRowHeight : 50*/ 50}
-                // scrollToIndex={scrollToIndex}
-                width={width}
-              />
+              <InfiniteLoader
+                isRowLoaded={this.isRowLoaded}
+                loadMoreRows={this.loadMoreRows}
+                rowCount={500} /* total rows count */
+              >
+                {({ onRowsRendered, registerChild }) => (
+                  <List
+                    onRowsRendered={onRowsRendered}
+                    ref={registerChild}
+                    height={400}
+                    // overscanRowCount={10}
+                    rowRenderer={this.rowRenderer}
+                    // noRowsRenderer={this.noRowsRenderer}
+                    rowCount={100}
+                    rowHeight={/*useDynamicRowHeight ? this._getRowHeight : 50*/ 50}
+                    // scrollToIndex={scrollToIndex}
+                    width={width}
+                  />
+                )}
+              </InfiniteLoader>
             )}
           </AutoSizer>
         </div>
