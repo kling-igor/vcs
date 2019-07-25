@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react'
 import styled, { createGlobalStyle } from 'styled-components'
 
-import { List, AutoSizer, InfiniteLoader } from 'react-virtualized'
+import { List, AutoSizer, InfiniteLoader, ScrollSync } from 'react-virtualized'
 
 const GlobalStyle = createGlobalStyle`
   .List {
@@ -58,6 +58,16 @@ const NoRowsStyle = styled.div`
   justify-content: center;
   color: #bdbdbd;
 `
+
+class Tree extends PureComponent {
+  render() {
+    const { scrollTop } = this.props
+
+    console.log('scrollTop:', scrollTop)
+
+    return <div> </div>
+  }
+}
 
 export default class App extends PureComponent {
   list = []
@@ -150,18 +160,30 @@ export default class App extends PureComponent {
                 rowCount={500} /* total rows count */
               >
                 {({ onRowsRendered, registerChild }) => (
-                  <List
-                    onRowsRendered={onRowsRendered}
-                    ref={registerChild}
-                    height={400}
-                    // overscanRowCount={10}
-                    rowRenderer={this.rowRenderer}
-                    // noRowsRenderer={this.noRowsRenderer}
-                    rowCount={100}
-                    rowHeight={/*useDynamicRowHeight ? this._getRowHeight : 50*/ 50}
-                    // scrollToIndex={scrollToIndex}
-                    width={width}
-                  />
+                  <ScrollSync>
+                    {({ clientHeight, clientWidth, onScroll, scrollHeight, scrollLeft, scrollTop, scrollWidth }) => (
+                      <div className="Table">
+                        <div className="LeftColumn">
+                          <Tree scrollTop={scrollTop} />
+                        </div>
+                        <div className="RightColumn">
+                          <List
+                            onScroll={onScroll}
+                            onRowsRendered={onRowsRendered}
+                            ref={registerChild}
+                            height={400}
+                            // overscanRowCount={10}
+                            rowRenderer={this.rowRenderer}
+                            // noRowsRenderer={this.noRowsRenderer}
+                            rowCount={100} /* INT_MAX if unknown */
+                            rowHeight={/*useDynamicRowHeight ? this._getRowHeight : 50*/ 50}
+                            // scrollToIndex={scrollToIndex}
+                            width={width}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </ScrollSync>
                 )}
               </InfiniteLoader>
             )}
