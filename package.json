@@ -1,0 +1,41 @@
+{
+  "name": "scroll",
+  "version": "0.0.1",
+  "description": "React virtualized scroll",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "webpack-dev-server --mode development --env.dev --hot"
+  },
+  "keywords": [],
+  "author": "'Igor Kling' <\"klingiv@altarix.ru\">",
+  "private": true,
+  "license": "ISC",
+  "dependencies": {
+    "mobx": "^5.9.0",
+    "mobx-react": "^5.4.3",
+    "react": "16.8.6",
+    "react-dom": "^16.8.6",
+    "styled-components": "^4.1.3",
+    "uuid": "^3.3.2"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.2.3",
+    "@babel/core": "^7.2.2",
+    "@babel/node": "^7.2.2",
+    "@babel/plugin-proposal-class-properties": "^7.3.0",
+    "@babel/plugin-proposal-decorators": "^7.3.0",
+    "@babel/plugin-proposal-object-rest-spread": "^7.3.2",
+    "@babel/preset-env": "^7.3.1",
+    "@babel/preset-react": "^7.0.0",
+    "@babel/register": "^7.0.0",
+    "babel-loader": "^8.0.5",
+    "core-js": "^3.0.1",
+    "css-loader": "^2.1.1",
+    "extract-text-webpack-plugin": "^3.0.2",
+    "html-webpack-plugin": "^3.2.0",
+    "style-loader": "^0.23.1",
+    "webpack": "^4.29.3",
+    "webpack-cli": "^3.2.3",
+    "webpack-dev-server": "^3.1.14"
+  }
+}
