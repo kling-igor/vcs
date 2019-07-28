@@ -1,3 +1,4 @@
+const { ipcRenderer } = window.require('electron')
 import React, { PureComponent } from 'react'
 import styled, { createGlobalStyle } from 'styled-components'
 
@@ -74,6 +75,18 @@ export default class App extends PureComponent {
 
   state = {
     showScrollingPlaceholder: false
+  }
+
+  constructor(props) {
+    super(props)
+
+    ipcRenderer.on('gitlog', (event, result) => {
+      console.log(result)
+    })
+
+    setTimeout(() => {
+      ipcRenderer.send('gitlog', 10)
+    }, 2000)
   }
 
   getDatum = index => {
