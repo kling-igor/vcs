@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
+const { callRenderer, answerRenderer } = require('./ipc')(ipcMain, BrowserWindow)
 import { join, resolve } from 'path'
 import * as URL from 'url'
 import nodegit from 'nodegit'
@@ -39,7 +40,7 @@ app.on('ready', async () => {
   })
 
   try {
-    repo = await nodegit.Repository.open(resolve(__dirname, '..', '.git'))
+    repo = await nodegit.Repository.open(resolve(__dirname, '..', '..', '..', 'editor', '.git'))
 
     try {
       const commit = await repo.getHeadCommit()
@@ -74,10 +75,19 @@ const walk = async (limit, result) => {
       console.log('parents:', commit.parents().map(parent => parent.toString()))
       console.log('-----------------------------------------\n')
 
-      result.push(commit)
+      result.push({
+        sha: commit.toString(),
+        message: commit.message()
+        // author: commit.author().name(),
+        // email: commit.author().email(),
+        // date: commit.date(),
+        // parents: commit.parents().map(parent => parent.toString())
+      })
 
       if (commit.parents().length > 0 && limit > 0) {
-        await walk(limit - 1, result)
+        return await walk(limit - 1, result)
+      } else {
+        return result
       }
     }
   } catch (e) {
@@ -85,10 +95,12 @@ const walk = async (limit, result) => {
   }
 }
 
-ipcMain.on('gitlog', (event, limit) => {
-  console.log('gitlog:', limit)
-  const result = []
-  walk(limit, result)
-  console.log('RESULT:', result)
-  event.reply('gitlog', result)
+// ipcMain.on('gitlog', async (event, limit) => {
+//   console.log('gitlog:', limit)
+//   const result = await walk(limit, [])
+//   console.log('RESULT:', result)
+//   event.reply('gitlog', result)
+// })
+const disposable = answerRenderer('gitlog', async (browserWindow, limit) => {
+  return await walk(limit, [])
 })

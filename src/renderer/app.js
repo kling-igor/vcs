@@ -1,6 +1,9 @@
 const { ipcRenderer } = window.require('electron')
+const { callMain, answerMain } = require('./ipc').default(ipcRenderer)
+
 import React, { PureComponent } from 'react'
 import styled, { createGlobalStyle } from 'styled-components'
+import queue from 'async/queue'
 
 import { List, AutoSizer, InfiniteLoader, ScrollSync } from 'react-virtualized'
 
@@ -63,8 +66,7 @@ const NoRowsStyle = styled.div`
 class Tree extends PureComponent {
   render() {
     const { scrollTop } = this.props
-
-    console.log('scrollTop:', scrollTop)
+    // console.log('scrollTop:', scrollTop)
 
     return <div> </div>
   }
@@ -74,19 +76,36 @@ export default class App extends PureComponent {
   list = []
 
   state = {
-    showScrollingPlaceholder: false
+    showScrollingPlaceholder: false,
+    totalRowCount: 1
   }
 
   constructor(props) {
     super(props)
 
-    ipcRenderer.on('gitlog', (event, result) => {
-      console.log(result)
-    })
+    // this.queue = queue((data, callback) => {
+    //   console.log('queue data:', data)
+    //   // поместить данные в  state
+    //   this.list = [...this.list, ...data]
 
-    setTimeout(() => {
-      ipcRenderer.send('gitlog', 10)
-    }, 2000)
+    //   callback()
+    // }, 1)
+
+    // ipcRenderer.on('gitlog', (event, result) => {
+    //   this.list = [...this.list, ...result]
+    // })
+
+    // setTimeout(() => {
+    // ipcRenderer.send('gitlog', 10)
+    // }, 2000)
+
+    callMain('gitlog', 10).then(data => {
+      if (data) {
+        console.log('data:', data)
+        this.list = [...this.list, ...data]
+        // this.queue.push(data)
+      }
+    })
   }
 
   getDatum = index => {
@@ -118,16 +137,9 @@ export default class App extends PureComponent {
 
     return (
       <RowStyle key={key} style={style}>
-        <LetterStyle
-          style={{
-            backgroundColor: datum.color
-          }}
-        >
-          {datum.name.charAt(0)}
-        </LetterStyle>
         <div>
-          <NameStyle>{datum.name}</NameStyle>
-          <IndexStyle>This is row {index}</IndexStyle>
+          <NameStyle>{datum.sha}</NameStyle>
+          <IndexStyle>{datum.message}</IndexStyle>
         </div>
       </RowStyle>
     )
@@ -144,20 +156,40 @@ export default class App extends PureComponent {
   loadMoreRows = ({ startIndex, stopIndex }) => {
     console.log('loadMoreRows:', startIndex, stopIndex)
 
-    return new Promise(resolve => {
-      setTimeout(() => {
-        for (let i = startIndex; i < stopIndex; i += 1) {
-          if (!this.list[i]) {
-            this.list.push({
-              color: 'green',
-              name: `Name:${i}`
-            })
+    return callMain('gitlog', 10).then(data => {
+      if (data) {
+        // this.queue.push(data)
+        this.list = [...this.list, ...data]
+        this.setState(({ totalRowCount }) => {
+          if (totalRowCount === stopIndex + 1) {
+            return { totalRowCount: totalRowCount + 1 }
           }
-        }
-
-        resolve()
-      }, 2000)
+        })
+      }
     })
+
+    // return new Promise(resolve => {
+    //   ipcRenderer.send('gitlog', 10)
+
+    // setTimeout(() => {
+    //   for (let i = startIndex; i < stopIndex; i += 1) {
+    //     if (!this.list[i]) {
+    //       this.list.push({
+    //         color: 'green',
+    //         name: `Name:${i}`
+    //       })
+    //     }
+    //   }
+
+    //   this.setState(({ totalRowCount }) => {
+    //     if (totalRowCount === stopIndex + 1) {
+    //       return { totalRowCount: totalRowCount + 1 }
+    //     }
+    //   })
+
+    //   resolve()
+    // }, 1000)
+    // })
   }
 
   render() {
@@ -170,7 +202,7 @@ export default class App extends PureComponent {
               <InfiniteLoader
                 isRowLoaded={this.isRowLoaded}
                 loadMoreRows={this.loadMoreRows}
-                rowCount={500} /* total rows count */
+                rowCount={this.state.totalRowCount} /* total rows count */
               >
                 {({ onRowsRendered, registerChild }) => (
                   <ScrollSync>
@@ -185,10 +217,10 @@ export default class App extends PureComponent {
                             onRowsRendered={onRowsRendered}
                             ref={registerChild}
                             height={400}
-                            // overscanRowCount={10}
+                            overscanRowCount={10}
                             rowRenderer={this.rowRenderer}
                             // noRowsRenderer={this.noRowsRenderer}
-                            rowCount={100} /* INT_MAX if unknown */
+                            rowCount={this.state.totalRowCount} /* INT_MAX if unknown */
                             rowHeight={/*useDynamicRowHeight ? this._getRowHeight : 50*/ 50}
                             // scrollToIndex={scrollToIndex}
                             width={width}
