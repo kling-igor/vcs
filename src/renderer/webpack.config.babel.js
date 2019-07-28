@@ -1,14 +1,14 @@
-import webpack from 'webpack'
 import HTMLWebpackPlugin from 'html-webpack-plugin'
-import { resolve, join } from 'path'
-import packagejson from './package.json'
+import { join } from 'path'
 
 module.exports = env => ({
-  entry: join(__dirname, 'src', 'index.js'),
+  entry: join(__dirname, 'index.js'),
   output: {
-    filename: 'index.js',
-    path: join(__dirname, 'app')
+    filename: 'bundle.js',
+    path: join(__dirname, '../../app')
   },
+
+  // target: 'electron-renderer',
 
   watch: false,
 
@@ -23,17 +23,15 @@ module.exports = env => ({
   devtool: env.dev ? 'source-map' : false,
 
   resolve: {
-    modules: [join(__dirname, '.'), join(__dirname, 'src')]
+    modules: [__dirname]
   },
 
   plugins: [
     new HTMLWebpackPlugin({
-      title: packagejson.description,
       filename: 'index.html',
-      template: join(__dirname, 'src', 'index.html'),
+      template: join(__dirname, 'index.html'),
       inject: 'body',
-      hash: true,
-      debug: env.dev
+      hash: false
     })
   ],
 
@@ -41,7 +39,7 @@ module.exports = env => ({
     rules: [
       {
         test: /.jsx?$/,
-        include: [join(__dirname, 'src')],
+        include: [__dirname],
         use: {
           loader: 'babel-loader'
         }
