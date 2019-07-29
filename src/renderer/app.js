@@ -73,8 +73,8 @@ class Tree extends PureComponent {
 }
 
 export default class App extends PureComponent {
+  list = []
   state = {
-    list: [],
     showScrollingPlaceholder: false,
     totalRowCount: 1
   }
@@ -93,7 +93,7 @@ export default class App extends PureComponent {
   // }
 
   getDatum = index => {
-    return this.state.list[index]
+    return this.list[index]
   }
 
   rowRenderer = ({ index, isScrolling, key, style }) => {
@@ -134,26 +134,23 @@ export default class App extends PureComponent {
   }
 
   isRowLoaded = ({ index }) => {
-    return !!this.state.list[index]
+    return !!this.list[index]
   }
 
   loadMoreRows = async ({ startIndex, stopIndex }) => {
     console.log('loadMoreRows:', startIndex, stopIndex)
 
     return new Promise(async resolve => {
-      const data = await callMain('gitlog', 10)
+      const data = await callMain('gitlog', stopIndex - startIndex + 1)
+      console.log('DATA:', data)
 
       if (data) {
-        this.setState(({ totalRowCount, list }) => {
-          const retValue = {
-            list: [...list, ...data]
-          }
-
+        this.list = [...this.list, ...data]
+        this.setState(({ totalRowCount }) => {
           if (totalRowCount === stopIndex + 1) {
-            retValue.totalRowCount = totalRowCount + 1
+            console.log('BINGO')
+            return { totalRowCount: totalRowCount + 1 }
           }
-
-          return retValue
         })
       }
 
@@ -206,7 +203,7 @@ export default class App extends PureComponent {
                             onRowsRendered={onRowsRendered}
                             ref={registerChild}
                             height={400}
-                            overscanRowCount={3}
+                            overscanRowCount={1}
                             rowRenderer={this.rowRenderer}
                             // noRowsRenderer={this.noRowsRenderer}
                             rowCount={this.state.totalRowCount} /* INT_MAX if unknown */

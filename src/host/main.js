@@ -62,6 +62,8 @@ app.on('window-all-closed', () => {
 })
 
 const walk = async (limit, result = []) => {
+  console.log('walk:', limit)
+
   try {
     const oid = await revWalk.next()
     if (oid) {
@@ -70,21 +72,22 @@ const walk = async (limit, result = []) => {
       // console.log('COMMIT:', commit)
       console.log('commit:', commit.toString())
       console.log('message:', commit.message())
-      console.log('author:', commit.author().name())
-      console.log('date:', commit.date())
-      console.log('parents:', commit.parents().map(parent => parent.toString()))
+      // console.log('author:', commit.author().name())
+      // console.log('date:', commit.date())
+      // console.log('parents:', commit.parents().map(parent => parent.toString()))
       console.log('-----------------------------------------\n')
 
       result.push({
         sha: commit.toString(),
         message: commit.message()
+
         // author: commit.author().name(),
         // email: commit.author().email(),
         // date: commit.date(),
         // parents: commit.parents().map(parent => parent.toString())
       })
 
-      if (commit.parents().length > 0 && limit > 0) {
+      if (commit.parents().length > 0 && limit > 1) {
         return await walk(limit - 1, result)
       } else {
         return result
