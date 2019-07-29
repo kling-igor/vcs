@@ -61,7 +61,7 @@ app.on('window-all-closed', () => {
   }
 })
 
-const walk = async (limit, result) => {
+const walk = async (limit, result = []) => {
   try {
     const oid = await revWalk.next()
     if (oid) {
@@ -102,5 +102,5 @@ const walk = async (limit, result) => {
 //   event.reply('gitlog', result)
 // })
 const disposable = answerRenderer('gitlog', async (browserWindow, limit) => {
-  return await walk(limit, [])
+  return await walk(limit)
 })

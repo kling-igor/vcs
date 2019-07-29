@@ -73,43 +73,27 @@ class Tree extends PureComponent {
 }
 
 export default class App extends PureComponent {
-  list = []
-
   state = {
+    list: [],
     showScrollingPlaceholder: false,
     totalRowCount: 1
   }
 
-  constructor(props) {
-    super(props)
+  // constructor(props) {
+  //   super(props)
 
-    // this.queue = queue((data, callback) => {
-    //   console.log('queue data:', data)
-    //   // поместить данные в  state
-    //   this.list = [...this.list, ...data]
-
-    //   callback()
-    // }, 1)
-
-    // ipcRenderer.on('gitlog', (event, result) => {
-    //   this.list = [...this.list, ...result]
-    // })
-
-    // setTimeout(() => {
-    // ipcRenderer.send('gitlog', 10)
-    // }, 2000)
-
-    callMain('gitlog', 10).then(data => {
-      if (data) {
-        console.log('data:', data)
-        this.list = [...this.list, ...data]
-        // this.queue.push(data)
-      }
-    })
-  }
+  //   // callMain('gitlog', 10).then(data => {
+  //   //   if (data) {
+  //   //     console.log('data:', data)
+  //   //     this.setState(({ list }) => ({
+  //   //       list: [...list, ...data]
+  //   //     }))
+  //   //   }
+  //   // })
+  // }
 
   getDatum = index => {
-    return this.list[index]
+    return this.state.list[index]
   }
 
   rowRenderer = ({ index, isScrolling, key, style }) => {
@@ -150,49 +134,54 @@ export default class App extends PureComponent {
   }
 
   isRowLoaded = ({ index }) => {
-    return !!this.list[index]
+    return !!this.state.list[index]
   }
 
-  loadMoreRows = ({ startIndex, stopIndex }) => {
+  loadMoreRows = async ({ startIndex, stopIndex }) => {
     console.log('loadMoreRows:', startIndex, stopIndex)
 
-    return callMain('gitlog', 10).then(data => {
+    return new Promise(async resolve => {
+      const data = await callMain('gitlog', 10)
+
       if (data) {
-        // this.queue.push(data)
-        this.list = [...this.list, ...data]
-        this.setState(({ totalRowCount }) => {
-          if (totalRowCount === stopIndex + 1) {
-            return { totalRowCount: totalRowCount + 1 }
+        this.setState(({ totalRowCount, list }) => {
+          const retValue = {
+            list: [...list, ...data]
           }
+
+          if (totalRowCount === stopIndex + 1) {
+            retValue.totalRowCount = totalRowCount + 1
+          }
+
+          return retValue
         })
       }
+
+      resolve()
     })
 
-    // return new Promise(resolve => {
-    //   ipcRenderer.send('gitlog', 10)
+    // console.log('loadMoreRows:', startIndex, stopIndex)
 
-    // setTimeout(() => {
-    //   for (let i = startIndex; i < stopIndex; i += 1) {
-    //     if (!this.list[i]) {
-    //       this.list.push({
-    //         color: 'green',
-    //         name: `Name:${i}`
-    //       })
+    // const data = await callMain('gitlog', 10)
+
+    // if (data) {
+    //   this.setState(({ totalRowCount, list }) => {
+    //     const retValue = {
+    //       list: [...list, ...data]
     //     }
-    //   }
 
-    //   this.setState(({ totalRowCount }) => {
     //     if (totalRowCount === stopIndex + 1) {
-    //       return { totalRowCount: totalRowCount + 1 }
+    //       retValue.totalRowCount = totalRowCount + 1
     //     }
-    //   })
 
-    //   resolve()
-    // }, 1000)
-    // })
+    //     return retValue
+    //   })
+    // }
   }
 
   render() {
+    console.log('state:', this.state)
+
     return (
       <>
         <GlobalStyle />
@@ -217,7 +206,7 @@ export default class App extends PureComponent {
                             onRowsRendered={onRowsRendered}
                             ref={registerChild}
                             height={400}
-                            overscanRowCount={10}
+                            overscanRowCount={3}
                             rowRenderer={this.rowRenderer}
                             // noRowsRenderer={this.noRowsRenderer}
                             rowCount={this.state.totalRowCount} /* INT_MAX if unknown */
