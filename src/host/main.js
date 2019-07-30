@@ -62,7 +62,7 @@ app.on('window-all-closed', () => {
 })
 
 const walk = async (limit, result = []) => {
-  console.log('walk:', limit)
+  // console.log('walk:', limit)
 
   try {
     const oid = await revWalk.next()
@@ -70,21 +70,20 @@ const walk = async (limit, result = []) => {
       const commit = await repo.getCommit(oid)
       // console.log(`['${commit.toString()}',`, commit.parents().map(parent => parent.toString()), '],')
       // console.log('COMMIT:', commit)
-      console.log('commit:', commit.toString())
-      console.log('message:', commit.message())
+      // console.log('commit:', commit.toString())
+      // console.log('message:', commit.message())
       // console.log('author:', commit.author().name())
       // console.log('date:', commit.date())
       // console.log('parents:', commit.parents().map(parent => parent.toString()))
-      console.log('-----------------------------------------\n')
+      // console.log('-----------------------------------------\n')
 
       result.push({
         sha: commit.toString(),
-        message: commit.message()
-
+        message: commit.message(),
+        parents: commit.parents().map(parent => parent.toString())
         // author: commit.author().name(),
         // email: commit.author().email(),
         // date: commit.date(),
-        // parents: commit.parents().map(parent => parent.toString())
       })
 
       if (commit.parents().length > 0 && limit > 1) {
