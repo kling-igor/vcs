@@ -70,7 +70,7 @@ const X_STEP = 15
 const Y_STEP = 30
 
 const CANVAS_WIDTH = 512
-const CANVAS_HEIGHT = 1024
+const CANVAS_HEIGHT = 1000
 const LINE_WIDTH = 2
 const COMMIT_RADIUS = 5
 
@@ -94,7 +94,7 @@ const branchColor = branch =>
 
 const yPositionForIndex = yIndex => (yIndex + 0.5) * Y_STEP
 
-const xPositionForIndex = xIndex => (xIndex + 1) * X_STEP
+const xPositionForIndex = xIndex => (xIndex + 2) * X_STEP
 
 const drawCommit = (ctx, commit, yIndex) => {
   const { offset } = commit
@@ -157,32 +157,17 @@ const GlobalStyle = createGlobalStyle`
     margin-top: 15px;
   }
 `
-
 const RowStyle = styled.div`
-  height: 100%;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding: 0 25px;
-  background-color: #fff;
-  border-bottom: 1px solid #e0e0e0;
+  margin-left: 50px;
+  height: 30px;
 `
 
-const ScrollingPlaceholderStyle = styled(RowStyle)`
-  color: #ddd;
-  font-style: italic;
-`
-
-const LetterStyle = styled.div`
-  display: inline-block;
-  height: 40px;
-  width: 40px;
-  line-height: 40px;
-  text-align: center;
-  border-radius: 40px;
-  color: white;
-  font-size: 1.5em;
-  margin-right: 25px;
+const TextStyle = styled.span`
+  font-size: 12px;
+  line-height: 30px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 `
 
 const NameStyle = styled.div`
@@ -215,17 +200,28 @@ const NoRowsStyle = styled.div`
 //   }
 // }
 
-const Tree = ({ scrollTop, commits }) => {
+/**
+ *
+ * @param {Number} scrollTop - смещение
+ * @param {Number} height - видимая высота рисования
+ * @param {Array} commits - данные для отображения
+ */
+const Tree = ({ scrollTop, height, commits }) => {
   const canvasRef = useRef(null)
   useEffect(() => {
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
     ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT)
 
-    drawGraph(ctx, processCommits(commits))
+    drawGraph(ctx, processCommits(commits)) // тут имеет смысл передавать смещение и высчитанное кол-ов отображаемых коммитов чтобы не процессить ненужные
+    // имеем смысл также не процессить каждый раз а только в тот момент когда в этом есть необходимость (поменялась структура дерева)
   }, [scrollTop, commits])
 
-  return <canvas ref={canvasRef} width={100} height={500} style={{ position: 'absolute', left: 0, top: 0 }} />
+  // ширина может быть высчитанна в результате препроцессинга (для отображаемого диапазона может быть определено максимальное кол-во параллельно идущих веток)
+
+  return (
+    <canvas ref={canvasRef} width={100} height={height} style={{ position: 'absolute', left: 0, top: -scrollTop }} />
+  )
 }
 
 export default class App extends PureComponent {
@@ -275,12 +271,13 @@ export default class App extends PureComponent {
 
     const datum = this.getDatum(index)
 
+    // TODO: тут передавать смещение чтобы менять marginLeft для TextStyle
+
     return (
-      <RowStyle key={key} style={style}>
-        <div>
-          <NameStyle>{datum.sha}</NameStyle>
-          <IndexStyle>{datum.message}</IndexStyle>
-        </div>
+      <RowStyle key={key}>
+        <TextStyle>
+          {datum.sha.slice(0, 8)} {datum.message}
+        </TextStyle>
       </RowStyle>
     )
   }
