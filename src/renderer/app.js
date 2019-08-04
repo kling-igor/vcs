@@ -8,102 +8,105 @@ import styled, { createGlobalStyle } from 'styled-components'
 
 import { List, AutoSizer, InfiniteLoader, ScrollSync } from 'react-virtualized'
 
-let branchIndex = 0
-const reserve = []
-const branches = {}
+// let branchIndex = 0
+// const reserve = []
+// const branches = {}
 
-const getBranch = sha => {
-  if (branches[sha] == null) {
-    branches[sha] = branchIndex
-    reserve.push(branchIndex)
-    branchIndex += 1
-  }
+// const getBranch = sha => {
+//   if (branches[sha] == null) {
+//     branches[sha] = branchIndex
+//     reserve.push(branchIndex)
+//     branchIndex += 1
+//   }
 
-  return branches[sha]
-}
+//   return branches[sha]
+// }
 
-const fillRoutes = (from, to, iterable) => iterable.map((branch, index) => [from(index), to(index), branch])
+// const fillRoutes = (from, to, iterable) => iterable.map((branch, index) => [from(index), to(index), branch])
 
-const processCommits = commits => {
-  console.log('PROCESS COMMITS:', commits)
+// const processCommits = commits => {
+//   console.log('PROCESS COMMITS:', commits)
 
-  return commits.map(commit => {
-    console.log('COMMIT:', commit)
-    const { sha, parents } = commit
-    const [parent, otherParent] = parents
+//   return commits.map(commit => {
+//     console.log('COMMIT:', commit)
+//     const { sha, parents } = commit
+//     const [parent, otherParent] = parents
 
-    const branch = getBranch(sha)
-    const offset = reserve.indexOf(branch)
-    let routes = []
+//     const branch = getBranch(sha)
+//     const offset = reserve.indexOf(branch)
+//     let routes = []
 
-    if (parents.length === 1) {
-      if (branches[parent] != null) {
-        // create branch
-        routes = [
-          ...fillRoutes(i => i + offset + 1, i => i + offset + 1 - 1, reserve.slice(offset + 1)),
-          ...fillRoutes(i => i, i => i, reserve.slice(0, offset))
-        ]
+//     if (parents.length === 1) {
+//       if (branches[parent] != null) {
+//         // create branch
+//         routes = [
+//           ...fillRoutes(i => i + offset + 1, i => i + offset + 1 - 1, reserve.slice(offset + 1)),
+//           ...fillRoutes(i => i, i => i, reserve.slice(0, offset))
+//         ]
 
-        reserve.splice(reserve.indexOf(branch), 1)
-        routes = [...routes, [offset, reserve.indexOf(branches[parent]), branch]]
-      } else {
-        // straight
-        routes = [...fillRoutes(i => i, i => i, reserve)]
-        branches[parent] = branch
-      }
-    } else if (parents.length === 2) {
-      // merge branch
-      branches[parent] = branch
+//         reserve.splice(reserve.indexOf(branch), 1)
+//         routes = [...routes, [offset, reserve.indexOf(branches[parent]), branch]]
+//       } else {
+//         // straight
+//         routes = [...fillRoutes(i => i, i => i, reserve)]
+//         branches[parent] = branch
+//       }
+//     } else if (parents.length === 2) {
+//       // merge branch
+//       branches[parent] = branch
 
-      routes = fillRoutes(i => i, i => i, reserve)
+//       routes = fillRoutes(i => i, i => i, reserve)
 
-      const otherBranch = getBranch(otherParent)
+//       const otherBranch = getBranch(otherParent)
 
-      routes = [...routes, [offset, reserve.indexOf(otherBranch), otherBranch]]
-    }
+//       routes = [...routes, [offset, reserve.indexOf(otherBranch), otherBranch]]
+//     }
 
-    return { sha, offset, branch, routes }
-  })
-}
+//     return { sha, offset, branch, routes }
+//   })
+// }
+
+const ROW_HEIGHT = 20
 
 const X_STEP = 15
-const Y_STEP = 30
+const Y_STEP = ROW_HEIGHT
 
 const CANVAS_WIDTH = 512
-const CANVAS_HEIGHT = 1000
+// const CANVAS_HEIGHT = 400 + 30
 const LINE_WIDTH = 2
 const COMMIT_RADIUS = 5
 
-const branchColor = branch =>
-  [
-    '#0098d4',
-    '#b36305',
-    '#e32017',
-    '#ffd300',
-    '#00782a',
-    '#f3a9bb',
-    '#a0a5a9',
-    '#9b0056',
-    '#003688',
-    '#000000',
-    '#95cdba',
-    '#00a4a7',
-    '#ee7c0e',
-    '#84b817'
-  ][branch] || 'black'
+const colors = [
+  '#0098d4',
+  '#b36305',
+  '#e32017',
+  '#ffd300',
+  '#00782a',
+  '#f3a9bb',
+  '#a0a5a9',
+  '#9b0056',
+  '#003688',
+  '#000000',
+  '#95cdba',
+  '#00a4a7',
+  '#ee7c0e',
+  '#84b817'
+]
+
+const branchColor = branch => colors[branch] || 'black'
 
 const yPositionForIndex = yIndex => (yIndex + 0.5) * Y_STEP
 
-const xPositionForIndex = xIndex => (xIndex + 2) * X_STEP
+const xPositionForIndex = xIndex => (xIndex + 1) * X_STEP
 
-const drawCommit = (ctx, commit, yIndex) => {
+const drawCommit = (ctx, topOffset, commit, yIndex) => {
   const { offset } = commit
 
   // Thicker lines for the circles, or they look odd
   ctx.lineWidth = LINE_WIDTH * 2
 
   const x = xPositionForIndex(offset) // Positioning of commit circle
-  const y = yPositionForIndex(yIndex)
+  const y = yPositionForIndex(yIndex) + topOffset
   const innerRadius = COMMIT_RADIUS - LINE_WIDTH
 
   ctx.fillStyle = '#ffffff'
@@ -114,16 +117,16 @@ const drawCommit = (ctx, commit, yIndex) => {
   ctx.fill() // Fill the inner circle
 }
 
-const drawRoute = (ctx, route, yIndex) => {
+const drawRoute = (ctx, topOffset, route, yIndex) => {
   const [from, to, branch] = route
 
   // Starting position for route
   const fromX = xPositionForIndex(from)
-  const fromY = yPositionForIndex(yIndex)
+  const fromY = yPositionForIndex(yIndex) + topOffset
 
   // Ending position for route
   const toX = xPositionForIndex(to)
-  const toY = yPositionForIndex(yIndex + 1)
+  const toY = yPositionForIndex(yIndex + 1) + topOffset
 
   ctx.strokeStyle = branchColor(branch) // Gets a colour based on the branch no.
   ctx.lineWidth = LINE_WIDTH
@@ -140,13 +143,18 @@ const drawRoute = (ctx, route, yIndex) => {
   ctx.stroke()
 }
 
-const drawGraph = (ctx, nodes) => {
+const drawGraph = (ctx, topOffset, nodes) => {
+  // ctx.beginPath()
+  // ctx.rect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT)
+  // ctx.fillStyle = 'yellow'
+  // ctx.fill()
+
   nodes.forEach((node, yIndex) => {
     // Draw the routes for this node
-    node.routes.forEach(route => drawRoute(ctx, route, yIndex))
+    node.routes.forEach(route => drawRoute(ctx, topOffset, route, yIndex))
 
     // Draw the commit on top of the routes
-    drawCommit(ctx, node, yIndex)
+    drawCommit(ctx, topOffset, node, yIndex)
   })
 }
 
@@ -158,13 +166,21 @@ const GlobalStyle = createGlobalStyle`
   }
 `
 const RowStyle = styled.div`
-  margin-left: 50px;
-  height: 30px;
+  padding-left: 30px;
+  height: ${() => `${ROW_HEIGHT}px`};
+
+  color: black;
+  background-color: ${({ odd }) => (odd ? '#e0e0e0' : 'white')};
+  :hover {
+    color: white;
+    background-color: blue;
+  }
 `
 
 const TextStyle = styled.span`
+  margin-left: ${({ offset }) => `${offset}px`};
   font-size: 12px;
-  line-height: 30px;
+  line-height: ${() => `${ROW_HEIGHT}px`};
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
@@ -208,19 +224,31 @@ const NoRowsStyle = styled.div`
  */
 const Tree = ({ scrollTop, height, commits }) => {
   const canvasRef = useRef(null)
+  let topOffset = 0
   useEffect(() => {
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
-    ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT)
+    ctx.clearRect(0, 0, CANVAS_WIDTH, height)
 
-    drawGraph(ctx, processCommits(commits)) // тут имеет смысл передавать смещение и высчитанное кол-ов отображаемых коммитов чтобы не процессить ненужные
+    const skip = Math.floor(scrollTop / ROW_HEIGHT)
+    const count = Math.floor(height / ROW_HEIGHT) + 2
+    topOffset = -scrollTop % ROW_HEIGHT
+
+    const drawingCommits = commits.slice(skip, skip + count)
+
+    drawGraph(ctx, topOffset, drawingCommits /*processCommits(commits)*/) // тут имеет смысл передавать смещение и высчитанное кол-ов отображаемых коммитов чтобы не процессить ненужные
     // имеем смысл также не процессить каждый раз а только в тот момент когда в этом есть необходимость (поменялась структура дерева)
-  }, [scrollTop, commits])
+  }, [scrollTop, height, commits])
 
   // ширина может быть высчитанна в результате препроцессинга (для отображаемого диапазона может быть определено максимальное кол-во параллельно идущих веток)
 
   return (
-    <canvas ref={canvasRef} width={100} height={height} style={{ position: 'absolute', left: 0, top: -scrollTop }} />
+    <canvas
+      ref={canvasRef}
+      width={CANVAS_WIDTH}
+      height={height}
+      style={{ zIndex: 9999, position: 'absolute', left: 0, top: 0 }}
+    />
   )
 }
 
@@ -228,7 +256,7 @@ export default class App extends PureComponent {
   list = []
   state = {
     showScrollingPlaceholder: false,
-    totalRowCount: 1
+    totalRowCount: 0
   }
 
   // constructor(props) {
@@ -244,8 +272,16 @@ export default class App extends PureComponent {
   //   // })
   // }
 
-  getDatum = index => {
-    return this.list[index]
+  async componentDidMount() {
+    // super.componentDidMount()
+
+    const data = await callMain('gitlog')
+    // console.log('DATA:', data)
+
+    if (data) {
+      this.list = data
+      this.setState({ totalRowCount: data.length })
+    }
   }
 
   rowRenderer = ({ index, isScrolling, key, style }) => {
@@ -259,24 +295,24 @@ export default class App extends PureComponent {
     //   )
     // }
 
-    if (!this.isRowLoaded({ index })) {
-      return (
-        <RowStyle key={key} style={style}>
-          <div>
-            <NameStyle>Loading...</NameStyle>
-          </div>
-        </RowStyle>
-      )
-    }
+    // if (!this.isRowLoaded({ index })) {
+    //   return (
+    //     <RowStyle key={key} style={style}>
+    //       <div>
+    //         <NameStyle>Loading...</NameStyle>
+    //       </div>
+    //     </RowStyle>
+    //   )
+    // }
 
-    const datum = this.getDatum(index)
+    const { sha, message, routes } = this.list[index]
 
     // TODO: тут передавать смещение чтобы менять marginLeft для TextStyle
 
     return (
-      <RowStyle key={key}>
-        <TextStyle>
-          {datum.sha.slice(0, 8)} {datum.message}
+      <RowStyle key={key} style={style} odd={index % 2}>
+        <TextStyle offset={(routes.length - 1) * X_STEP}>
+          <b>{sha}</b> {message}
         </TextStyle>
       </RowStyle>
     )
@@ -286,90 +322,88 @@ export default class App extends PureComponent {
     return <NoRowsStyle>No rows</NoRowsStyle>
   }
 
-  isRowLoaded = ({ index }) => {
-    return !!this.list[index]
-  }
+  // isRowLoaded = ({ index }) => {
+  //   return !!this.list[index]
+  // }
 
-  loadMoreRows = async ({ startIndex, stopIndex }) => {
-    // console.log('loadMoreRows:', startIndex, stopIndex)
+  // loadMoreRows = async ({ startIndex, stopIndex }) => {
+  //   // console.log('loadMoreRows:', startIndex, stopIndex)
 
-    return new Promise(async resolve => {
-      const data = await callMain('gitlog', stopIndex - startIndex + 1)
-      // console.log('DATA:', data)
+  //   return new Promise(async resolve => {
+  //     const data = await callMain('gitlog', stopIndex - startIndex + 1)
+  //     // console.log('DATA:', data)
 
-      if (data) {
-        this.list = [...this.list, ...data]
-        this.setState(({ totalRowCount }) => {
-          if (totalRowCount === stopIndex + 1) {
-            // console.log('BINGO')
-            return { totalRowCount: totalRowCount + 1 }
-          }
-        })
-      }
+  //     if (data) {
+  //       this.list = [...this.list, ...data]
+  //       this.setState(({ totalRowCount }) => {
+  //         if (totalRowCount === stopIndex + 1) {
+  //           // console.log('BINGO')
+  //           return { totalRowCount: totalRowCount + 1 }
+  //         }
+  //       })
+  //     }
 
-      resolve()
-    })
+  //     resolve()
+  //   })
 
-    // console.log('loadMoreRows:', startIndex, stopIndex)
+  //   // console.log('loadMoreRows:', startIndex, stopIndex)
 
-    // const data = await callMain('gitlog', 10)
+  //   // const data = await callMain('gitlog', 10)
 
-    // if (data) {
-    //   this.setState(({ totalRowCount, list }) => {
-    //     const retValue = {
-    //       list: [...list, ...data]
-    //     }
+  //   // if (data) {
+  //   //   this.setState(({ totalRowCount, list }) => {
+  //   //     const retValue = {
+  //   //       list: [...list, ...data]
+  //   //     }
 
-    //     if (totalRowCount === stopIndex + 1) {
-    //       retValue.totalRowCount = totalRowCount + 1
-    //     }
+  //   //     if (totalRowCount === stopIndex + 1) {
+  //   //       retValue.totalRowCount = totalRowCount + 1
+  //   //     }
 
-    //     return retValue
-    //   })
-    // }
-  }
+  //   //     return retValue
+  //   //   })
+  //   // }
+  // }
 
   render() {
-    console.log('state:', this.state)
-
     return (
       <>
         <GlobalStyle />
-        <div style={{ height: '400px' }}>
-          <AutoSizer disableHeight>
-            {({ width }) => (
-              <InfiniteLoader
-                isRowLoaded={this.isRowLoaded}
-                loadMoreRows={this.loadMoreRows}
-                rowCount={this.state.totalRowCount} /* total rows count */
-              >
-                {({ onRowsRendered, registerChild }) => (
-                  <ScrollSync>
-                    {({ clientHeight, clientWidth, onScroll, scrollHeight, scrollLeft, scrollTop, scrollWidth }) => (
-                      <div className="Table">
-                        <div className="LeftColumn">
-                          <Tree scrollTop={scrollTop} commits={this.list} />
-                        </div>
-                        <div className="RightColumn">
-                          <List
-                            onScroll={onScroll}
-                            onRowsRendered={onRowsRendered}
-                            ref={registerChild}
-                            height={400}
-                            overscanRowCount={1}
-                            rowRenderer={this.rowRenderer}
-                            // noRowsRenderer={this.noRowsRenderer}
-                            rowCount={this.state.totalRowCount} /* INT_MAX if unknown */
-                            rowHeight={/*useDynamicRowHeight ? this._getRowHeight : 50*/ 50}
-                            // scrollToIndex={scrollToIndex}
-                            width={width}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </ScrollSync>
+        <div style={{ height: '100%' }}>
+          <AutoSizer>
+            {({ width, height }) => (
+              // <InfiniteLoader
+              //   isRowLoaded={this.isRowLoaded}
+              //   loadMoreRows={this.loadMoreRows}
+              //   rowCount={this.state.totalRowCount} /* total rows count */
+              // >
+              // {({ onRowsRendered, registerChild }) => (
+              <ScrollSync>
+                {({ clientHeight, clientWidth, onScroll, scrollHeight, scrollLeft, scrollTop, scrollWidth }) => (
+                  <div className="Table">
+                    <div className="LeftColumn">
+                      {<Tree height={height} scrollTop={scrollTop} commits={this.list} />}
+                    </div>
+                    <div className="RightColumn">
+                      <List
+                        onScroll={onScroll}
+                        // onRowsRendered={onRowsRendered}
+                        // ref={registerChild}
+                        width={width}
+                        height={height}
+                        overscanRowCount={1}
+                        rowRenderer={this.rowRenderer}
+                        // noRowsRenderer={this.noRowsRenderer}
+                        rowCount={this.state.totalRowCount} /* INT_MAX if unknown */
+                        rowHeight={/*useDynamicRowHeight ? this._getRowHeight : 50*/ ROW_HEIGHT}
+                        // scrollToIndex={scrollToIndex}
+                      />
+                    </div>
+                  </div>
                 )}
-              </InfiniteLoader>
+              </ScrollSync>
+              // )}
+              // </InfiniteLoader>
             )}
           </AutoSizer>
         </div>
