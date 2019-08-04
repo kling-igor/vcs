@@ -66,18 +66,26 @@ import { List, AutoSizer, InfiniteLoader, ScrollSync } from 'react-virtualized'
 //   })
 // }
 
+const CanvasStyle = styled.canvas`
+  z-index: 9999;
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  pointer-events: none;
+`
+
 const ROW_HEIGHT = 20
 
 const X_STEP = 15
 const Y_STEP = ROW_HEIGHT
 
-const CANVAS_WIDTH = 512
+const CANVAS_WIDTH = 60
 // const CANVAS_HEIGHT = 400 + 30
 const LINE_WIDTH = 2
 const COMMIT_RADIUS = 5
 
 const colors = [
-  '#0098d4',
+  '#84b817',
   '#b36305',
   '#e32017',
   '#ffd300',
@@ -89,8 +97,7 @@ const colors = [
   '#000000',
   '#95cdba',
   '#00a4a7',
-  '#ee7c0e',
-  '#84b817'
+  '#ee7c0e'
 ]
 
 const branchColor = branch => colors[branch] || 'black'
@@ -161,8 +168,8 @@ const drawGraph = (ctx, topOffset, nodes) => {
 const GlobalStyle = createGlobalStyle`
   .List {
     width: 100%;
-    border: 1px solid #DDD;
-    margin-top: 15px;
+    /* border: 1px solid #DDD; */
+    /* margin-top: 15px; */
   }
 `
 const RowStyle = styled.div`
@@ -170,10 +177,10 @@ const RowStyle = styled.div`
   height: ${() => `${ROW_HEIGHT}px`};
 
   color: black;
-  background-color: ${({ odd }) => (odd ? '#e0e0e0' : 'white')};
+  background-color: ${({ odd }) => (odd ? '#f0f0f0' : 'white')};
   :hover {
     color: white;
-    background-color: blue;
+    background-color: #0098d4;
   }
 `
 
@@ -184,6 +191,8 @@ const TextStyle = styled.span`
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
+  cursor: pointer;
+  user-select: none;
 `
 
 const NameStyle = styled.div`
@@ -242,14 +251,7 @@ const Tree = ({ scrollTop, height, commits }) => {
 
   // ширина может быть высчитанна в результате препроцессинга (для отображаемого диапазона может быть определено максимальное кол-во параллельно идущих веток)
 
-  return (
-    <canvas
-      ref={canvasRef}
-      width={CANVAS_WIDTH}
-      height={height}
-      style={{ zIndex: 9999, position: 'absolute', left: 0, top: 0 }}
-    />
-  )
+  return <CanvasStyle ref={canvasRef} width={CANVAS_WIDTH} height={height} />
 }
 
 export default class App extends PureComponent {
