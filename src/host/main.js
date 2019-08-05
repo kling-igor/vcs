@@ -40,7 +40,7 @@ app.on('ready', async () => {
   })
 
   try {
-    repo = await nodegit.Repository.open(resolve(__dirname, '..', '..', '..', 'editor', '.git'))
+    repo = await nodegit.Repository.open(resolve(__dirname, '..', '..', /*'..',*/ 'editor', '.git'))
 
     try {
       const commit = await repo.getHeadCommit()
@@ -72,6 +72,9 @@ const disposable = answerRenderer('gitlog', async browserWindow => {
   const reserve = []
   const branches = {}
 
+  const commiters = []
+  const commits = []
+
   const getBranch = sha => {
     if (branches[sha] == null) {
       branches[sha] = branchIndex
@@ -84,30 +87,27 @@ const disposable = answerRenderer('gitlog', async browserWindow => {
 
   const fillRoutes = (from, to, iterable) => iterable.map((branch, index) => [from(index), to(index), branch])
 
-  const walk = async (result = []) => {
+  const walk = async () => {
     // console.log('walk:', limit)
 
     try {
       const oid = await revWalk.next()
       if (oid) {
         const commit = await repo.getCommit(oid)
-        // console.log(`['${commit.toString()}',`, commit.parents().map(parent => parent.toString()), '],')
-        // console.log('COMMIT:', commit)
-        // console.log('commit:', commit.toString())
-        // console.log('message:', commit.message())
-        // console.log('author:', commit.author().name())
-        // console.log('date:', commit.date())
-        // console.log('parents:', commit.parents().map(parent => parent.toString()))
-        // console.log('-----------------------------------------\n')
 
-        // result.push({
-        //   sha: commit.toString(),
-        //   message: commit.message(),
-        //   parents: commit.parents().map(parent => parent.toString())
-        //   // author: commit.author().name(),
-        //   // email: commit.author().email(),
-        //   // date: commit.date(),
-        // })
+        const authorName = commit.author().name()
+        const authorEmail = commit.author().email()
+        const authorDate = commit.time()
+
+        let commiterIndex
+
+        const foundIndex = commiters.findIndex(({ name, email }) => name === authorName && email === authorEmail)
+        if (foundIndex !== -1) {
+          commiterIndex = foundIndex
+        } else {
+          commiterIndex = commiters.length
+          commiters.push({ name: authorName, email: authorEmail })
+        }
 
         const sha = commit.toString()
         const message = commit.message()
@@ -144,9 +144,11 @@ const disposable = answerRenderer('gitlog', async browserWindow => {
           routes = [...routes, [offset, reserve.indexOf(otherBranch), otherBranch]]
         }
 
-        result.push({
+        commits.push({
           sha: sha.slice(0, 8),
-          message,
+          message: message.slice(0, 80),
+          commiter: commiterIndex,
+          date: authorDate,
           offset,
           branch,
           routes
@@ -155,9 +157,12 @@ const disposable = answerRenderer('gitlog', async browserWindow => {
         // console.log(message.slice(0, 80))
 
         if (parents.length > 0) {
-          return await walk(result)
+          return await walk()
         } else {
-          return result
+          return {
+            commits,
+            commiters
+          }
         }
       }
     } catch (e) {

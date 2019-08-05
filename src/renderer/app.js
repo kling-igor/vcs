@@ -3,6 +3,8 @@ const { callMain, answerMain } = require('./ipc').default(ipcRenderer)
 
 import React, { PureComponent, useRef, useEffect } from 'react'
 
+import moment from 'moment'
+
 import styled, { createGlobalStyle } from 'styled-components'
 // import queue from 'async/queue'
 
@@ -255,7 +257,8 @@ const Tree = ({ scrollTop, height, commits }) => {
 }
 
 export default class App extends PureComponent {
-  list = []
+  commits = []
+  commiters = []
   state = {
     showScrollingPlaceholder: false,
     totalRowCount: 0
@@ -281,8 +284,11 @@ export default class App extends PureComponent {
     // console.log('DATA:', data)
 
     if (data) {
-      this.list = data
-      this.setState({ totalRowCount: data.length })
+      const { commits, commiters } = data
+
+      this.commits = commits
+      this.commiters = commiters
+      this.setState({ totalRowCount: commits.length })
     }
   }
 
@@ -307,14 +313,19 @@ export default class App extends PureComponent {
     //   )
     // }
 
-    const { sha, message, routes } = this.list[index]
+    const { sha, message, routes, commiter, date } = this.commits[index]
 
-    // TODO: тут передавать смещение чтобы менять marginLeft для TextStyle
+    const { name, email } = this.commiters[commiter]
+    const datetime = moment.unix(date).format('MMMM Do YYYY, H:mm:ss')
 
     return (
       <RowStyle key={key} style={style} odd={index % 2}>
         <TextStyle offset={(routes.length - 1) * X_STEP}>
-          <b>{sha}</b> {message}
+          <b>{sha}</b>{' '}
+          <em>
+            {name} {email}
+          </em>{' '}
+          {message} <em>{datetime}</em>
         </TextStyle>
       </RowStyle>
     )
@@ -384,7 +395,7 @@ export default class App extends PureComponent {
                 {({ clientHeight, clientWidth, onScroll, scrollHeight, scrollLeft, scrollTop, scrollWidth }) => (
                   <div className="Table">
                     <div className="LeftColumn">
-                      {<Tree height={height} scrollTop={scrollTop} commits={this.list} />}
+                      {<Tree height={height} scrollTop={scrollTop} commits={this.commits} />}
                     </div>
                     <div className="RightColumn">
                       <List
