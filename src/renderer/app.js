@@ -184,6 +184,10 @@ const RowStyle = styled.div`
     color: white;
     background-color: #0098d4;
   }
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
 `
 
 const TextStyle = styled.span`
@@ -191,6 +195,16 @@ const TextStyle = styled.span`
   font-size: 12px;
   line-height: ${() => `${ROW_HEIGHT}px`};
   text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+`
+
+const TimeStampStyle = styled.span`
+  padding-right: 32px;
+  font-size: 12px;
+  line-height: ${() => `${ROW_HEIGHT}px`};
   white-space: nowrap;
   overflow: hidden;
   cursor: pointer;
@@ -325,8 +339,9 @@ export default class App extends PureComponent {
           <em>
             {name} {email}
           </em>{' '}
-          {message} <em>{datetime}</em>
+          <b>{message}</b>
         </TextStyle>
+        <TimeStampStyle>{datetime}</TimeStampStyle>
       </RowStyle>
     )
   }

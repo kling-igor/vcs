@@ -110,7 +110,10 @@ const disposable = answerRenderer('gitlog', async browserWindow => {
         }
 
         const sha = commit.toString()
-        const message = commit.message()
+        let message = commit.message()
+        if (message.length > 80) {
+          message = message.slice(0, 79) + '\u2026'
+        }
         const parents = commit.parents().map(parent => parent.toString())
         const [parent, otherParent] = parents
 
