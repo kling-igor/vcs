@@ -21,15 +21,31 @@ const DiffPane = memo(() => {
   return <RootStyle style={{ background: 'red' }}> </RootStyle>
 })
 
-const CommitInfoPane = memo(() => {
+const CommitInfoPane = memo(({ commitInfo }) => {
+  if (!commitInfo) return null
+
+  const {
+    commit,
+    author: { name, email },
+    date,
+    message,
+    parents,
+    labels
+  } = commitInfo
+
+  const parentsString = parents.join(', ')
+  const labelsString = labels.join(', ')
+
   return (
     <RootStyle
       style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start' }}
     >
-      <span>{`commit: #deadbeef`}</span>
-      <span>{`author: Igor Kling <klingigor@gmail.com>`}</span>
-      <span>{`parents: #aabbcdd`}</span>
-      <span>{`date: 8 aug 2019`}</span>
+      <span>{message}</span>
+      <span>{`Commit: ${commit}`}</span>
+      <span>{`Parents: ${parentsString}`}</span>
+      <span>{`Author: ${name} <${email}>`}</span>
+      <span>{`${date}`}</span>
+      <span>{`Labels: ${labelsString}`}</span>
     </RootStyle>
   )
 })
@@ -39,11 +55,22 @@ const FileTree = memo(() => {
 })
 
 export default class HistoryPage extends Component {
+  state = {
+    commitInfo: null
+  }
+
+  onRowClick = async sha => {
+    const commitInfo = await this.props.onCommitSelect(sha)
+    this.setState({ commitInfo })
+  }
+
   render() {
+    const { commits, commiters } = this.props
+
     return (
       <SplitPane split="horizontal" allowResize resizersSize={0} onResizeEnd={onMainSplitResize}>
         <Pane size={200} minSize="50px" maxSize="100%">
-          <History commits={this.props.commits} commiters={this.props.commiters} />
+          <History commits={commits} commiters={commiters} onRowClick={this.onRowClick} />
         </Pane>
         <Pane size={200} minSize="50px" maxSize="100%">
           <SplitPane split="vertical" allowResize resizersSize={0} onResizeEnd={onSecondarySplitResize}>
@@ -54,7 +81,7 @@ export default class HistoryPage extends Component {
                     <FileTree />
                   </Pane>
                   <Pane size={200} minSize="50px" maxSize="100%">
-                    <CommitInfoPane />
+                    <CommitInfoPane commitInfo={this.state.commitInfo} />
                   </Pane>
                 </SplitPane>
               </RootStyle>

@@ -43,15 +43,17 @@ const TimeStampStyle = styled.span`
   user-select: none;
 `
 
-export const History = memo(({ commits = [], commiters = [] }) => {
+export const History = memo(({ commits = [], commiters = [], onRowClick }) => {
   const rowRenderer = ({ index, isScrolling, key, style }) => {
     const { sha, message, routes, commiter, date } = commits[index]
 
     const { name, email } = commiters[commiter]
     const datetime = moment.unix(date).format('MMMM Do YYYY, H:mm:ss')
 
+    const onClick = () => onRowClick(sha)
+
     return (
-      <RowStyle key={key} style={style} odd={index % 2}>
+      <RowStyle key={key} style={style} odd={index % 2} onClick={onClick}>
         <TextStyle offset={(routes.length - 1) * X_STEP}>
           <b>{sha}</b>{' '}
           <em>

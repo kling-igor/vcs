@@ -61,6 +61,32 @@ app.on('window-all-closed', () => {
   }
 })
 
+answerRenderer('commit:info', async (browserWindow, sha) => {
+  console.log('commit:info')
+  const oid = nodegit.Oid.fromString(sha)
+  try {
+    const commit = await repo.getCommit(oid)
+
+    console.log(commit.toString())
+
+    return {
+      commit: commit.toString(),
+      author: {
+        name: commit.author().name(),
+        email: commit.author().email()
+      },
+      date: commit.time(),
+      message: commit.message(),
+      parents: commit.parents().map(parent => parent.toString()),
+      labels: ['master', 'HEAD'] // TODO:
+    }
+  } catch (e) {
+    console.log('COMMIT INFO', e)
+  }
+
+  return null
+})
+
 // ipcMain.on('gitlog', async (event, limit) => {
 //   console.log('gitlog:', limit)
 //   const result = await walk(limit, [])

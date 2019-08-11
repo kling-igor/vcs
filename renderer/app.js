@@ -31,12 +31,21 @@ export default class App extends PureComponent {
     }
   }
 
+  onCommitSelect = async sha => {
+    const info = await callMain('commit:info', sha)
+    console.log(info)
+  }
+
   render() {
     return (
       <>
         <GlobalStyle />
         <RootStyle>
-          <HistoryPage commits={this.state.commits} commiters={this.state.commiters} />
+          <HistoryPage
+            commits={this.state.commits}
+            commiters={this.state.commiters}
+            onCommitSelect={this.onCommitSelect}
+          />
         </RootStyle>
       </>
     )
