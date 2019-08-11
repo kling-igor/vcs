@@ -2,8 +2,9 @@ const { ipcRenderer } = window.require('electron')
 const { callMain, answerMain } = require('./ipc').default(ipcRenderer)
 
 import React, { PureComponent } from 'react'
-import { History } from './src/components/vcs/history'
 import styled, { createGlobalStyle } from 'styled-components'
+
+import HistoryPage from './src/components/vcs/history-page'
 
 const GlobalStyle = createGlobalStyle`
   .List {
@@ -35,7 +36,7 @@ export default class App extends PureComponent {
       <>
         <GlobalStyle />
         <RootStyle>
-          <History commits={this.state.commits} commiters={this.state.commiters} />
+          <HistoryPage commits={this.state.commits} commiters={this.state.commiters} />
         </RootStyle>
       </>
     )
