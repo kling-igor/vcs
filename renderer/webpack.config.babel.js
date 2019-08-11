@@ -5,7 +5,7 @@ module.exports = env => ({
   entry: join(__dirname, 'index.js'),
   output: {
     filename: 'bundle.js',
-    path: join(__dirname, '../../app')
+    path: join(__dirname, '../app')
   },
 
   // target: 'electron-renderer',

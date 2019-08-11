@@ -40,7 +40,7 @@ app.on('ready', async () => {
   })
 
   try {
-    repo = await nodegit.Repository.open(resolve(__dirname, '..', '..', /*'..',*/ 'editor', '.git'))
+    repo = await nodegit.Repository.open(resolve('/Users/kling/Altarix/editor/.git'))
 
     try {
       const commit = await repo.getHeadCommit()

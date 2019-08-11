@@ -1,12 +1,12 @@
 {
-  "name": "scroll",
+  "name": "vcs",
   "version": "0.0.1",
-  "description": "React virtualized scroll",
+  "description": "VCS for Vision",
   "main": "app/main.js",
   "scripts": {
     "start": "electron .",
-    "build:main": "babel -w src/host -d app --copy-files",
-    "build:renderer": "webpack --mode development --env.dev --config src/renderer/webpack.config.babel.js --watch",
+    "build:main": "babel -w host -d app --copy-files",
+    "build:renderer": "webpack --mode development --env.dev --config renderer/webpack.config.babel.js --watch",
     "rebuild": "electron-rebuild -f -w nodegit"
   },
   "keywords": [],
