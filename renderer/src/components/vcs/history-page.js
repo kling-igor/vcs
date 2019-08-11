@@ -1,6 +1,7 @@
 import React, { Component, memo } from 'react'
 import SplitPane, { Pane } from '../react-split'
 import styled from 'styled-components'
+import moment from 'moment'
 
 import { History } from './history'
 
@@ -21,6 +22,35 @@ const DiffPane = memo(() => {
   return <RootStyle style={{ background: 'red' }}> </RootStyle>
 })
 
+const IconStyle = styled.span`
+  display: inline-block;
+  height: 40px;
+  width: 40px;
+  line-height: 40px;
+  text-align: center;
+  border-radius: 40px;
+  color: white;
+  background-color: ${({ color }) => color};
+  font-size: 1.25em;
+  margin: 8px;
+  margin-right: 24px;
+`
+
+const TableStyle = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  margin-left: 8px;
+`
+
+const LeftColumnStyle = styled.td`
+  text-align: right;
+  width: 50px;
+`
+
+const RightColumnStyle = styled.td`
+  text-align: left;
+`
+
 const CommitInfoPane = memo(({ commitInfo }) => {
   if (!commitInfo) return null
 
@@ -36,16 +66,62 @@ const CommitInfoPane = memo(({ commitInfo }) => {
   const parentsString = parents.join(', ')
   const labelsString = labels.join(', ')
 
+  const LETTERS = name
+    .split(' ')
+    .map(item => item.slice(0, 1))
+    .slice(0, 2)
+
   return (
     <RootStyle
       style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start' }}
+      className="bp3-ui-text bp3-text-small"
     >
-      <span>{message}</span>
-      <span>{`Commit: ${commit}`}</span>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'flex-start',
+          alignItems: 'flex-start'
+        }}
+      >
+        <div>
+          <IconStyle color={'blue'}>{LETTERS}</IconStyle>
+        </div>
+        <div>
+          <span>{message}</span>
+        </div>
+      </div>
+
+      <TableStyle>
+        <tbody>
+          <tr>
+            <LeftColumnStyle>Commit:</LeftColumnStyle>
+            <RightColumnStyle>{commit}</RightColumnStyle>
+          </tr>
+          <tr>
+            <LeftColumnStyle>Parents:</LeftColumnStyle>
+            <RightColumnStyle>{parentsString}</RightColumnStyle>
+          </tr>
+          <tr>
+            <LeftColumnStyle>Author:</LeftColumnStyle>
+            <RightColumnStyle>{`${name} <${email}>`}</RightColumnStyle>
+          </tr>
+          <tr>
+            <LeftColumnStyle>Date:</LeftColumnStyle>
+            <RightColumnStyle>{`${moment.unix(date).format('Do MMMM YYYY, H:mm:ss')}`}</RightColumnStyle>
+          </tr>
+          <tr>
+            <LeftColumnStyle>Labels:</LeftColumnStyle>
+            <RightColumnStyle>{labelsString}</RightColumnStyle>
+          </tr>
+        </tbody>
+      </TableStyle>
+
+      {/* <span>{`Commit: ${commit}`}</span>
       <span>{`Parents: ${parentsString}`}</span>
       <span>{`Author: ${name} <${email}>`}</span>
-      <span>{`${date}`}</span>
-      <span>{`Labels: ${labelsString}`}</span>
+      <span>{`Date: ${moment.unix(date).format('Do MMMM YYYY, H:mm:ss')}`}</span>
+      <span>{`Labels: ${labelsString}`}</span> */}
     </RootStyle>
   )
 })

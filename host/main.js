@@ -62,12 +62,9 @@ app.on('window-all-closed', () => {
 })
 
 answerRenderer('commit:info', async (browserWindow, sha) => {
-  console.log('commit:info')
   const oid = nodegit.Oid.fromString(sha)
   try {
     const commit = await repo.getCommit(oid)
-
-    console.log(commit.toString())
 
     return {
       commit: commit.toString(),
@@ -81,7 +78,7 @@ answerRenderer('commit:info', async (browserWindow, sha) => {
       labels: ['master', 'HEAD'] // TODO:
     }
   } catch (e) {
-    console.log('COMMIT INFO', e)
+    console.log('COMMIT INFO ERROR:', e)
   }
 
   return null
@@ -174,7 +171,7 @@ const disposable = answerRenderer('gitlog', async browserWindow => {
         }
 
         commits.push({
-          sha: sha.slice(0, 8),
+          sha,
           message: message.slice(0, 80),
           commiter: commiterIndex,
           date: authorDate,

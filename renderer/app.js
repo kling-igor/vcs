@@ -32,8 +32,7 @@ export default class App extends PureComponent {
   }
 
   onCommitSelect = async sha => {
-    const info = await callMain('commit:info', sha)
-    console.log(info)
+    return await callMain('commit:info', sha)
   }
 
   render() {
