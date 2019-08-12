@@ -66,7 +66,24 @@ answerRenderer('commit:info', async (browserWindow, sha) => {
   const oid = nodegit.Oid.fromString(sha)
   try {
     const commit = await repo.getCommit(oid)
-
+    /*
+    const diffList = await commit.getDiff()
+    for (const diff of diffList) {
+      const patches = await diff.patches()
+      for (const patch of patches) {
+        const hunks = await patch.hunks()
+        for (const hunk of hunks) {
+          console.log('----------------------------------------------------------')
+          console.log('diff', patch.oldFile().path(), patch.newFile().path())
+          console.log(hunk.header().trim())
+          const lines = await hunk.lines()
+          for (const line of lines) {
+            console.log(String.fromCharCode(line.origin()) + line.content().trim())
+          }
+        }
+      }
+    }
+*/
     const labels = repoRefs.filter(item => item.sha === sha).map(({ name }) => name)
 
     return {

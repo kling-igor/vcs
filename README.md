@@ -5,9 +5,6 @@ https://stackoverflow.com/questions/36245496/nodegit-get-diff-of-all-staged-file
 
 https://github.com/nodegit/nodegit/blob/master/examples/diff-commits.js
 
-How to list all remote branches?
-https://github.com/nodegit/nodegit/issues/1395
-
 https://github.com/microsoft/monaco-editor/blob/master/test/playground.generated/interacting-with-the-editor-customizing-the-line-numbers.html
 
 https://stackoverflow.com/questions/23870374/nodegit-how-to-modify-a-file-and-push-the-changes/28890806
