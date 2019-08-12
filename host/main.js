@@ -66,24 +66,50 @@ answerRenderer('commit:info', async (browserWindow, sha) => {
   const oid = nodegit.Oid.fromString(sha)
   try {
     const commit = await repo.getCommit(oid)
-    /*
+
+    const paths = []
+
     const diffList = await commit.getDiff()
     for (const diff of diffList) {
       const patches = await diff.patches()
       for (const patch of patches) {
-        const hunks = await patch.hunks()
-        for (const hunk of hunks) {
-          console.log('----------------------------------------------------------')
-          console.log('diff', patch.oldFile().path(), patch.newFile().path())
-          console.log(hunk.header().trim())
-          const lines = await hunk.lines()
-          for (const line of lines) {
-            console.log(String.fromCharCode(line.origin()) + line.content().trim())
-          }
-        }
+        paths.push({ old: patch.oldFile().path(), new: patch.newFile().path() })
+        // const hunks = await patch.hunks()
+        // for (const hunk of hunks) {
+        // console.log('----------------------------------------------------------')
+        // console.log('diff', patch.oldFile().path(), patch.newFile().path())
+        // console.log(hunk.header().trim())
+        // const lines = await hunk.lines()
+        // for (const line of lines) {
+        // console.log(String.fromCharCode(line.origin()) + line.content().trim())
+        // }
+        // }
       }
     }
-*/
+
+    try {
+      // const tree = await commit.getTree()
+
+      for (const { old: oldPath, new: newPath } of paths) {
+        // console.log('newPath:', newPath)
+        const entry = await commit.getEntry(oldPath)
+        const blob = await entry.getBlob()
+        console.log(`${entry.name()}:${blob.rawsize()} bytes`)
+        // console.log(blob.toString())
+
+        // const entry = await tree.getEntry(newPath)
+        // entry.getBlob((error, blob) => {
+        //   if (error) {
+        //     console.log('get blob error:', error)
+        //   } else {
+        //     console.log('Blob size:', blob.size())
+        //   }
+        // })
+      }
+    } catch (e) {
+      console.log('TREE ERROR:', e)
+    }
+
     const labels = repoRefs.filter(item => item.sha === sha).map(({ name }) => name)
 
     return {
