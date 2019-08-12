@@ -69,6 +69,10 @@ answerRenderer('commit:info', async (browserWindow, sha) => {
 
     const paths = []
 
+    // получать за один раз такой объем информации - накладно при передаче в рендер
+    // TODO: добавить метод получения diff только для одного указанного файла
+    // изначально render будет получать только список измененных файлов
+    // потом при выделении на файлах будут запрашиваться детали по каждому файлу
     const diffList = await commit.getDiff()
     for (const diff of diffList) {
       const patches = await diff.patches()
