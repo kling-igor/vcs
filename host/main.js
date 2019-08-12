@@ -6,6 +6,7 @@ import nodegit from 'nodegit'
 
 let repo
 let revWalk
+let repoRefs = []
 
 app.on('ready', async () => {
   const window = new BrowserWindow({
@@ -40,7 +41,7 @@ app.on('ready', async () => {
   })
 
   try {
-    repo = await nodegit.Repository.open(resolve('/Users/kling/Altarix/editor/.git'))
+    repo = await nodegit.Repository.open(resolve('/Users/user/projects/editor/.git'))
 
     try {
       const commit = await repo.getHeadCommit()
@@ -66,6 +67,8 @@ answerRenderer('commit:info', async (browserWindow, sha) => {
   try {
     const commit = await repo.getCommit(oid)
 
+    const labels = repoRefs.filter(item => item.sha === sha).map(({ name }) => name)
+
     return {
       commit: commit.toString(),
       author: {
@@ -75,7 +78,7 @@ answerRenderer('commit:info', async (browserWindow, sha) => {
       date: commit.time(),
       message: commit.message(),
       parents: commit.parents().map(parent => parent.toString()),
-      labels: ['master', 'HEAD'] // TODO:
+      labels
     }
   } catch (e) {
     console.log('COMMIT INFO ERROR:', e)
@@ -109,6 +112,30 @@ const disposable = answerRenderer('gitlog', async browserWindow => {
   }
 
   const fillRoutes = (from, to, iterable) => iterable.map((branch, index) => [from(index), to(index), branch])
+
+  try {
+    const refs = await repo.getReferenceNames(nodegit.Reference.TYPE.LISTALL)
+    try {
+      for (const refName of refs) {
+        const reference = await repo.getReference(refName)
+        if (reference.isConcrete()) {
+          console.log('Concrete reference:', refName, reference.target().toString())
+
+          const name = refName.replace('refs/heads/', '').replace('refs/remotes/', '')
+          repoRefs.push({
+            name,
+            sha: reference.target().toString()
+          })
+        } else if (reference.isSymbolic()) {
+          console.log('Symbolic reference:', refName, reference.symbolicTarget().toString())
+        }
+      }
+    } catch (e) {
+      console.log('unable to get reference info:', e)
+    }
+  } catch (e) {
+    console.log('UNABLE TO GET REFS')
+  }
 
   const walk = async () => {
     // console.log('walk:', limit)
@@ -186,6 +213,7 @@ const disposable = answerRenderer('gitlog', async browserWindow => {
           return await walk()
         } else {
           return {
+            branches: repoRefs,
             commits,
             commiters
           }

@@ -64,7 +64,7 @@ const CommitInfoPane = memo(({ commitInfo }) => {
   } = commitInfo
 
   const parentsString = parents.join(', ')
-  const labelsString = labels.join(', ')
+  const labelsString = labels.join(', ').toUpperCase()
 
   const LETTERS = name
     .split(' ')
@@ -96,11 +96,13 @@ const CommitInfoPane = memo(({ commitInfo }) => {
         <tbody>
           <tr>
             <LeftColumnStyle>Commit:</LeftColumnStyle>
-            <RightColumnStyle>{commit}</RightColumnStyle>
+            <RightColumnStyle className="bp3-monospace-text">
+              {commit} {`[${commit.slice(0, 8)}]`}
+            </RightColumnStyle>
           </tr>
           <tr>
             <LeftColumnStyle>Parents:</LeftColumnStyle>
-            <RightColumnStyle>{parentsString}</RightColumnStyle>
+            <RightColumnStyle className="bp3-monospace-text">{parentsString}</RightColumnStyle>
           </tr>
           <tr>
             <LeftColumnStyle>Author:</LeftColumnStyle>
@@ -110,18 +112,14 @@ const CommitInfoPane = memo(({ commitInfo }) => {
             <LeftColumnStyle>Date:</LeftColumnStyle>
             <RightColumnStyle>{`${moment.unix(date).format('Do MMMM YYYY, H:mm:ss')}`}</RightColumnStyle>
           </tr>
-          <tr>
-            <LeftColumnStyle>Labels:</LeftColumnStyle>
-            <RightColumnStyle>{labelsString}</RightColumnStyle>
-          </tr>
+          {labelsString && (
+            <tr>
+              <LeftColumnStyle>Labels:</LeftColumnStyle>
+              <RightColumnStyle>{labelsString}</RightColumnStyle>
+            </tr>
+          )}
         </tbody>
       </TableStyle>
-
-      {/* <span>{`Commit: ${commit}`}</span>
-      <span>{`Parents: ${parentsString}`}</span>
-      <span>{`Author: ${name} <${email}>`}</span>
-      <span>{`Date: ${moment.unix(date).format('Do MMMM YYYY, H:mm:ss')}`}</span>
-      <span>{`Labels: ${labelsString}`}</span> */}
     </RootStyle>
   )
 })
@@ -141,12 +139,12 @@ export default class HistoryPage extends Component {
   }
 
   render() {
-    const { commits, commiters } = this.props
+    const { commits, commiters, branches } = this.props
 
     return (
       <SplitPane split="horizontal" allowResize resizersSize={0} onResizeEnd={onMainSplitResize}>
         <Pane size={200} minSize="50px" maxSize="100%">
-          <History commits={commits} commiters={commiters} onRowClick={this.onRowClick} />
+          <History commits={commits} commiters={commiters} branches={branches} onRowClick={this.onRowClick} />
         </Pane>
         <Pane size={200} minSize="50px" maxSize="100%">
           <SplitPane split="vertical" allowResize resizersSize={0} onResizeEnd={onSecondarySplitResize}>

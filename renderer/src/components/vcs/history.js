@@ -43,25 +43,75 @@ const TimeStampStyle = styled.span`
   user-select: none;
 `
 
-export const History = memo(({ commits = [], commiters = [], onRowClick }) => {
+const BadgeStyle = styled.span`
+  margin-top: 2px;
+  margin-left: 8px;
+  margin-right: 16px;
+  float: left;
+  position: relative;
+  width: auto;
+  height: 16px;
+  padding: 0 6px;
+  line-height: 16px;
+  background: #137cbd;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 100;
+  text-decoration: none;
+  font-family: Arial, Helvetica, sans-serif;
+  border-bottom-left-radius: 3px;
+  border-top-left-radius: 3px;
+
+  ::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 0;
+    height: 0;
+    border-style: solid;
+
+    right: -8px;
+    border-color: transparent transparent transparent #137cbd;
+    border-width: 8px 0 8px 8px;
+  }
+`
+
+const BranchStyle = styled.span`
+  background-color: greenyellow;
+  color: black;
+  padding-left: 2px;
+  padding-right: 2px;
+  border-color: black;
+  border-width: 1px;
+  border-radius: 3px;
+  border-style: solid;
+  margin-right: 4px;
+`
+
+export const History = memo(({ commits = [], commiters = [], branches = [], onRowClick }) => {
   const rowRenderer = ({ index, isScrolling, key, style }) => {
     const { sha, message, routes, commiter, date } = commits[index]
 
     const { name, email } = commiters[commiter]
     const datetime = moment.unix(date).format('MMMM Do YYYY, H:mm:ss')
 
+    const refs = branches.filter(item => item.sha === sha)
+
     const onClick = () => {
       // console.log('SHA:', sha)
       onRowClick(sha)
     }
 
+    const offset = routes.length > 0 ? (routes.length - 1) * X_STEP : 0
+
     return (
       <RowStyle key={key} style={style} odd={index % 2} onClick={onClick}>
-        <TextStyle offset={(routes.length - 1) * X_STEP}>
-          <b>{sha.slice(0, 8)}</b>{' '}
+        <TextStyle offset={offset}>
+          <b className="bp3-monospace-text">{sha.slice(0, 8)}</b>{' '}
           <em>
             {name} {email}
           </em>{' '}
+          {!!refs.length > 0 && refs.map(item => <BranchStyle key={item.name}>{item.name.toUpperCase()}</BranchStyle>)}
           <b>{message}</b>
         </TextStyle>
         <TimeStampStyle>{datetime}</TimeStampStyle>

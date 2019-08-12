@@ -19,15 +19,16 @@ const RootStyle = styled.div`
 export default class App extends PureComponent {
   state = {
     commits: [],
-    commiters: []
+    commiters: [],
+    branches: []
   }
 
   async componentDidMount() {
     const data = await callMain('gitlog')
 
     if (data) {
-      const { commits, commiters } = data
-      this.setState({ commits, commiters })
+      const { commits, commiters, branches } = data
+      this.setState({ commits, commiters, branches })
     }
   }
 
@@ -43,6 +44,7 @@ export default class App extends PureComponent {
           <HistoryPage
             commits={this.state.commits}
             commiters={this.state.commiters}
+            branches={this.state.branches}
             onCommitSelect={this.onCommitSelect}
           />
         </RootStyle>
