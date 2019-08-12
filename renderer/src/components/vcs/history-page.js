@@ -20,13 +20,23 @@ const onSecondarySplitResize = layout => {
   console.log(layout)
 }
 
-const HistoryPage = memo(({ commits, commiters, branches, onCommitSelect }) => {
+const HistoryPage = memo(({ commits, commiters, branches, onCommitSelect, onPathSelect, originalFile }) => {
   const [commitInfo, setCommitInfo] = useState(null)
 
-  const onRowClick = async sha => {
-    const info = await onCommitSelect(sha)
-    setCommitInfo(info)
-  }
+  const onRowClick = useCallback(
+    async sha => {
+      const info = await onCommitSelect(sha)
+      setCommitInfo(info)
+    },
+    [onCommitSelect]
+  )
+
+  const onFilePathClick = useCallback(
+    async path => {
+      await onPathSelect(path)
+    },
+    [onPathSelect]
+  )
 
   return (
     <SplitPane split="horizontal" allowResize resizersSize={0} onResizeEnd={onMainSplitResize}>
@@ -39,7 +49,7 @@ const HistoryPage = memo(({ commits, commiters, branches, onCommitSelect }) => {
             <RootStyle style={{ background: 'magenta' }}>
               <SplitPane split="horizontal" allowResize resizersSize={0} onResizeEnd={onMainSplitResize}>
                 <Pane size={200} minSize="50px" maxSize="100%">
-                  <FileTree commitInfo={commitInfo} />
+                  <FileTree commitInfo={commitInfo} onSelect={onFilePathClick} />
                 </Pane>
                 <Pane size={200} minSize="50px" maxSize="100%">
                   <CommitInfoPane commitInfo={commitInfo} />
@@ -48,7 +58,7 @@ const HistoryPage = memo(({ commits, commiters, branches, onCommitSelect }) => {
             </RootStyle>
           </Pane>
           <Pane size={200} minSize="400px" maxSize="100%">
-            <DiffPane />
+            <DiffPane originalFile={originalFile} />
           </Pane>
         </SplitPane>
       </Pane>

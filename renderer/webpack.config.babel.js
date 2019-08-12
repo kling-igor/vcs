@@ -1,5 +1,6 @@
 import HTMLWebpackPlugin from 'html-webpack-plugin'
-const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin')
+import MonacoWebpackPlugin from 'monaco-editor-webpack-plugin'
+import MomentLocalesPlugin from 'moment-locales-webpack-plugin'
 import { resolve, join } from 'path'
 
 const MONACO_DIR = resolve(__dirname, './node_modules/monaco-editor')

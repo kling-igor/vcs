@@ -49,7 +49,7 @@ export const CommitInfoPane = memo(({ commitInfo }) => {
   } = commitInfo
 
   const parentsString = parents.join(', ')
-  const labelsString = labels.join(', ').toUpperCase()
+  const labelsString = labels.length > 0 ? labels.join(', ').toUpperCase() : null
 
   const LETTERS = name
     .split(' ')

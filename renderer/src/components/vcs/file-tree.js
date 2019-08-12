@@ -1,4 +1,4 @@
-import React, { memo } from 'react'
+import React, { memo, useCallback } from 'react'
 import styled from 'styled-components'
 
 const RootStyle = styled.div`
@@ -6,18 +6,39 @@ const RootStyle = styled.div`
   height: 100%;
 `
 
-export const FileTree = memo(({ commitInfo }) => {
+const ListStyle = styled.ul`
+  list-style: none;
+  padding-inline-start: 0px;
+  padding: 0px;
+  margin: 0px;
+`
+
+const ListItemStyle = styled.li`
+  padding-left: 8px;
+  padding-right: 8px;
+  cursor: pointer;
+  user-select: none;
+  :hover {
+    color: white;
+    background-color: #0098d4;
+  }
+`
+
+export const FileTree = memo(({ commitInfo, onSelect }) => {
   if (!commitInfo) return null
   const { paths } = commitInfo
+
+  const onClick = useCallback(event => onSelect(event.target.dataset.path), [onSelect])
+
   return (
     <RootStyle style={{ backgroundColor: 'yellow', overflow: 'auto' }}>
-      <ul style={{ listStyle: 'none', paddingInlineStart: 0, padding: 0, margin: 0 }}>
+      <ListStyle>
         {paths.map(({ oldPath }) => (
-          <li key={oldPath} style={{ paddingLeft: 8, paddingRight: 8 }}>
+          <ListItemStyle key={oldPath} onClick={onClick} data-path={oldPath}>
             {oldPath}
-          </li>
+          </ListItemStyle>
         ))}
-      </ul>
+      </ListStyle>
     </RootStyle>
   )
 })

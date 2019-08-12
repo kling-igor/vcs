@@ -135,6 +135,25 @@ answerRenderer('commit:info', async (browserWindow, sha) => {
   return null
 })
 
+answerRenderer('commit:file-diff', async (browserWindow, sha, path) => {
+  console.log(sha, path)
+
+  if (sha) return null
+
+  console.log('DEBUG!!!')
+
+  const oid = nodegit.Oid.fromString(sha)
+  const commit = await repo.getCommit(oid)
+  const entry = await commit.getEntry(path)
+  if (entry.isFile()) {
+    return (await entry.getBlob()).toString()
+  } else {
+    console.log('ENTRY IS NOT FILE:', entry.toString())
+  }
+
+  return ''
+})
+
 // ipcMain.on('gitlog', async (event, limit) => {
 //   console.log('gitlog:', limit)
 //   const result = await walk(limit, [])

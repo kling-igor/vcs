@@ -20,7 +20,9 @@ export default class App extends PureComponent {
   state = {
     commits: [],
     commiters: [],
-    branches: []
+    branches: [],
+    sha: null,
+    originalFile: ''
   }
 
   async componentDidMount() {
@@ -33,7 +35,13 @@ export default class App extends PureComponent {
   }
 
   onCommitSelect = async sha => {
+    this.setState({ sha })
     return await callMain('commit:info', sha)
+  }
+
+  onPathSelect = async path => {
+    const originalFile = await callMain('commit:file-diff', this.state.sha, path)
+    this.setState({ originalFile })
   }
 
   render() {
@@ -46,6 +54,8 @@ export default class App extends PureComponent {
             commiters={this.state.commiters}
             branches={this.state.branches}
             onCommitSelect={this.onCommitSelect}
+            onPathSelect={this.onPathSelect}
+            originalFile={this.state.originalFile}
           />
         </RootStyle>
       </>
