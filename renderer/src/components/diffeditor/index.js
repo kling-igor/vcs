@@ -7,12 +7,13 @@ const RootStyle = styled.div`
   height: 100%;
 `
 
-const DiffEditor = memo(({ originalFile, modifiedFile, width, height }) => {
+const DiffEditor = memo(({ originalFile = '', modifiedFile = '', width, height }) => {
   const editorRef = useRef(null)
 
   useEffect(() => {
     const diffEditor = monaco.editor.createDiffEditor(editorRef.current, {
       enableSplitViewResizing: false,
+      renderSideBySide: false,
       selectOnLineNumbers: true,
       readOnly: true,
       // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditorconstructionoptions.html
@@ -27,7 +28,7 @@ const DiffEditor = memo(({ originalFile, modifiedFile, width, height }) => {
     return () => {
       diffEditor.dispose()
     }
-  }, [width, height])
+  }, [width, height, originalFile, modifiedFile])
 
   return <RootStyle ref={editorRef} />
 })

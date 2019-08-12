@@ -41,7 +41,7 @@ app.on('ready', async () => {
   })
 
   try {
-    repo = await nodegit.Repository.open(resolve('/Users/user/projects/editor/.git'))
+    repo = await nodegit.Repository.open(resolve(__dirname, '..', 'test-repo', '.git'))
 
     try {
       const commit = await repo.getHeadCommit()
@@ -77,7 +77,13 @@ answerRenderer('commit:info', async (browserWindow, sha) => {
     for (const diff of diffList) {
       const patches = await diff.patches()
       for (const patch of patches) {
-        paths.push({ oldPath: patch.oldFile().path(), newPath: patch.newFile().path() })
+        const found = paths.find(
+          ({ oldPath, newPath }) => oldPath === patch.oldFile().path() && newPath === patch.newFile().path()
+        )
+        if (!found) {
+          paths.push({ oldPath: patch.oldFile().path(), newPath: patch.newFile().path() })
+        }
+
         // const hunks = await patch.hunks()
         // for (const hunk of hunks) {
         // console.log('----------------------------------------------------------')
@@ -136,22 +142,37 @@ answerRenderer('commit:info', async (browserWindow, sha) => {
 })
 
 answerRenderer('commit:file-diff', async (browserWindow, sha, path) => {
-  console.log(sha, path)
-
-  if (sha) return null
-
-  console.log('DEBUG!!!')
+  if (!sha) return null
 
   const oid = nodegit.Oid.fromString(sha)
   const commit = await repo.getCommit(oid)
-  const entry = await commit.getEntry(path)
-  if (entry.isFile()) {
-    return (await entry.getBlob()).toString()
-  } else {
-    console.log('ENTRY IS NOT FILE:', entry.toString())
+
+  let originalContent = ''
+  let modifiedContent = ''
+
+  const [parentSha] = commit.parents()
+  if (parentSha) {
+    const parentCommit = await repo.getCommit(parentSha)
+
+    const originalEntry = await parentCommit.getEntry(path)
+
+    if (originalEntry && originalEntry.isFile()) {
+      originalContent = (await originalEntry.getBlob()).toString()
+    }
   }
 
-  return ''
+  const modifiedEntry = await commit.getEntry(path)
+
+  if (modifiedEntry.isFile()) {
+    modifiedContent = (await modifiedEntry.getBlob()).toString()
+
+    return {
+      originalContent,
+      modifiedContent
+    }
+  }
+
+  return { details: 'ERROR!!!!' }
 })
 
 // ipcMain.on('gitlog', async (event, limit) => {

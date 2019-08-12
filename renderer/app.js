@@ -1,7 +1,7 @@
 const { ipcRenderer } = window.require('electron')
 const { callMain, answerMain } = require('./ipc').default(ipcRenderer)
 
-import React, { PureComponent } from 'react'
+import React, { Component } from 'react'
 import styled, { createGlobalStyle } from 'styled-components'
 
 import HistoryPage from './src/components/vcs/history-page'
@@ -16,13 +16,14 @@ const RootStyle = styled.div`
   height: 100%;
 `
 
-export default class App extends PureComponent {
+export default class App extends Component {
   state = {
     commits: [],
     commiters: [],
     branches: [],
     sha: null,
-    originalFile: ''
+    originalFile: '',
+    modifiedFile: ''
   }
 
   async componentDidMount() {
@@ -40,8 +41,21 @@ export default class App extends PureComponent {
   }
 
   onPathSelect = async path => {
-    const originalFile = await callMain('commit:file-diff', this.state.sha, path)
-    this.setState({ originalFile })
+    try {
+      const { originalContent = '', modifiedContent = '', details } = await callMain(
+        'commit:file-diff',
+        this.state.sha,
+        path
+      )
+
+      if (details) {
+        console.log(details)
+      }
+
+      this.setState({ originalFile: originalContent, modifiedFile: modifiedContent })
+    } catch (e) {
+      console.error(e)
+    }
   }
 
   render() {
@@ -56,6 +70,7 @@ export default class App extends PureComponent {
             onCommitSelect={this.onCommitSelect}
             onPathSelect={this.onPathSelect}
             originalFile={this.state.originalFile}
+            modifiedFile={this.state.modifiedFile}
           />
         </RootStyle>
       </>

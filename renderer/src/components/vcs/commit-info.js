@@ -48,7 +48,7 @@ export const CommitInfoPane = memo(({ commitInfo }) => {
     labels
   } = commitInfo
 
-  const parentsString = parents.join(', ')
+  const parentsString = parents.length > 0 ? parents.join(', ') : null
   const labelsString = labels.length > 0 ? labels.join(', ').toUpperCase() : null
 
   const LETTERS = name
@@ -91,10 +91,12 @@ export const CommitInfoPane = memo(({ commitInfo }) => {
               {commit} {`[${commit.slice(0, 8)}]`}
             </RightColumnStyle>
           </tr>
-          <tr>
-            <LeftColumnStyle>Parents:</LeftColumnStyle>
-            <RightColumnStyle className="bp3-monospace-text">{parentsString}</RightColumnStyle>
-          </tr>
+          {!!parentsString && (
+            <tr>
+              <LeftColumnStyle>Parents:</LeftColumnStyle>
+              <RightColumnStyle className="bp3-monospace-text">{parentsString}</RightColumnStyle>
+            </tr>
+          )}
           <tr>
             <LeftColumnStyle>Author:</LeftColumnStyle>
             <RightColumnStyle>{`${name} <${email}>`}</RightColumnStyle>
@@ -103,7 +105,7 @@ export const CommitInfoPane = memo(({ commitInfo }) => {
             <LeftColumnStyle>Date:</LeftColumnStyle>
             <RightColumnStyle>{`${moment.unix(date).format('Do MMMM YYYY, H:mm:ss')}`}</RightColumnStyle>
           </tr>
-          {labelsString && (
+          {!!labelsString && (
             <tr>
               <LeftColumnStyle>Labels:</LeftColumnStyle>
               <RightColumnStyle>{labelsString}</RightColumnStyle>
