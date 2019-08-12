@@ -77,7 +77,7 @@ answerRenderer('commit:info', async (browserWindow, sha) => {
     for (const diff of diffList) {
       const patches = await diff.patches()
       for (const patch of patches) {
-        paths.push({ old: patch.oldFile().path(), new: patch.newFile().path() })
+        paths.push({ oldPath: patch.oldFile().path(), newPath: patch.newFile().path() })
         // const hunks = await patch.hunks()
         // for (const hunk of hunks) {
         // console.log('----------------------------------------------------------')
@@ -90,7 +90,7 @@ answerRenderer('commit:info', async (browserWindow, sha) => {
         // }
       }
     }
-
+    /*
     try {
       // const tree = await commit.getTree()
 
@@ -113,7 +113,7 @@ answerRenderer('commit:info', async (browserWindow, sha) => {
     } catch (e) {
       console.log('TREE ERROR:', e)
     }
-
+*/
     const labels = repoRefs.filter(item => item.sha === sha).map(({ name }) => name)
 
     return {
@@ -125,6 +125,7 @@ answerRenderer('commit:info', async (browserWindow, sha) => {
       date: commit.time(),
       message: commit.message(),
       parents: commit.parents().map(parent => parent.toString()),
+      paths,
       labels
     }
   } catch (e) {
