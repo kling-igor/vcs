@@ -36,7 +36,7 @@ export default class App extends Component {
   }
 
   onCommitSelect = async sha => {
-    this.setState({ sha })
+    this.setState({ sha, originalFile: '', modifiedFile: '' })
     return await callMain('commit:info', sha)
   }
 

@@ -1,4 +1,4 @@
-import React, { Component, memo, useCallback, useState } from 'react'
+import React, { Component, memo, useCallback, useState, useEffect } from 'react'
 import SplitPane, { Pane } from '../react-split'
 import styled from 'styled-components'
 
@@ -21,14 +21,28 @@ const onSecondarySplitResize = layout => {
 }
 
 const HistoryPage = memo(
-  ({ commits, commiters, branches, onCommitSelect, onPathSelect, originalFile, modifiedFile }) => {
+  ({
+    commits,
+    commiters,
+    branches,
+    onCommitSelect,
+    onPathSelect,
+    originalFile,
+    modifiedFile,
+    layout: { primary = ['200', '200'], secondary = ['200', '200'], inner = ['200', '200'] } = {},
+    onLayoutChange = () => {}
+  }) => {
     const [commitInfo, setCommitInfo] = useState(null)
 
-    const [mainLayout, setMainLayout] = useState(['200', '200'])
+    const [mainLayout, setMainLayout] = useState(primary)
+    const [secondaryLayout, setSecondaryLayout] = useState(secondary)
+    const [innerLayout, setInnerLayout] = useState(inner)
 
-    const [secondaryLayout, setSecondaryLayout] = useState(['200', '200'])
-
-    const [innerLayout, setInnerLayout] = useState(['200', '200'])
+    useEffect(() => {
+      const serialized = { primary: mainLayout, secondary: secondaryLayout, inner: innerLayout }
+      console.log('serialized:', serialized)
+      onLayoutChange(serialized)
+    }, [mainLayout, secondaryLayout, innerLayout])
 
     const onRowClick = useCallback(
       async sha => {
