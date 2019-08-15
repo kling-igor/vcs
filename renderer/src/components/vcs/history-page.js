@@ -12,9 +12,9 @@ const RootStyle = styled.div`
   height: 100%;
 `
 
-const onMainSplitResize = layout => {
-  console.log(layout)
-}
+// const onMainSplitResize = layout => {
+//   console.log(layout)
+// }
 
 const onSecondarySplitResize = layout => {
   console.log(layout)
@@ -23,6 +23,12 @@ const onSecondarySplitResize = layout => {
 const HistoryPage = memo(
   ({ commits, commiters, branches, onCommitSelect, onPathSelect, originalFile, modifiedFile }) => {
     const [commitInfo, setCommitInfo] = useState(null)
+
+    const [mainLayout, setMainLayout] = useState(['200', '200'])
+
+    const [secondaryLayout, setSecondaryLayout] = useState(['200', '200'])
+
+    const [innerLayout, setInnerLayout] = useState(['200', '200'])
 
     const onRowClick = useCallback(
       async sha => {
@@ -39,26 +45,35 @@ const HistoryPage = memo(
       [onPathSelect]
     )
 
+    const upperSize = +mainLayout[0] / 100
+    const lowerSize = +mainLayout[1] / 100
+
+    const leftSize = +secondaryLayout[0] / 100
+    const rightSize = +secondaryLayout[1] / 100
+
+    const upperInnerSize = +innerLayout[0] / 100
+    const lowerInnerSize = +innerLayout[1] / 100
+
     return (
-      <SplitPane split="horizontal" allowResize resizersSize={0} onResizeEnd={onMainSplitResize}>
-        <Pane size={200} minSize="50px" maxSize="100%">
+      <SplitPane split="horizontal" allowResize resizersSize={0} onResizeEnd={setMainLayout}>
+        <Pane size={upperSize} minSize="50px" maxSize="100%">
           <History commits={commits} commiters={commiters} branches={branches} onRowClick={onRowClick} />
         </Pane>
-        <Pane size={200} minSize="50px" maxSize="100%">
-          <SplitPane split="vertical" allowResize resizersSize={0} onResizeEnd={onSecondarySplitResize}>
-            <Pane size={200} minSize="200px" maxSize="100%">
+        <Pane size={lowerSize} minSize="50px" maxSize="100%">
+          <SplitPane split="vertical" allowResize resizersSize={0} onResizeEnd={setSecondaryLayout}>
+            <Pane size={leftSize} minSize="200px" maxSize="100%">
               <RootStyle style={{ background: 'magenta' }}>
-                <SplitPane split="horizontal" allowResize resizersSize={0} onResizeEnd={onMainSplitResize}>
-                  <Pane size={200} minSize="50px" maxSize="100%">
+                <SplitPane split="horizontal" allowResize resizersSize={0} onResizeEnd={setInnerLayout}>
+                  <Pane size={upperInnerSize} minSize="50px" maxSize="100%">
                     <FileTree commitInfo={commitInfo} onSelect={onFilePathClick} />
                   </Pane>
-                  <Pane size={200} minSize="50px" maxSize="100%">
+                  <Pane size={lowerInnerSize} minSize="50px" maxSize="100%">
                     <CommitInfoPane commitInfo={commitInfo} />
                   </Pane>
                 </SplitPane>
               </RootStyle>
             </Pane>
-            <Pane size={200} minSize="400px" maxSize="100%">
+            <Pane size={rightSize} minSize="400px" maxSize="100%">
               <DiffPane originalFile={originalFile} modifiedFile={modifiedFile} />
             </Pane>
           </SplitPane>
@@ -69,45 +84,3 @@ const HistoryPage = memo(
 )
 
 export default HistoryPage
-
-// export default class HistoryPage extends Component {
-//   state = {
-//     commitInfo: null
-//   }
-
-//   onRowClick = async sha => {
-//     const commitInfo = await this.props.onCommitSelect(sha)
-//     this.setState({ commitInfo })
-//   }
-
-//   render() {
-//     const { commits, commiters, branches } = this.props
-
-//     return (
-//       <SplitPane split="horizontal" allowResize resizersSize={0} onResizeEnd={onMainSplitResize}>
-//         <Pane size={200} minSize="50px" maxSize="100%">
-//           <History commits={commits} commiters={commiters} branches={branches} onRowClick={this.onRowClick} />
-//         </Pane>
-//         <Pane size={200} minSize="50px" maxSize="100%">
-//           <SplitPane split="vertical" allowResize resizersSize={0} onResizeEnd={onSecondarySplitResize}>
-//             <Pane size={200} minSize="200px" maxSize="100%">
-//               <RootStyle style={{ background: 'magenta' }}>
-//                 <SplitPane split="horizontal" allowResize resizersSize={0} onResizeEnd={onMainSplitResize}>
-//                   <Pane size={200} minSize="50px" maxSize="100%">
-//                     <FileTree commitInfo={this.state.commitInfo} />
-//                   </Pane>
-//                   <Pane size={200} minSize="50px" maxSize="100%">
-//                     <CommitInfoPane commitInfo={this.state.commitInfo} />
-//                   </Pane>
-//                 </SplitPane>
-//               </RootStyle>
-//             </Pane>
-//             <Pane size={200} minSize="400px" maxSize="100%">
-//               <DiffPane />
-//             </Pane>
-//           </SplitPane>
-//         </Pane>
-//       </SplitPane>
-//     )
-//   }
-// }
