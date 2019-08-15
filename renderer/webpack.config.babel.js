@@ -14,17 +14,23 @@ module.exports = env => ({
     globalObject: 'this'
   },
 
-  target: 'electron-renderer',
+  devServer: {
+    port: 8080,
+    host: '0.0.0.0',
+    hot: true
+  },
 
-  watch: false,
+  // target: 'electron-renderer',
+
+  watch: true,
+
+  watchOptions: {
+    aggregateTimeout: 100
+  },
 
   node: {
     fs: 'empty',
     __dirname: false
-  },
-
-  watchOptions: {
-    aggregateTimeout: 100
   },
 
   devtool: env.dev ? 'source-map' : false,

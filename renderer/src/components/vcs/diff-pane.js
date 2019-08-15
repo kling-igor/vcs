@@ -3,6 +3,8 @@ import ResizeDetector from 'react-resize-detector'
 import DiffEditor from '../diffeditor'
 
 export const DiffPane = memo(({ originalFile = '', modifiedFile = '' }) => {
+  if (!originalFile || !modifiedFile) return null
+
   return (
     <ResizeDetector
       handleWidth

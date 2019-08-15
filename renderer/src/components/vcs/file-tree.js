@@ -1,9 +1,11 @@
 import React, { memo, useCallback } from 'react'
 import styled from 'styled-components'
+import { Scrollbars } from 'react-custom-scrollbars'
 
 const RootStyle = styled.div`
   width: 100%;
   height: 100%;
+  background-color: yellow;
 `
 
 const ListStyle = styled.ul`
@@ -24,6 +26,16 @@ const ListItemStyle = styled.li`
   }
 `
 
+const ContainerWithScrollbarsStyle = styled(Scrollbars)`
+  width: 100%;
+  height: 100%;
+`
+
+const ScrollBarThumbStyle = styled.div`
+  background-color: #424341;
+  border-radius: 4px;
+`
+
 export const FileTree = memo(({ commitInfo, onSelect }) => {
   if (!commitInfo) return null
   const { paths } = commitInfo
@@ -31,14 +43,23 @@ export const FileTree = memo(({ commitInfo, onSelect }) => {
   const onClick = useCallback(event => onSelect(event.target.dataset.path), [onSelect])
 
   return (
-    <RootStyle style={{ backgroundColor: 'yellow', overflow: 'auto' }}>
-      <ListStyle>
-        {paths.map(({ oldPath }) => (
-          <ListItemStyle key={oldPath} onClick={onClick} data-path={oldPath}>
-            {oldPath}
-          </ListItemStyle>
-        ))}
-      </ListStyle>
-    </RootStyle>
+    <ContainerWithScrollbarsStyle
+      autoHide={true}
+      autoHideTimeout={1000}
+      autoHideDuration={200}
+      thumbMinSize={30}
+      renderThumbHorizontal={({ style, ...props }) => <ScrollBarThumbStyle />}
+      renderThumbVertical={({ style, ...props }) => <ScrollBarThumbStyle />}
+    >
+      <RootStyle>
+        <ListStyle>
+          {paths.map(({ oldPath }) => (
+            <ListItemStyle key={oldPath} onClick={onClick} data-path={oldPath}>
+              {oldPath}
+            </ListItemStyle>
+          ))}
+        </ListStyle>
+      </RootStyle>
+    </ContainerWithScrollbarsStyle>
   )
 })

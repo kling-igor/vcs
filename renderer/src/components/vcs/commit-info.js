@@ -1,10 +1,12 @@
 import React, { memo } from 'react'
 import styled from 'styled-components'
 import moment from 'moment'
+import { Scrollbars } from 'react-custom-scrollbars'
 
 const RootStyle = styled.div`
   width: 100%;
   height: 100%;
+  display: block;
 `
 
 const IconStyle = styled.span`
@@ -18,7 +20,6 @@ const IconStyle = styled.span`
   background-color: ${({ color }) => color};
   font-size: 1.25em;
   margin: 8px;
-  margin-right: 24px;
 `
 
 const TableStyle = styled.table`
@@ -34,6 +35,29 @@ const LeftColumnStyle = styled.td`
 
 const RightColumnStyle = styled.td`
   text-align: left;
+`
+
+const TextStyle = styled.span`
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+`
+
+// background: ${({
+//   theme: {
+//     sideBar: { background }
+//   }
+// }) => background};
+const ContainerWithScrollbarsStyle = styled(Scrollbars)`
+  width: 100%;
+  height: 100%;
+`
+
+const ScrollBarThumbStyle = styled.div`
+  background-color: #424341;
+  border-radius: 4px;
 `
 
 export const CommitInfoPane = memo(({ commitInfo }) => {
@@ -57,62 +81,72 @@ export const CommitInfoPane = memo(({ commitInfo }) => {
     .slice(0, 2)
 
   return (
-    <RootStyle
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'flex-start',
-        alignItems: 'flex-start',
-        overflow: 'auto'
-      }}
-      className="bp3-ui-text bp3-text-small"
+    <ContainerWithScrollbarsStyle
+      autoHide={true}
+      autoHideTimeout={1000}
+      autoHideDuration={200}
+      thumbMinSize={30}
+      renderThumbHorizontal={({ style, ...props }) => <ScrollBarThumbStyle />}
+      renderThumbVertical={({ style, ...props }) => <ScrollBarThumbStyle />}
     >
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'flex-start',
-          alignItems: 'flex-start'
-        }}
-      >
-        <div>
-          <IconStyle color={'blue'}>{LETTERS}</IconStyle>
+      <RootStyle className="bp3-ui-text bp3-text-small">
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'flex-start',
+            alignItems: 'flex-start'
+          }}
+        >
+          <div>
+            <IconStyle color={'blue'}>{LETTERS}</IconStyle>
+          </div>
+          <div>
+            <span>{message}</span>
+          </div>
         </div>
-        <div>
-          <span>{message}</span>
-        </div>
-      </div>
 
-      <TableStyle>
-        <tbody>
-          <tr>
-            <LeftColumnStyle>Commit:</LeftColumnStyle>
-            <RightColumnStyle className="bp3-monospace-text">
-              {commit} {`[${commit.slice(0, 8)}]`}
-            </RightColumnStyle>
-          </tr>
-          {!!parentsString && (
+        <TableStyle>
+          <tbody>
             <tr>
-              <LeftColumnStyle>Parents:</LeftColumnStyle>
-              <RightColumnStyle className="bp3-monospace-text">{parentsString}</RightColumnStyle>
+              <LeftColumnStyle>Commit:</LeftColumnStyle>
+              <RightColumnStyle className="bp3-monospace-text">
+                <TextStyle>
+                  {commit} {`[${commit.slice(0, 8)}]`}
+                </TextStyle>
+              </RightColumnStyle>
             </tr>
-          )}
-          <tr>
-            <LeftColumnStyle>Author:</LeftColumnStyle>
-            <RightColumnStyle>{`${name} <${email}>`}</RightColumnStyle>
-          </tr>
-          <tr>
-            <LeftColumnStyle>Date:</LeftColumnStyle>
-            <RightColumnStyle>{`${moment.unix(date).format('Do MMMM YYYY, H:mm:ss')}`}</RightColumnStyle>
-          </tr>
-          {!!labelsString && (
+            {!!parentsString && (
+              <tr>
+                <LeftColumnStyle>Parents:</LeftColumnStyle>
+                <RightColumnStyle className="bp3-monospace-text">
+                  <TextStyle>{parentsString}</TextStyle>
+                </RightColumnStyle>
+              </tr>
+            )}
             <tr>
-              <LeftColumnStyle>Labels:</LeftColumnStyle>
-              <RightColumnStyle>{labelsString}</RightColumnStyle>
+              <LeftColumnStyle>Author:</LeftColumnStyle>
+              <RightColumnStyle>
+                <TextStyle>{`${name} <${email}>`}</TextStyle>
+              </RightColumnStyle>
             </tr>
-          )}
-        </tbody>
-      </TableStyle>
-    </RootStyle>
+            <tr>
+              <LeftColumnStyle>Date:</LeftColumnStyle>
+              <RightColumnStyle>
+                <TextStyle>{`${moment.unix(date).format('Do MMMM YYYY, H:mm:ss')}`}</TextStyle>
+              </RightColumnStyle>
+            </tr>
+            {!!labelsString && (
+              <tr>
+                <LeftColumnStyle>Labels:</LeftColumnStyle>
+                <RightColumnStyle>
+                  <TextStyle>{labelsString}</TextStyle>
+                </RightColumnStyle>
+              </tr>
+            )}
+          </tbody>
+        </TableStyle>
+      </RootStyle>
+    </ContainerWithScrollbarsStyle>
   )
 })

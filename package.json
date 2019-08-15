@@ -6,7 +6,7 @@
   "scripts": {
     "start": "electron .",
     "build:main": "babel -w host -d app --copy-files",
-    "build:renderer": "webpack --mode development --env.dev --config renderer/webpack.config.babel.js --watch",
+    "build:renderer": "webpack --mode development --env.dev --config renderer/webpack.config.babel.js --watch --hot",
     "rebuild": "electron-rebuild -f -w nodegit"
   },
   "keywords": [],
@@ -38,6 +38,7 @@
     "moment-locales-webpack-plugin": "^1.0.7",
     "monaco-editor-webpack-plugin": "^1.7.0",
     "react": "16.8.6",
+    "react-custom-scrollbars": "^4.2.1",
     "react-dom": "^16.8.6",
     "react-monaco-editor": "github:kling-igor/react-monaco-editor",
     "react-resize-detector": "^4.2.0",
@@ -47,7 +48,7 @@
     "uuid": "^3.3.2",
     "webpack": "^4.29.3",
     "webpack-cli": "^3.2.3",
-    "webpack-dev-server": "^3.1.14"
+    "webpack-dev-server": "^3.8.0"
   },
   "dependencies": {
     "event-kit": "^2.5.3",
