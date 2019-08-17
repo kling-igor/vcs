@@ -3,10 +3,10 @@ const { callRenderer, answerRenderer } = require('./ipc')(ipcMain, BrowserWindow
 import { join, resolve } from 'path'
 import * as URL from 'url'
 import nodegit from 'nodegit'
+import { openRepository, references, status } from './gitops'
 
 let repo
-let revWalk
-let repoRefs = []
+let emptyRepo = false
 
 app.on('ready', async () => {
   const window = new BrowserWindow({
@@ -39,21 +39,6 @@ app.on('ready', async () => {
   window.on('closed', () => {
     window.removeAllListeners()
   })
-
-  try {
-    repo = await nodegit.Repository.open(resolve(__dirname, '..', 'test-repo', '.git'))
-
-    try {
-      const commit = await repo.getHeadCommit()
-      revWalk = repo.createRevWalk()
-      revWalk.sorting(nodegit.Revwalk.SORT.TOPOLOGICAL)
-      revWalk.push(commit.sha())
-    } catch (e) {
-      console.log('unable to get head commit')
-    }
-  } catch (e) {
-    console.log('unable to open repo:', e)
-  }
 })
 
 app.on('window-all-closed', () => {
@@ -62,7 +47,41 @@ app.on('window-all-closed', () => {
   }
 })
 
-answerRenderer('commit:info', async (browserWindow, sha) => {
+answerRenderer('repository:open', async (browserWindow, path) => {
+  try {
+    repo = await openRepository(resolve(__dirname, path))
+    if (repo) {
+      console.log('repo is opened')
+    }
+  } catch (e) {
+    console.log('ERROR OPENING REPO:', e)
+  }
+})
+
+answerRenderer('repository:close', async (browserWindow, path) => {
+  repo = null
+})
+
+// TODO add codes for state rebase and merge
+answerRenderer('repository:get-status', async browserWindow => {
+  if (!repo) {
+    console.error('REPO IS NOT OPENED')
+    return null
+  }
+
+  return await status(repo)
+})
+
+answerRenderer('repository:get-references', async browserWindow => {
+  if (!repo) {
+    console.error('REPO IS NOT OPENED')
+    return null
+  }
+
+  return await references(repo)
+})
+
+answerRenderer('commit:get-info', async (browserWindow, sha) => {
   const oid = nodegit.Oid.fromString(sha)
   try {
     const commit = await repo.getCommit(oid)
@@ -120,6 +139,9 @@ answerRenderer('commit:info', async (browserWindow, sha) => {
       console.log('TREE ERROR:', e)
     }
 */
+
+    const repoRefs = await references(repo)
+
     const labels = repoRefs.filter(item => item.sha === sha).map(({ name }) => name)
 
     return {
@@ -142,7 +164,15 @@ answerRenderer('commit:info', async (browserWindow, sha) => {
 })
 
 answerRenderer('commit:file-diff', async (browserWindow, sha, path) => {
-  if (!sha) return null
+  if (!sha) {
+    console.error('sha not specified')
+    return null
+  }
+
+  if (!repo) {
+    console.log('repo is not opened')
+    return null
+  }
 
   const oid = nodegit.Oid.fromString(sha)
   const commit = await repo.getCommit(oid)
@@ -182,6 +212,16 @@ answerRenderer('commit:file-diff', async (browserWindow, sha, path) => {
 //   event.reply('gitlog', result)
 // })
 const disposable = answerRenderer('gitlog', async browserWindow => {
+  if (!repo) {
+    console.log('repo is not opened')
+    return null
+  }
+
+  const commit = await repo.getHeadCommit()
+  const revWalk = repo.createRevWalk()
+  revWalk.sorting(nodegit.Revwalk.SORT.TOPOLOGICAL)
+  revWalk.push(commit.sha())
+
   let branchIndex = 0
   const reserve = []
   const branches = {}
@@ -190,7 +230,18 @@ const disposable = answerRenderer('gitlog', async browserWindow => {
   const commits = []
 
   const getBranch = sha => {
+    if (!sha) {
+      reserve.push(branchIndex)
+      branches[sha] = branchIndex
+      return branchIndex
+    }
+
     if (branches[sha] == null) {
+      if (branches[null] != null) {
+        delete branches[null]
+        reserve.shift()
+      }
+
       branches[sha] = branchIndex
       reserve.push(branchIndex)
       branchIndex += 1
@@ -201,28 +252,23 @@ const disposable = answerRenderer('gitlog', async browserWindow => {
 
   const fillRoutes = (from, to, iterable) => iterable.map((branch, index) => [from(index), to(index), branch])
 
-  try {
-    const refs = await repo.getReferenceNames(nodegit.Reference.TYPE.LISTALL)
-    try {
-      for (const refName of refs) {
-        const reference = await repo.getReference(refName)
-        if (reference.isConcrete()) {
-          console.log('Concrete reference:', refName, reference.target().toString())
+  const repoRefs = await references(repo)
 
-          const name = refName.replace('refs/heads/', '').replace('refs/remotes/', '')
-          repoRefs.push({
-            name,
-            sha: reference.target().toString()
-          })
-        } else if (reference.isSymbolic()) {
-          console.log('Symbolic reference:', refName, reference.symbolicTarget().toString())
-        }
-      }
-    } catch (e) {
-      console.log('unable to get reference info:', e)
-    }
-  } catch (e) {
-    console.log('UNABLE TO GET REFS')
+  const workDirStatus = await status(repo)
+
+  if (workDirStatus.length > 0) {
+    const branch = getBranch(null)
+    const offset = reserve.indexOf(branch)
+
+    commits.push({
+      sha: null,
+      message: 'Uncommited changes',
+      commiter: null,
+      date: Date.now(),
+      offset,
+      branch,
+      routes: [...fillRoutes(i => i, i => i, reserve)]
+    })
   }
 
   const walk = async () => {

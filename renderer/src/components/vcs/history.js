@@ -1,4 +1,4 @@
-import React, { memo } from 'react'
+import React, { memo, useCallback } from 'react'
 import styled from 'styled-components'
 import { List, AutoSizer, ScrollSync } from 'react-virtualized'
 import moment from 'moment'
@@ -87,31 +87,43 @@ const BranchStyle = styled.span`
   border-style: solid;
   margin-right: 4px;
 `
+// TODO: useContext onRowClick
 
 export const History = memo(({ commits = [], commiters = [], branches = [], onRowClick }) => {
+  const onClick = useCallback(
+    event => {
+      onRowClick(event.currentTarget.dataset.sha)
+    },
+    [onRowClick]
+  )
+
   const rowRenderer = ({ index, isScrolling, key, style }) => {
     const { sha, message, routes, commiter, date } = commits[index]
-
-    const { name, email } = commiters[commiter]
+    const offset = routes.length > 0 ? (routes.length - 1) * X_STEP : 0
     const datetime = moment.unix(date).format('MMMM Do YYYY, H:mm:ss')
 
-    const refs = branches.filter(item => item.sha === sha)
-
-    const onClick = () => {
-      // console.log('SHA:', sha)
-      onRowClick(sha)
+    if (!sha) {
+      return (
+        <RowStyle key={key} style={style} odd={index % 2} onClick={onClick}>
+          <TextStyle offset={offset}>
+            <b>{message}</b>
+          </TextStyle>
+          <TimeStampStyle>{datetime}</TimeStampStyle>
+        </RowStyle>
+      )
     }
 
-    const offset = routes.length > 0 ? (routes.length - 1) * X_STEP : 0
+    const { name, email } = commiters[commiter]
+    const refs = branches.filter(item => item.sha === sha)
 
     return (
-      <RowStyle key={key} style={style} odd={index % 2} onClick={onClick}>
+      <RowStyle key={key} style={style} odd={index % 2} onClick={onClick} data-sha={sha}>
         <TextStyle offset={offset}>
           <b className="bp3-monospace-text">{sha.slice(0, 8)}</b>{' '}
           <em>
             {name} {email}
           </em>{' '}
-          {!!refs.length > 0 && refs.map(item => <BranchStyle key={item.name}>{item.name.toUpperCase()}</BranchStyle>)}
+          {!!refs.length > 0 && refs.map(item => <BranchStyle key={item.name}>{item.name}</BranchStyle>)}
           <b>{message}</b>
         </TextStyle>
         <TimeStampStyle>{datetime}</TimeStampStyle>

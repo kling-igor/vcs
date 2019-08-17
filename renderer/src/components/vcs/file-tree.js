@@ -40,7 +40,7 @@ export const FileTree = memo(({ commitInfo, onSelect }) => {
   if (!commitInfo) return null
   const { paths } = commitInfo
 
-  const onClick = useCallback(event => onSelect(event.target.dataset.path), [onSelect])
+  const onClick = useCallback(event => onSelect(event.currentTarget.dataset.path), [onSelect])
 
   return (
     <ContainerWithScrollbarsStyle

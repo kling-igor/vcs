@@ -27,6 +27,14 @@ export default class App extends Component {
   }
 
   async componentDidMount() {
+    await callMain('repository:open', '../test-repo')
+
+    const status = await callMain('repository:get-status')
+    console.log(status)
+
+    const references = await callMain('repository:get-references')
+    console.log(references)
+
     const data = await callMain('gitlog')
 
     if (data) {
@@ -37,7 +45,7 @@ export default class App extends Component {
 
   onCommitSelect = async sha => {
     this.setState({ sha, originalFile: '', modifiedFile: '' })
-    return await callMain('commit:info', sha)
+    return await callMain('commit:get-info', sha)
   }
 
   onPathSelect = async path => {

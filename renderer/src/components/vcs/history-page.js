@@ -46,8 +46,10 @@ const HistoryPage = memo(
 
     const onRowClick = useCallback(
       async sha => {
-        const info = await onCommitSelect(sha)
-        setCommitInfo(info)
+        if (sha) {
+          const info = await onCommitSelect(sha)
+          setCommitInfo(info)
+        }
       },
       [onCommitSelect]
     )
