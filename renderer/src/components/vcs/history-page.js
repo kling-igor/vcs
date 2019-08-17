@@ -24,7 +24,7 @@ const HistoryPage = memo(
   ({
     commits,
     commiters,
-    branches,
+    refs,
     onCommitSelect,
     onPathSelect,
     originalFile,
@@ -73,7 +73,7 @@ const HistoryPage = memo(
     return (
       <SplitPane split="horizontal" allowResize resizersSize={0} onResizeEnd={setMainLayout}>
         <Pane size={upperSize} minSize="50px" maxSize="100%">
-          <History commits={commits} commiters={commiters} branches={branches} onRowClick={onRowClick} />
+          <History commits={commits} commiters={commiters} refs={refs} onRowClick={onRowClick} />
         </Pane>
         <Pane size={lowerSize} minSize="50px" maxSize="100%">
           <SplitPane split="vertical" allowResize resizersSize={0} onResizeEnd={setSecondaryLayout}>

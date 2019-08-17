@@ -20,7 +20,7 @@ export default class App extends Component {
   state = {
     commits: [],
     commiters: [],
-    branches: [],
+    refs: [],
     sha: null,
     originalFile: '',
     modifiedFile: ''
@@ -38,8 +38,8 @@ export default class App extends Component {
     const data = await callMain('gitlog')
 
     if (data) {
-      const { commits, commiters, branches } = data
-      this.setState({ commits, commiters, branches })
+      const { commits, commiters, refs } = data
+      this.setState({ commits, commiters, refs })
     }
   }
 
@@ -74,7 +74,7 @@ export default class App extends Component {
           <HistoryPage
             commits={this.state.commits}
             commiters={this.state.commiters}
-            branches={this.state.branches}
+            refs={this.state.refs}
             onCommitSelect={this.onCommitSelect}
             onPathSelect={this.onPathSelect}
             originalFile={this.state.originalFile}

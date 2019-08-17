@@ -89,7 +89,7 @@ const BranchStyle = styled.span`
 `
 // TODO: useContext onRowClick
 
-export const History = memo(({ commits = [], commiters = [], branches = [], onRowClick }) => {
+export const History = memo(({ commits = [], commiters = [], refs = [], onRowClick }) => {
   const onClick = useCallback(
     event => {
       onRowClick(event.currentTarget.dataset.sha)
@@ -114,7 +114,7 @@ export const History = memo(({ commits = [], commiters = [], branches = [], onRo
     }
 
     const { name, email } = commiters[commiter]
-    const refs = branches.filter(item => item.sha === sha)
+    const commitRefs = refs.filter(item => item.sha === sha)
 
     return (
       <RowStyle key={key} style={style} odd={index % 2} onClick={onClick} data-sha={sha}>
@@ -123,7 +123,7 @@ export const History = memo(({ commits = [], commiters = [], branches = [], onRo
           <em>
             {name} {email}
           </em>{' '}
-          {!!refs.length > 0 && refs.map(item => <BranchStyle key={item.name}>{item.name}</BranchStyle>)}
+          {!!commitRefs.length > 0 && commitRefs.map(item => <BranchStyle key={item.name}>{item.name}</BranchStyle>)}
           <b>{message}</b>
         </TextStyle>
         <TimeStampStyle>{datetime}</TimeStampStyle>
