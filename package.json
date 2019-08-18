@@ -7,7 +7,8 @@
     "start": "electron .",
     "build:main": "babel -w host -d app --copy-files",
     "build:renderer": "webpack --mode development --env.dev --config renderer/webpack.config.babel.js --watch --hot",
-    "rebuild": "electron-rebuild -f -w nodegit"
+    "rebuild": "electron-rebuild -f -w nodegit",
+    "treetest": "node -r @babel/register host/maketree.js"
   },
   "keywords": [],
   "author": "'Igor Kling' <\"klingiv@altarix.ru\">",

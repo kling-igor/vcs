@@ -434,124 +434,123 @@ export async function log(repo) {
   const walk = async () => {
     try {
       const oid = await revWalk.next()
-      if (oid) {
-        const commit = await repo.getCommit(oid)
+      if (!oid) return
 
-        const authorName = commit.author().name()
-        const authorEmail = commit.author().email()
-        const authorDate = commit.time()
+      const commit = await repo.getCommit(oid)
 
-        let commiterIndex
+      const sha = commit.toString()
+      const parents = commit.parents().map(parent => parent.toString())
+      const [parent, otherParent] = parents
 
-        const foundIndex = commiters.findIndex(({ name, email }) => name === authorName && email === authorEmail)
-        if (foundIndex !== -1) {
-          commiterIndex = foundIndex
+      const branch = getBranch(sha)
+      let offset = reserve.indexOf(branch)
+
+      // if (headNotOnMaster && sha === headCommit.toString()) {
+      //   offset = reserve.indexOf(getBranch(sha))
+      // }
+
+      console.log('----------------------------------')
+      console.log('SHA:', sha.slice(0, 2))
+      console.log('BRANCH ID:', branch)
+      console.log('PARENT:', parent ? parent.slice(0, 2) : 'UNDEFINED')
+      console.log('OFFSET:', offset)
+      console.log('RESERVE (BEFORE):', reserve)
+      // if (sha === headCommit.sha()) {
+      //   console.log('HEAD DETECTED!!! ', sha)
+      //   console.log('BRANCH:', branch)
+      //   console.log('OFFSET:', offset)
+      // }
+
+      let routes = []
+
+      if (parents.length === 1) {
+        if (branches[parent] != null) {
+          // create branch
+          routes = [
+            ...fillRoutes(i => i + offset + 1, i => i + offset + 1 - 1, reserve.slice(offset + 1)),
+            ...fillRoutes(I, I, reserve.slice(0, offset))
+          ]
+
+          reserve.splice(reserve.indexOf(branch), 1)
+
+          // if (headNotOnMaster && sha === headCommit.sha()) {
+          //   for (let i = 0; i < reserve.length; i += 1) {
+          //     reserve[i] -= 1
+          //   }
+          // }
+
+          routes = [...routes, [offset, reserve.indexOf(branches[parent]), branch]]
         } else {
-          commiterIndex = commiters.length
-          commiters.push({ name: authorName, email: authorEmail })
+          // straight
+          routes = [...fillRoutes(I, I, reserve)]
+
+          console.log(`1)SETTING ${parent.slice(0, 2)} TO BRANCH_ID ${branch}`)
+          branches[parent] = branch
+
+          // if (headNotOnMaster && sha === headCommit.sha()) {
+          //   branches[parent] = 0
+          // } else {
+
+          // }
+        }
+      } else if (parents.length === 2) {
+        console.log(`2)SETTING ${parent.slice(0, 2)} TO BRANCH_ID ${branch}`)
+        // merge branch
+
+        if (branches[parent] == null) {
+          branches[parent] = branch
         }
 
-        const sha = commit.toString()
-        let message = commit.message()
-        if (message.length > 80) {
-          message = message.slice(0, 79) + '\u2026'
-        }
-        const parents = commit.parents().map(parent => parent.toString())
-        const [parent, otherParent] = parents
+        routes = fillRoutes(I, I, reserve)
 
-        const branch = getBranch(sha)
-        let offset = reserve.indexOf(branch)
+        const otherBranch = getBranch(otherParent)
 
-        // if (headNotOnMaster && sha === headCommit.toString()) {
-        //   offset = reserve.indexOf(getBranch(sha))
-        // }
+        routes = [...routes, [offset, reserve.indexOf(otherBranch), otherBranch]]
+      }
 
-        console.log('----------------------------------')
-        console.log('SHA:', sha.slice(0, 2))
-        console.log('BRANCH ID:', branch)
-        console.log('PARENT:', parent ? parent.slice(0, 2) : 'UNDEFINED')
-        console.log('OFFSET:', offset)
-        console.log('RESERVE (BEFORE):', reserve)
-        // if (sha === headCommit.sha()) {
-        //   console.log('HEAD DETECTED!!! ', sha)
-        //   console.log('BRANCH:', branch)
-        //   console.log('OFFSET:', offset)
-        // }
+      delete branches[sha]
 
-        let routes = []
+      console.log('RESERVE (AFTER):', reserve)
 
-        if (parents.length === 1) {
-          if (branches[parent] != null) {
-            // create branch
-            routes = [
-              ...fillRoutes(i => i + offset + 1, i => i + offset + 1 - 1, reserve.slice(offset + 1)),
-              ...fillRoutes(I, I, reserve.slice(0, offset))
-            ]
+      const authorName = commit.author().name()
+      const authorEmail = commit.author().email()
+      const authorDate = commit.time()
 
-            reserve.splice(reserve.indexOf(branch), 1)
+      let commiterIndex
+      const foundIndex = commiters.findIndex(({ name, email }) => name === authorName && email === authorEmail)
+      if (foundIndex !== -1) {
+        commiterIndex = foundIndex
+      } else {
+        commiterIndex = commiters.length
+        commiters.push({ name: authorName, email: authorEmail })
+      }
 
-            if (headNotOnMaster && sha === headCommit.sha()) {
-              for (let i = 0; i < reserve.length; i += 1) {
-                reserve[i] -= 1
-              }
-            }
+      let message = commit.message()
+      if (message.length > 80) {
+        message = message.slice(0, 79) + '\u2026'
+      }
 
-            routes = [...routes, [offset, reserve.indexOf(branches[parent]), branch]]
-          } else {
-            // straight
-            routes = [...fillRoutes(I, I, reserve)]
+      commits.push({
+        sha,
+        message: message.slice(0, 80),
+        commiter: commiterIndex,
+        date: authorDate,
+        offset,
+        branch,
+        routes
+      })
 
-            console.log(`1)SETTING ${parent.slice(0, 2)} TO BRANCH_ID ${branch}`)
-            branches[parent] = branch
-
-            // if (headNotOnMaster && sha === headCommit.sha()) {
-            //   branches[parent] = 0
-            // } else {
-
-            // }
-          }
-        } else if (parents.length === 2) {
-          console.log(`2)SETTING ${parent.slice(0, 2)} TO BRANCH_ID ${branch}`)
-          // merge branch
-
-          if (parent !== headCommit.sha()) {
-            branches[parent] = branch
-          } else {
-            branches[parent] = getBranch(headCommit.sha())
-          }
-
-          routes = fillRoutes(I, I, reserve)
-
-          const otherBranch = getBranch(otherParent)
-
-          routes = [...routes, [offset, reserve.indexOf(otherBranch), otherBranch]]
-        }
-
-        console.log('RESERVE (AFTER):', reserve)
-
-        commits.push({
-          sha,
-          message: message.slice(0, 80),
-          commiter: commiterIndex,
-          date: authorDate,
-          offset,
-          branch,
-          routes
-        })
-
-        // console.log(message.slice(0, 80))
-
-        if (parents.length > 0) {
-          return await walk()
-        } else {
+      if (parents.length === 0) {
+        return {
           // опционально добавляем HEAD ссылку
-          return {
-            refs: headNotOnMaster ? [{ name: 'HEAD', sha: headCommit.sha() }, ...repoRefs] : repoRefs,
-            commits,
-            commiters
-          }
+          refs: headNotOnMaster ? [{ name: 'HEAD', sha: headCommit.sha() }, ...repoRefs] : repoRefs,
+          commits,
+          commiters
         }
       }
+
+      // TODO:!!! НАГРУЖАЕТСЯ СТЕК!!!! - использовать другое решение
+      return await walk()
     } catch (e) {
       console.log(e)
     }
