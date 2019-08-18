@@ -7,7 +7,7 @@ import { Tree } from './tree'
 import { ROW_HEIGHT, X_STEP } from './constants'
 
 const RowStyle = styled.div`
-  padding-left: 30px;
+  padding-left: 20px;
   height: ${() => `${ROW_HEIGHT}px`};
 
   color: black;
@@ -99,13 +99,26 @@ export const History = memo(({ commits = [], commiters = [], refs = [], onRowCli
 
   const rowRenderer = ({ index, isScrolling, key, style }) => {
     const { sha, message, routes, commiter, date } = commits[index]
-    const offset = routes.length > 0 ? (routes.length - 1) * X_STEP : 0
+    // const offset = routes.length > 0 ? routes.length - 1 : 0
+
+    // подсчет кол-ва параллельных роутов
+    let offset = routes.reduce((result, route) => {
+      const [from, to] = route
+      if (from === to) return result + 1
+
+      return result
+    }, 0)
+
+    if (offset === 0) {
+      offset = 1
+    }
+
     const datetime = moment.unix(date).format('MMMM Do YYYY, H:mm:ss')
 
     if (!sha) {
       return (
         <RowStyle key={key} style={style} odd={index % 2} onClick={onClick}>
-          <TextStyle offset={offset}>
+          <TextStyle offset={offset * X_STEP}>
             <b>{message}</b>
           </TextStyle>
           <TimeStampStyle>{datetime}</TimeStampStyle>
@@ -118,7 +131,7 @@ export const History = memo(({ commits = [], commiters = [], refs = [], onRowCli
 
     return (
       <RowStyle key={key} style={style} odd={index % 2} onClick={onClick} data-sha={sha}>
-        <TextStyle offset={offset}>
+        <TextStyle offset={offset * X_STEP}>
           <b className="bp3-monospace-text">{sha.slice(0, 8)}</b>{' '}
           <em>
             {name} {email}
