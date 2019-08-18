@@ -464,53 +464,51 @@ export async function log(repo) {
       let routes = []
 
       if (parents.length === 1) {
-        if (branches[parent] != null) {
-          // create branch
+        if (branches[parent] == null) {
+          // straight
+          routes = [...fillRoutes(I, I, reserve)]
+          branches[parent] = branch
+        } else {
           routes = [
+            // все возможные ветки правее текущей загибаем влево
             ...fillRoutes(i => i + offset + 1, i => i + offset + 1 - 1, reserve.slice(offset + 1)),
+            // все возможные ветки левее текущей продолжают идти параллельно
             ...fillRoutes(I, I, reserve.slice(0, offset))
           ]
 
-          reserve.splice(reserve.indexOf(branch), 1)
+          // удаляем текущую ветку из списка
+          reserve.splice(offset, 1)
 
-          // if (headNotOnMaster && sha === headCommit.sha()) {
-          //   for (let i = 0; i < reserve.length; i += 1) {
-          //     reserve[i] -= 1
-          //   }
-          // }
-
+          // загибаем текущую ветку в сторону ее родителя
           routes = [...routes, [offset, reserve.indexOf(branches[parent]), branch]]
-        } else {
-          // straight
-          routes = [...fillRoutes(I, I, reserve)]
-
-          console.log(`1)SETTING ${parent.slice(0, 2)} TO BRANCH_ID ${branch}`)
-          branches[parent] = branch
-
-          // if (headNotOnMaster && sha === headCommit.sha()) {
-          //   branches[parent] = 0
-          // } else {
-
-          // }
         }
       } else if (parents.length === 2) {
-        console.log(`2)SETTING ${parent.slice(0, 2)} TO BRANCH_ID ${branch}`)
-        // merge branch
-
         if (branches[parent] == null) {
           branches[parent] = branch
+        } else {
+          const parentOffset = reserve.indexOf(branches[parent])
+          if (parentOffset !== offset) {
+            // загибаем
+            routes = [...routes, [offset, parentOffset, branch]]
+            reserve.splice(offset, 1)
+
+            // значение offset далее невалидно, т.к. соответсвующее значение удалено из списка
+            for (const i of Object.keys(branches)) {
+              if (branches[i] >= offset) {
+                branches[i] -= 1
+              }
+            }
+          }
         }
 
-        routes = fillRoutes(I, I, reserve)
+        routes = [...routes, ...fillRoutes(I, I, reserve)]
 
         const otherBranch = getBranch(otherParent)
-
         routes = [...routes, [offset, reserve.indexOf(otherBranch), otherBranch]]
       }
 
+      // удаляем ветку из кеша (на нее никто не ссылается больше)
       delete branches[sha]
-
-      console.log('RESERVE (AFTER):', reserve)
 
       const authorName = commit.author().name()
       const authorEmail = commit.author().email()

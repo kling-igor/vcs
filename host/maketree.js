@@ -68,12 +68,6 @@ const walk = () => {
       // удаляем текущую ветку из списка
       reserve.splice(offset, 1)
 
-      // if (headNotOnMaster && sha === headCommit.sha()) {
-      //   for (let i = 0; i < reserve.length; i += 1) {
-      //     reserve[i] -= 1
-      //   }
-      // }
-
       // загибаем текущую ветку в сторону ее родителя
       routes = [...routes, [offset, reserve.indexOf(branches[parent]), branch]]
     }
