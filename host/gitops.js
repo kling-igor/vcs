@@ -207,6 +207,14 @@ export async function checkoutRemoteBranch(repo, branchName) {
   await resetToCommit(repo, commit)
 }
 
+export async function checkoutToCommit(repo, sha) {
+  console.log('checkoutToCommit', sha)
+  const oid = nodegit.Oid.fromString(sha)
+  const commit = await repo.getCommit(oid)
+  await nodegit.Checkout.tree(repo, commit, { checkoutStrategy: nodegit.Checkout.STRATEGY.FORCE })
+  return await repo.setHeadDetached(commit)
+}
+
 export async function fetch(repo, username, password) {
   return await repo.fetch('origin', {
     fetchOpts: {
@@ -376,6 +384,11 @@ export async function commitInfo(repo, sha) {
   return null
 }
 
+export async function headCommit(repo) {
+  const headCommit = await repo.getHeadCommit()
+  return headCommit.toString()
+}
+
 /**
  * gitlog
  * @param {Repository} repo
@@ -425,15 +438,15 @@ export async function log(repo) {
       branch,
       routes: [...fillRoutes(I, I, reserve)]
     })
+  } else {
+    branchIndex += 1 // пропускаем серую ветку
   }
-
-  const workDirIsDirty = workDirStatus.length > 0
 
   // если HEAD не на master
   const headNotOnMaster = headCommit.sha() !== masterCommit.sha()
-  console.log('HEAD:', headCommit.sha())
-  console.log('MASTER:', masterCommit.sha())
-  console.log('headNotOnMaster:', headNotOnMaster)
+  // console.log('HEAD:', headCommit.sha())
+  // console.log('MASTER:', masterCommit.sha())
+  // console.log('headNotOnMaster:', headNotOnMaster)
 
   // если head сдвинут, то историю будем обходит с master коммитов (а если они не самые свежие ???)
   const commit = headNotOnMaster ? masterCommit : headCommit
@@ -525,7 +538,7 @@ export async function log(repo) {
 
       commits.push({
         sha,
-        isHead: sha === headCommit.sha(),
+        isHead: sha === headCommit.sha() && workDirStatus.length === 0,
         message: message.slice(0, 80),
         commiter: commiterIndex,
         date: authorDate,

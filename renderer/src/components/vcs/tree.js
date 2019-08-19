@@ -9,6 +9,7 @@ const COMMIT_RADIUS = 5
 const CANVAS_WIDTH = 500
 
 const colors = [
+  '#a0a5a9',
   '#84b817',
   '#003688',
   '#e32017',
@@ -17,7 +18,6 @@ const colors = [
   '#ffd300',
   '#00782a',
   '#f3a9bb',
-  '#a0a5a9',
   '#9b0056',
   '#95cdba',
   '#ee7c0e'
@@ -31,22 +31,33 @@ const CanvasStyle = styled.canvas`
   pointer-events: none;
 `
 
-const branchColor = branch => colors[branch] || 'black'
+const branchColor = branch => {
+  if (branch > 0) {
+    let index = branch % 11
+    if (index === 0) {
+      index += 1
+    }
+
+    return colors[index] || 'black'
+  }
+
+  return colors[0]
+}
 
 const yPositionForIndex = yIndex => (yIndex + 0.5) * Y_STEP
 
 const xPositionForIndex = xIndex => (xIndex + 1) * X_STEP
 
 const drawCommit = (ctx, topOffset, commit, yIndex) => {
-  const { sha, offset, isHead, routes: [[, , branch = 0] = []] = [] } = commit
+  const { sha, offset, isHead, branch } = commit
 
   const x = xPositionForIndex(offset) // Positioning of commit circle
   const y = yPositionForIndex(yIndex) + topOffset
-  const innerRadius = COMMIT_RADIUS - LINE_WIDTH - (!sha ? 1 : 0)
+  const innerRadius = COMMIT_RADIUS - LINE_WIDTH - (!sha || isHead ? 1 : 0)
 
-  ctx.fillStyle = isHead ? '#ffffff' : branchColor(branch)
+  ctx.fillStyle = !sha || isHead ? '#ffffff' : branchColor(branch)
   ctx.strokeStyle = branchColor(branch)
-  ctx.lineWidth = isHead ? 8 : LINE_WIDTH * 2 + (!sha ? 4 : 0)
+  ctx.lineWidth = !sha || isHead ? 8 : LINE_WIDTH * 2 + (!sha ? 4 : 0)
   ctx.beginPath()
   ctx.arc(x, y, innerRadius, 0, 2 * Math.PI) // Draw a circle
   ctx.stroke() // Draw the outer line

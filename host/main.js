@@ -2,7 +2,16 @@ import { app, BrowserWindow, ipcMain } from 'electron'
 const { callRenderer, answerRenderer } = require('./ipc')(ipcMain, BrowserWindow)
 import { join, resolve } from 'path'
 import * as URL from 'url'
-import { openRepository, references, status, log, commitInfo, resetToCommit } from './gitops'
+import {
+  openRepository,
+  references,
+  status,
+  log,
+  commitInfo,
+  resetToCommit,
+  checkoutToCommit,
+  headCommit
+} from './gitops'
 
 let repo
 let emptyRepo = false
@@ -61,61 +70,58 @@ answerRenderer('repository:close', async (browserWindow, path) => {
   repo = null
 })
 
+const checkRepo = () => {
+  if (!repo) {
+    throw new Error('REPO IS NOT OPENED')
+  }
+}
+
 // TODO add codes for state rebase and merge
 answerRenderer('repository:get-status', async browserWindow => {
-  if (!repo) {
-    console.error('REPO IS NOT OPENED')
-    return null
-  }
+  checkRepo()
 
   return await status(repo)
 })
 
+answerRenderer('repository:get-head', async browserWindow => {
+  checkRepo()
+
+  return await headCommit(repo)
+})
+
 answerRenderer('repository:get-references', async browserWindow => {
-  if (!repo) {
-    console.error('REPO IS NOT OPENED')
-    return null
-  }
+  checkRepo()
 
   return await references(repo)
 })
 
 answerRenderer('commit:get-info', async (browserWindow, sha) => {
+  checkRepo()
+
   if (!sha) {
     console.error('sha not specified')
-    return null
-  }
-
-  if (!repo) {
-    console.log('repo is not opened')
     return null
   }
 
   return commitInfo(repo, sha)
 })
 
-answerRenderer('repository:reset', async (browserWindow, sha) => {
+answerRenderer('repository:checkout', async (browserWindow, sha) => {
+  checkRepo()
+
   if (!sha) {
     console.error('sha not specified')
     return null
   }
 
-  if (!repo) {
-    console.log('repo is not opened')
-    return null
-  }
-
-  return resetToCommit(repo, sha)
+  return checkoutToCommit(repo, sha)
 })
 
 answerRenderer('commit:file-diff', async (browserWindow, sha, filePath) => {
+  checkRepo()
+
   if (!sha) {
     console.error('sha not specified')
-    return null
-  }
-
-  if (!repo) {
-    console.log('repo is not opened')
     return null
   }
 
@@ -123,10 +129,7 @@ answerRenderer('commit:file-diff', async (browserWindow, sha, filePath) => {
 })
 
 const disposable = answerRenderer('gitlog', async browserWindow => {
-  if (!repo) {
-    console.log('repo is not opened')
-    return null
-  }
+  checkRepo()
 
   return log(repo)
 })

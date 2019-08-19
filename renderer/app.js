@@ -57,41 +57,39 @@ export default class App extends Component {
       items: [
         {
           label: 'Checkout...',
-          click: (menuItem, browserWindow, event) => {
-            console.log('CHECKOUT!!!')
+          click: async (menuItem, browserWindow, event) => {
+            const status = await callMain('repository:get-status')
 
-            callMain('repository:get-status')
-              .then(status => {
-                console.log('STATUS:', status)
-                const workdirIsDirty = status.length > 0
-                return this.confirmBranchSwitch(sha, workdirIsDirty)
-              })
-              .then(({ discardLocalChanges } = {}) => {
-                console.log('CHECKOUT AND DISCARD LOCAL CHANGES:', discardLocalChanges)
-                return callMain('repository:reset', sha)
-              })
-              .then(result => {
-                console.log('CHECKOUT RESULT:', result)
-                return callMain('gitlog')
-              })
-              .then(data => {
-                if (data) {
-                  const { commits, commiters, refs } = data
-                  this.setState({ commits, commiters, refs })
+            const branch = this.state.refs.find(item => item.sha === sha)
+            const workdirIsClean = status.length === 0
+
+            try {
+              let discardLocalChanges
+              if (!workdirIsClean || !branch) {
+                ;({ discardLocalChanges } = await this.confirmBranchSwitch(sha, workdirIsClean, branch && branch.name))
+
+                // Your local changes to the following files would be overwritten by checkout:
+                //   file.txt
+                // Please commit your changes or stash them before you switch branches.
+                // Aborting
+
+                if (!workdirIsClean && !discardLocalChanges) {
+                  console.log('Your local changes to would be overwritten by checkout!!!')
+                  throw new Error('Abort checkout in dirty working dir...')
                 }
-              })
-              .catch(e => {
-                console.log('CANCEL', e)
-              })
+              }
 
-            // если текущий sha в состоянии оторванной головы и переход на голову, то никаких подтверждений не нужно (если нет изменений в рабочем каталоге!!!)
+              await callMain('repository:checkout', sha)
 
-            // если попытка сменить голову без отказа от измененных файлов, то вывести ошибку!!!
+              const data = await callMain('gitlog')
 
-            // Your local changes to the following files would be overwritten by checkout:
-            //   file.txt
-            // Please commit your changes or stash them before you switch branches.
-            // Aborting
+              if (data) {
+                const { commits, commiters, refs } = data
+                this.setState({ commits, commiters, refs })
+              }
+            } catch (e) {
+              console.log('canceled:', e)
+            }
           },
           enabled: !!sha
         },
@@ -150,15 +148,13 @@ export default class App extends Component {
     }
   }
 
-  confirmBranchSwitch(sha, workdirIsDirty) {
-    const branch = this.state.refs.find(item => item.sha === sha)
-
+  confirmBranchSwitch(sha, workdirIsClean, branchName) {
     let message = ''
     let detail = ''
 
-    if (branch) {
+    if (branchName && branchName !== 'HEAD') {
       message = `Confirm Branch Switch`
-      detail = `Are you sure you want to switch your working copy to the branch '${branch.name}'?`
+      detail = `Are you sure you want to switch your working copy to the branch '${branchName}'?`
     } else {
       message = `Confirm change working copy`
       detail = `Are you sure you want to checkout '${sha}'? Doing so will make your working copy a 'detached HEAD', which means you won't be on a branch anymore. If you want to commit after this you'll probably want to either checkout a branch again, or create a new branch. Is this ok?`
@@ -173,7 +169,7 @@ export default class App extends Component {
           buttons: ['OK', 'Cancel'],
           defaultId: 0,
           cancelId: 1,
-          checkboxLabel: workdirIsDirty ? 'Discard local changes' : ''
+          checkboxLabel: workdirIsClean ? '' : 'Discard local changes'
           // icon: warningIcon
         },
         (index, checkboxChecked) => {
