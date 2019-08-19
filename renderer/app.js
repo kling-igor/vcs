@@ -6,6 +6,8 @@ import styled, { createGlobalStyle } from 'styled-components'
 
 import HistoryPage from './src/components/vcs/history-page'
 
+import Toolbar from './src/components/vcs/toolbar'
+
 import Workspace from './workspace'
 
 const workspace = new Workspace()
@@ -18,6 +20,8 @@ const GlobalStyle = createGlobalStyle`
 
 const RootStyle = styled.div`
   height: 100%;
+  display: flex;
+  flex-direction: column;
 `
 
 export default class App extends Component {
@@ -188,6 +192,7 @@ export default class App extends Component {
       <>
         <GlobalStyle />
         <RootStyle>
+          <Toolbar />
           <HistoryPage
             commits={this.state.commits}
             commiters={this.state.commiters}
