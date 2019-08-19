@@ -1,4 +1,4 @@
-const { ipcRenderer } = window.require('electron')
+const { ipcRenderer, remote } = window.require('electron')
 const { callMain, answerMain } = require('./ipc').default(ipcRenderer)
 
 import React, { Component } from 'react'
@@ -59,6 +59,14 @@ export default class App extends Component {
           label: 'Checkout...',
           click: (menuItem, browserWindow, event) => {
             console.log('CHECKOUT!!!')
+
+            this.confirmBranchSwitch(sha)
+              .then(({ discardLocalChanges } = {}) => {
+                console.log('CHECKOUT AND DISCARD LOCAL CHANGES:', discardLocalChanges)
+              })
+              .catch(e => {
+                console.log('CANCEL', e)
+              })
           },
           enabled: !!sha
         },
@@ -106,6 +114,44 @@ export default class App extends Component {
     } catch (e) {
       console.error(e)
     }
+  }
+
+  confirmBranchSwitch(sha) {
+    const branch = this.state.refs.find(item => item.sha === sha)
+
+    const workingDirIsDirty = true
+    let message = ''
+    let detail = ''
+
+    if (branch) {
+      message = `Confirm Branch Switch`
+      detail = `Are you sure you want to switch your working copy to the branch '${branch.name}'?`
+    } else {
+      message = `Confirm change working copy`
+      detail = `Are you sure you want to checkout '${sha}'? Doing so will make your working copy a 'detached HEAD', which means you won't be on a branch anymore. If you want to commit after this you'll probably want to either checkout a branch again, or create a new branch. Is this ok?`
+    }
+
+    return new Promise((resolve, reject) => {
+      remote.dialog.showMessageBox(
+        {
+          type: 'question',
+          message,
+          detail,
+          buttons: ['OK', 'Cancel'],
+          defaultId: 0,
+          cancelId: 1,
+          checkboxLabel: workingDirIsDirty ? 'Discard local changes' : ''
+          // icon: warningIcon
+        },
+        (index, checkboxChecked) => {
+          if (index === 0) {
+            resolve({ discardLocalChanges: !!checkboxChecked })
+          } else {
+            reject()
+          }
+        }
+      )
+    })
   }
 
   render() {
