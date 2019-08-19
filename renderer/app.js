@@ -6,6 +6,10 @@ import styled, { createGlobalStyle } from 'styled-components'
 
 import HistoryPage from './src/components/vcs/history-page'
 
+import Workspace from './workspace'
+
+const workspace = new Workspace()
+
 const GlobalStyle = createGlobalStyle`
   .List {
     width: 100%;
@@ -48,6 +52,44 @@ export default class App extends Component {
     return await callMain('commit:get-info', sha)
   }
 
+  onHistoryContextMenu = sha => {
+    workspace.showContextMenu({
+      items: [
+        {
+          label: 'Checkout...',
+          click: (menuItem, browserWindow, event) => {
+            console.log('CHECKOUT!!!')
+          },
+          enabled: !!sha
+        },
+        {
+          label: 'Merge...',
+          click: (menuItem, browserWindow, event) => {
+            console.log('MERGE!!!')
+          },
+          enabled: !!sha
+        },
+        {
+          label: 'Rebase...',
+          click: (menuItem, browserWindow, event) => {
+            console.log('REBASE!!!')
+          },
+          enabled: !!sha
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: 'Tag...',
+          click: (menuItem, browserWindow, event) => {
+            console.log('REBASE!!!')
+          },
+          enabled: !!sha
+        }
+      ]
+    })
+  }
+
   onPathSelect = async path => {
     try {
       const { originalContent = '', modifiedContent = '', details } = await callMain(
@@ -76,6 +118,7 @@ export default class App extends Component {
             commiters={this.state.commiters}
             refs={this.state.refs}
             onCommitSelect={this.onCommitSelect}
+            onHistoryContextMenu={this.onHistoryContextMenu}
             onPathSelect={this.onPathSelect}
             originalFile={this.state.originalFile}
             modifiedFile={this.state.modifiedFile}

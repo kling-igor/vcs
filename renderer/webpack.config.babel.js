@@ -20,7 +20,7 @@ module.exports = env => ({
     hot: true
   },
 
-  // target: 'electron-renderer',
+  target: 'electron-renderer',
 
   watch: true,
 

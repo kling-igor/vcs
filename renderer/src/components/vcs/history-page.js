@@ -26,6 +26,7 @@ const HistoryPage = memo(
     commiters,
     refs,
     onCommitSelect,
+    onHistoryContextMenu,
     onPathSelect,
     originalFile,
     modifiedFile,
@@ -54,6 +55,13 @@ const HistoryPage = memo(
       [onCommitSelect]
     )
 
+    const onContextMenu = useCallback(
+      sha => {
+        onHistoryContextMenu(sha)
+      },
+      [onHistoryContextMenu]
+    )
+
     const onFilePathClick = useCallback(
       async path => {
         await onPathSelect(path)
@@ -73,7 +81,13 @@ const HistoryPage = memo(
     return (
       <SplitPane split="horizontal" allowResize resizersSize={0} onResizeEnd={setMainLayout}>
         <Pane size={upperSize} minSize="50px" maxSize="100%">
-          <History commits={commits} commiters={commiters} refs={refs} onRowClick={onRowClick} />
+          <History
+            commits={commits}
+            commiters={commiters}
+            refs={refs}
+            onRowClick={onRowClick}
+            onContextMenu={onContextMenu}
+          />
         </Pane>
         <Pane size={lowerSize} minSize="50px" maxSize="100%">
           <SplitPane split="vertical" allowResize resizersSize={0} onResizeEnd={setSecondaryLayout}>

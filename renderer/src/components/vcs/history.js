@@ -1,4 +1,4 @@
-import React, { memo, useCallback } from 'react'
+import React, { memo, useCallback, useEffect, useRef } from 'react'
 import styled from 'styled-components'
 import { List, AutoSizer, ScrollSync } from 'react-virtualized'
 import moment from 'moment'
@@ -89,13 +89,9 @@ const BranchStyle = styled.span`
 `
 // TODO: useContext onRowClick
 
-export const History = memo(({ commits = [], commiters = [], refs = [], onRowClick }) => {
-  const onClick = useCallback(
-    event => {
-      onRowClick(event.currentTarget.dataset.sha)
-    },
-    [onRowClick]
-  )
+export const History = memo(({ commits = [], commiters = [], refs = [], onRowClick, onContextMenu }) => {
+  const onClickHandler = useCallback(event => onRowClick(event.currentTarget.dataset.sha), [onRowClick])
+  const onContextMenuHandler = useCallback(event => onContextMenu(event.currentTarget.dataset.sha), [onContextMenu])
 
   const rowRenderer = ({ index, isScrolling, key, style }) => {
     const { sha, message, routes, commiter, date } = commits[index]
@@ -117,7 +113,7 @@ export const History = memo(({ commits = [], commiters = [], refs = [], onRowCli
 
     if (!sha) {
       return (
-        <RowStyle key={key} style={style} odd={index % 2} onClick={onClick}>
+        <RowStyle key={key} style={style} odd={index % 2} onClick={onClickHandler} onContextMenu={onContextMenuHandler}>
           <TextStyle offset={offset * X_STEP}>
             <b>{message}</b>
           </TextStyle>
@@ -130,7 +126,14 @@ export const History = memo(({ commits = [], commiters = [], refs = [], onRowCli
     const commitRefs = refs.filter(item => item.sha === sha)
 
     return (
-      <RowStyle key={key} style={style} odd={index % 2} onClick={onClick} data-sha={sha}>
+      <RowStyle
+        key={key}
+        style={style}
+        odd={index % 2}
+        onClick={onClickHandler}
+        onContextMenu={onContextMenuHandler}
+        data-sha={sha}
+      >
         <TextStyle offset={offset * X_STEP}>
           <b className="bp3-monospace-text">{sha.slice(0, 8)}</b>{' '}
           <em>
