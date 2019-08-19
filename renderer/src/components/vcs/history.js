@@ -95,19 +95,19 @@ export const History = memo(({ commits = [], commiters = [], refs = [], onRowCli
 
   const rowRenderer = ({ index, isScrolling, key, style }) => {
     const { sha, message, routes, commiter, date } = commits[index]
-    // const offset = routes.length > 0 ? routes.length - 1 : 0
+    const offset = routes.length > 0 ? routes.length : 1
 
-    // подсчет кол-ва параллельных роутов
-    let offset = routes.reduce((result, route) => {
-      const [from, to] = route
-      if (from === to) return result + 1
+    // // подсчет кол-ва параллельных роутов
+    // let offset = routes.reduce((result, route) => {
+    //   const [from, to] = route
+    //   if (from === to) return result + 1
 
-      return result
-    }, 0)
+    //   return result
+    // }, 0)
 
-    if (offset === 0) {
-      offset = 1
-    }
+    // if (offset === 0) {
+    //   offset = 1
+    // }
 
     const datetime = moment.unix(date).format('MMMM Do YYYY, H:mm:ss')
 

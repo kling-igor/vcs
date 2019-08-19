@@ -60,6 +60,15 @@ export default class App extends Component {
           click: (menuItem, browserWindow, event) => {
             console.log('CHECKOUT!!!')
 
+            // если текущий sha в состоянии оторванной головы и переход на голову, то никаких подтверждений не нужно (если нет изменений в рабочем каталоге!!!)
+
+            // если попытка сменить голову без отказа от измененных файлов, то вывести ошибку!!!
+
+            // Your local changes to the following files would be overwritten by checkout:
+            //   file.txt
+            // Please commit your changes or stash them before you switch branches.
+            // Aborting
+
             this.confirmBranchSwitch(sha)
               .then(({ discardLocalChanges } = {}) => {
                 console.log('CHECKOUT AND DISCARD LOCAL CHANGES:', discardLocalChanges)
@@ -93,6 +102,15 @@ export default class App extends Component {
             console.log('REBASE!!!')
           },
           enabled: !!sha
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: 'Branch...',
+          click: (menuItem, browserWindow, event) => {
+            console.log('BRANCH!!!')
+          }
         }
       ]
     })
