@@ -195,10 +195,16 @@ export async function checkout(repo, branch = 'master') {
   })
 }
 
+export async function resetToCommit(repo, sha) {
+  const oid = nodegit.Oid.fromString(sha)
+  const commit = await repo.getCommit(oid)
+  return nodegit.Reset.reset(repo, commit, nodegit.Reset.TYPE.HARD, {})
+}
+
 export async function checkoutRemoteBranch(repo, branchName) {
   await checkout(repo, branchName)
   const commit = await repo.getReferenceCommit(`refs/remotes/origin/${branchName}`)
-  await nodegit.Reset.reset(repo, commit, 3, {})
+  await resetToCommit(repo, commit)
 }
 
 export async function fetch(repo, username, password) {
@@ -421,8 +427,13 @@ export async function log(repo) {
     })
   }
 
+  const workDirIsDirty = workDirStatus.length > 0
+
   // если HEAD не на master
-  const headNotOnMaster = headCommit.sha() !== masterCommit.sha() && workDirStatus.length > 0
+  const headNotOnMaster = headCommit.sha() !== masterCommit.sha()
+  console.log('HEAD:', headCommit.sha())
+  console.log('MASTER:', masterCommit.sha())
+  console.log('headNotOnMaster:', headNotOnMaster)
 
   // если head сдвинут, то историю будем обходит с master коммитов (а если они не самые свежие ???)
   const commit = headNotOnMaster ? masterCommit : headCommit
@@ -443,23 +454,7 @@ export async function log(repo) {
       const [parent, otherParent] = parents
 
       const branch = getBranch(sha)
-      let offset = reserve.indexOf(branch)
-
-      // if (headNotOnMaster && sha === headCommit.toString()) {
-      //   offset = reserve.indexOf(getBranch(sha))
-      // }
-
-      console.log('----------------------------------')
-      console.log('SHA:', sha.slice(0, 2))
-      console.log('BRANCH ID:', branch)
-      console.log('PARENT:', parent ? parent.slice(0, 2) : 'UNDEFINED')
-      console.log('OFFSET:', offset)
-      console.log('RESERVE (BEFORE):', reserve)
-      // if (sha === headCommit.sha()) {
-      //   console.log('HEAD DETECTED!!! ', sha)
-      //   console.log('BRANCH:', branch)
-      //   console.log('OFFSET:', offset)
-      // }
+      const offset = reserve.indexOf(branch)
 
       let routes = []
 
@@ -530,6 +525,7 @@ export async function log(repo) {
 
       commits.push({
         sha,
+        isHead: sha === headCommit.sha(),
         message: message.slice(0, 80),
         commiter: commiterIndex,
         date: authorDate,

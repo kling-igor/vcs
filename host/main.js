@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain } from 'electron'
 const { callRenderer, answerRenderer } = require('./ipc')(ipcMain, BrowserWindow)
 import { join, resolve } from 'path'
 import * as URL from 'url'
-import { openRepository, references, status, log, commitInfo } from './gitops'
+import { openRepository, references, status, log, commitInfo, resetToCommit } from './gitops'
 
 let repo
 let emptyRepo = false
@@ -92,6 +92,20 @@ answerRenderer('commit:get-info', async (browserWindow, sha) => {
   }
 
   return commitInfo(repo, sha)
+})
+
+answerRenderer('repository:reset', async (browserWindow, sha) => {
+  if (!sha) {
+    console.error('sha not specified')
+    return null
+  }
+
+  if (!repo) {
+    console.log('repo is not opened')
+    return null
+  }
+
+  return resetToCommit(repo, sha)
 })
 
 answerRenderer('commit:file-diff', async (browserWindow, sha, filePath) => {

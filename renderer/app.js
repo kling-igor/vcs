@@ -60,6 +60,30 @@ export default class App extends Component {
           click: (menuItem, browserWindow, event) => {
             console.log('CHECKOUT!!!')
 
+            callMain('repository:get-status')
+              .then(status => {
+                console.log('STATUS:', status)
+                const workdirIsDirty = status.length > 0
+                return this.confirmBranchSwitch(sha, workdirIsDirty)
+              })
+              .then(({ discardLocalChanges } = {}) => {
+                console.log('CHECKOUT AND DISCARD LOCAL CHANGES:', discardLocalChanges)
+                return callMain('repository:reset', sha)
+              })
+              .then(result => {
+                console.log('CHECKOUT RESULT:', result)
+                return callMain('gitlog')
+              })
+              .then(data => {
+                if (data) {
+                  const { commits, commiters, refs } = data
+                  this.setState({ commits, commiters, refs })
+                }
+              })
+              .catch(e => {
+                console.log('CANCEL', e)
+              })
+
             // если текущий sha в состоянии оторванной головы и переход на голову, то никаких подтверждений не нужно (если нет изменений в рабочем каталоге!!!)
 
             // если попытка сменить голову без отказа от измененных файлов, то вывести ошибку!!!
@@ -68,14 +92,6 @@ export default class App extends Component {
             //   file.txt
             // Please commit your changes or stash them before you switch branches.
             // Aborting
-
-            this.confirmBranchSwitch(sha)
-              .then(({ discardLocalChanges } = {}) => {
-                console.log('CHECKOUT AND DISCARD LOCAL CHANGES:', discardLocalChanges)
-              })
-              .catch(e => {
-                console.log('CANCEL', e)
-              })
           },
           enabled: !!sha
         },
@@ -134,10 +150,9 @@ export default class App extends Component {
     }
   }
 
-  confirmBranchSwitch(sha) {
+  confirmBranchSwitch(sha, workdirIsDirty) {
     const branch = this.state.refs.find(item => item.sha === sha)
 
-    const workingDirIsDirty = true
     let message = ''
     let detail = ''
 
@@ -158,7 +173,7 @@ export default class App extends Component {
           buttons: ['OK', 'Cancel'],
           defaultId: 0,
           cancelId: 1,
-          checkboxLabel: workingDirIsDirty ? 'Discard local changes' : ''
+          checkboxLabel: workdirIsDirty ? 'Discard local changes' : ''
           // icon: warningIcon
         },
         (index, checkboxChecked) => {

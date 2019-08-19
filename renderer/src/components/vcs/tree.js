@@ -38,17 +38,15 @@ const yPositionForIndex = yIndex => (yIndex + 0.5) * Y_STEP
 const xPositionForIndex = xIndex => (xIndex + 1) * X_STEP
 
 const drawCommit = (ctx, topOffset, commit, yIndex) => {
-  const { sha, offset } = commit
-
-  // Thicker lines for the circles, or they look odd
-  ctx.lineWidth = LINE_WIDTH * 2 + (!sha ? 4 : 0)
+  const { sha, offset, isHead, routes: [[, , branch = 0] = []] = [] } = commit
 
   const x = xPositionForIndex(offset) // Positioning of commit circle
   const y = yPositionForIndex(yIndex) + topOffset
   const innerRadius = COMMIT_RADIUS - LINE_WIDTH - (!sha ? 1 : 0)
 
-  ctx.fillStyle = '#ffffff'
-  ctx.strokeStyle = '#000000'
+  ctx.fillStyle = isHead ? '#ffffff' : branchColor(branch)
+  ctx.strokeStyle = branchColor(branch)
+  ctx.lineWidth = isHead ? 8 : LINE_WIDTH * 2 + (!sha ? 4 : 0)
   ctx.beginPath()
   ctx.arc(x, y, innerRadius, 0, 2 * Math.PI) // Draw a circle
   ctx.stroke() // Draw the outer line
