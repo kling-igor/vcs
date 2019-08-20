@@ -1,78 +1,60 @@
-import React, { memo, useRef, useState, useEffect, useMemo } from 'react'
+import React, { memo, useRef, useState, useEffect, useMemo, useCallback } from 'react'
 import styled from 'styled-components'
 
-import { CommitIcon } from './icons'
+import {
+  CommitIcon,
+  MergeIcon,
+  ForkIcon,
+  AnotherMergeIcon,
+  AddBranchIcon,
+  RepoIcon,
+  CompareIcon,
+  PullIcon,
+  PushIcon
+} from './icons'
 
 const ButtonStyle = styled.div`
   display: block;
 `
 
-const compose = (...fns) => fns.reduceRight((prevFn, nextFn) => (...args) => nextFn(prevFn(...args)), value => value)
+// const compose = (...fns) => fns.reduceRight((prevFn, nextFn) => (...args) => nextFn(prevFn(...args)), value => value)
 
-const withHover = Component =>
-  memo(({ enabled = true, onClick, ...rest }) => {
+const IconButton = Svg =>
+  memo(({ active = false, enabled = true, color = 'gray', hoverColor = 'black', onClick = () => {} }) => {
     const [hovering, setHovering] = useState(false)
 
-    const handleMouseOver = () => {
-      // console.log('handleMouseOver')
+    const handleMouseOver = useCallback(() => {
       if (!enabled) return
       setHovering(true)
-    }
+    }, [enabled])
 
-    const handleMouseOut = () => {
-      // console.log('handleMouseOut')
+    const handleMouseOut = useCallback(() => {
       if (!enabled) return
       setHovering(false)
-    }
+    }, [enabled])
 
-    const props = {
-      hovering,
-      ...rest
-    }
+    const clickHandler = useCallback(() => enabled && onClick && onClick(), [enabled])
 
-    const clickHandler = useMemo(() => enabled && onClick && onClick(), [enabled])
+    const fill = active || hovering ? hoverColor : color
 
     return (
-      <Component
-        onMouseOver={handleMouseOver}
-        onMouseOut={handleMouseOut}
-        hovering={hovering}
-        onClick={clickHandler}
-        {...props}
-      />
+      <ButtonStyle onMouseOver={handleMouseOver} onMouseOut={handleMouseOut} onClick={clickHandler}>
+        <Svg fill={fill} />
+      </ButtonStyle>
     )
   })
 
-const withFillSvg = Svg => ({ active, hovering, color = '#ff00ff', hoverColor = '#ff0000', ...rest }) => {
-  const activeValue = typeof active === 'function' ? active() : active
-  const fill = activeValue || hovering ? hoverColor : color
-  return <Svg fill={fill} {...rest} />
-}
+const CommitButton = IconButton(CommitIcon)
+const MergeButton = IconButton(MergeIcon)
+const ForkButton = IconButton(ForkIcon)
 
-const Component = compose(
-  withHover,
-  withFillSvg
-)
+const AnotherMergeButton = IconButton(AnotherMergeIcon)
+const AddBranchButton = IconButton(AddBranchIcon)
+const RepoButton = IconButton(RepoIcon)
+const CompareButton = IconButton(CompareIcon)
 
-const FilledIcon = withFillSvg(CommitIcon)
-
-const HoveringButton = withHover(props => {
-  const { hovering } = props
-  console.log('hovering:', hovering)
-  return (
-    <ButtonStyle>
-      <FilledIcon active hovering={hovering} />
-    </ButtonStyle>
-  )
-})
-
-// const IconButton = Component(props => {
-//   return (
-//     <ButtonStyle>
-//       <ComitIcon />
-//     </ButtonStyle>
-//   )
-// })
+const PullButton = IconButton(PullIcon)
+const PushButton = IconButton(PushIcon)
 
 const RootStyle = styled.div`
   height: 48px;
@@ -86,7 +68,51 @@ const RootStyle = styled.div`
 const Toolbar = () => {
   return (
     <RootStyle>
-      <HoveringButton />
+      <CommitButton
+        onClick={() => {
+          console.log('COMMIT')
+        }}
+      />
+      <MergeButton
+        onClick={() => {
+          console.log('MERGE')
+        }}
+      />
+      <ForkButton
+        onClick={() => {
+          console.log('FORK')
+        }}
+      />
+      <AnotherMergeButton
+        onClick={() => {
+          console.log('ANOTHER MERGE')
+        }}
+      />
+      <AddBranchButton
+        onClick={() => {
+          console.log('ADD BRANCH')
+        }}
+      />
+      <RepoButton
+        onClick={() => {
+          console.log('REPO')
+        }}
+      />
+      <CompareButton
+        onClick={() => {
+          console.log('COMPARE')
+        }}
+      />
+      <PullButton
+        onClick={() => {
+          console.log('PULL')
+        }}
+      />
+      <PushButton
+        onClick={() => {
+          console.log('PUSH')
+        }}
+      />
     </RootStyle>
   )
 }
