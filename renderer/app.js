@@ -5,6 +5,7 @@ import React, { Component } from 'react'
 import styled, { createGlobalStyle } from 'styled-components'
 
 import HistoryPage from './src/components/vcs/history-page'
+import CommitPage from './src/components/vcs/commit-page'
 
 import Toolbar from './src/components/vcs/toolbar'
 
@@ -197,7 +198,8 @@ export default class App extends Component {
         <GlobalStyle />
         <RootStyle>
           <Toolbar />
-          <HistoryPage
+          <CommitPage />
+          {/* <HistoryPage
             commits={this.state.commits}
             commiters={this.state.commiters}
             refs={this.state.refs}
@@ -206,7 +208,7 @@ export default class App extends Component {
             onPathSelect={this.onPathSelect}
             originalFile={this.state.originalFile}
             modifiedFile={this.state.modifiedFile}
-          />
+          /> */}
         </RootStyle>
       </>
     )
