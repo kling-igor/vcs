@@ -5,7 +5,8 @@ import * as URL from 'url'
 import {
   findConfig,
   openRepoConfig,
-  userNameEmail,
+  getUserNameEmail,
+  getRemotes,
   openRepository,
   references,
   status,
@@ -18,12 +19,15 @@ import {
   commitInfo,
   resetToCommit,
   checkoutToCommit,
-  headCommit
+  headCommit,
+  pull,
+  push
 } from './gitops'
 
 let repo
 let emptyRepo = false
 let user
+let remotes = []
 
 app.on('ready', async () => {
   const window = new BrowserWindow({
@@ -77,11 +81,21 @@ answerRenderer('repository:open', async (browserWindow, path) => {
     }
 
     if (config) {
-      const { name, email } = (await userNameEmail(config)) || {}
-      if (name && email) {
-        user = { name, email }
+      try {
+        const { name, email } = (await getUserNameEmail(config)) || {}
+        if (name && email) {
+          user = { name, email }
 
-        console.log('USER:', user)
+          console.log('USER:', user)
+        }
+      } catch (e) {
+        console.log('UNABLE TO GET user name and email')
+      }
+
+      try {
+        remotes = await getRemotes(repo)
+      } catch (e) {
+        console.log('UNABLE TO GET REMOTES INFO', e)
       }
     }
   } catch (e) {
@@ -162,6 +176,18 @@ answerRenderer('repository:checkout', async (browserWindow, sha) => {
   }
 
   return checkoutToCommit(repo, sha)
+})
+
+answerRenderer('repository:pull', async (browserWindow, username, password) => {
+  checkRepo()
+
+  return pull(repo, username, password)
+})
+
+answerRenderer('repository:push', async (browserWindow, username, password) => {
+  checkRepo()
+  const remote = await repo.getRemote('origin')
+  return push(remote, username, password)
 })
 
 answerRenderer('commit:file-diff', async (browserWindow, sha, filePath) => {

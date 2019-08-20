@@ -53,11 +53,29 @@ export async function openRepoConfig(repo) {
  * @param {Config} config
  * @returns {name:String, email:String}
  */
-export async function userNameEmail(config) {
-  const name = await config.getStringBuf('user.name')
-  const email = await config.getStringBuf('user.email')
+export async function getUserNameEmail(config) {
+  const name = await config.getString('user.name')
+  const email = await config.getString('user.email')
 
   return { name, email }
+}
+
+export async function getRemotes(repo) {
+  try {
+    const remoteNames = await repo.getRemotes()
+
+    const remotes = []
+
+    for (const name of remoteNames) {
+      const remote = await nodegit.Remote.lookup(repo, name)
+      remotes.push({ name, url: remote.url() })
+    }
+
+    return remotes
+  } catch (e) {
+    console.log(e)
+  }
+  return null
 }
 
 /**
@@ -287,33 +305,75 @@ export async function fetch(repo, username, password) {
 }
 
 export async function pull(repo, username, password) {
-  await repo.fetchAll({
-    fetchOpts: {
+  console.log('FETCHING...')
+  try {
+    await repo.fetch('origin', {
+      fetchOpts: {
+        callbacks: {
+          // github will fail cert check on some OSX machines, this overrides that check
+          certificateCheck: () => 0,
+          // credentials: username && password ? () => nodegit.Cred.userpassPlaintextNew(username, password) : null
+          credentials: (url, userName) => {
+            console.log('REMOTE URL:', url)
+            return nodegit.Cred.sshKeyFromAgent(userName)
+          },
+          transferProgress: progress => console.log('pull progress:', progress)
+        }
+      }
+    })
+
+    try {
+      console.log('MERGING BRANCHES...')
+      // это может быть и самый последний коммит если все ОК
+      const oidOrIndexWithConflicts = await repo.mergeBranches('master', 'origin/master')
+      console.log('MERGED COMMIT:', oidOrIndexWithConflicts.toString())
+    } catch (e) {
+      console.log('MERGE ERROR:', e)
+    }
+  } catch (e) {
+    console.log('FETCH ERROR:', 3)
+  }
+}
+
+// export async function addRemote(repo, url) {
+//   return nodegit.Remote.create(repo, 'origin', url)
+// }
+
+export async function push(remote, username, password = '') {
+  const branch = 'master'
+
+  var sshPublicKeyPath = '/Users/user/.ssh/id_rsa.pub'
+  var sshPrivateKeyPath = '/Users/user/.ssh/id_rsa'
+
+  let debug = 0
+
+  try {
+    const code = await remote.push([`refs/heads/${branch}:refs/heads/${branch}`], {
       callbacks: {
         // github will fail cert check on some OSX machines, this overrides that check
         certificateCheck: () => 0,
-        credentials: username && password ? () => nodegit.Cred.userpassPlaintextNew(username, password) : null
-        // transferProgress: progress => console.log('clone progress:', progress)
+        // credentials: /*username ? (url, userName) => nodegit.Cred.userpassPlaintextNew(username, password) : null,*/
+        credentials: (url, userName) => {
+          console.log('REMOTE URL:', url)
+          return nodegit.Cred.sshKeyFromAgent(userName)
+
+          console.log(`getting creds for url:${url} username:${userName}`)
+          // avoid infinite loop when authentication agent is not loaded
+          if (debug++ > 10) {
+            console.log('Failed too often, bailing.')
+            throw 'Authentication agent not loaded.'
+          }
+          // return nodegit.Cred.sshKeyNew(userName, sshPublicKeyPath, sshPrivateKeyPath, '')
+          return nodegit.Cred.sshKeyFromAgent(userName)
+        },
+        transferProgress: progress => console.log('push progress:', progress)
       }
-    }
-  })
+    })
 
-  await repo.mergeBranches('master', 'origin/master')
-}
-
-export async function addRemote(repo, url) {
-  return nodegit.Remote.create(repo, 'origin', url)
-}
-
-export async function push(remote, username, password) {
-  await remote.push(['refs/heads/master:refs/heads/master'], {
-    callbacks: {
-      // github will fail cert check on some OSX machines, this overrides that check
-      certificateCheck: () => 0,
-      credentials: username && password ? () => nodegit.Cred.userpassPlaintextNew(username, password) : null
-      // transferProgress: progress => console.log('clone progress:', progress)
-    }
-  })
+    console.log('PUSH RESULT CODE:', code)
+  } catch (e) {
+    console.log('PUSH ERROR:', e)
+  }
 }
 
 export async function commit(repo, treeOid, message, name = 'User', email = 'no email') {

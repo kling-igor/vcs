@@ -91,13 +91,23 @@ const Toolbar = () => {
           }}
         />
         <PullButton
-          onClick={() => {
+          onClick={async () => {
             console.log('PULL')
+            try {
+              await callMain('repository:pull', 'kling-igor' /* username, password*/)
+            } catch (e) {
+              console.log(e)
+            }
           }}
         />
         <PushButton
-          onClick={() => {
+          onClick={async () => {
             console.log('PUSH')
+            try {
+              await callMain('repository:push', 'kling-igor' /* username, password*/)
+            } catch (e) {
+              console.log(e)
+            }
           }}
         />
 
