@@ -3,6 +3,64 @@ import { resolve, join } from 'path'
 import { ensureDir, writeFile } from 'fs-extra'
 
 /**
+ * @returns {Config}
+ */
+export async function findConfig() {
+  let configPath
+
+  try {
+    configPath = await nodegit.Config.findGlobal()
+  } catch (e) {
+    console.log(e)
+  }
+
+  try {
+    configPath = await nodegit.Config.findProgramdata()
+  } catch (e) {
+    console.log(e)
+  }
+
+  try {
+    configPath = await nodegit.Config.findSystem()
+  } catch (e) {
+    console.log(e)
+  }
+
+  try {
+    configPath = await nodegit.Config.findXdg()
+  } catch (e) {
+    console.log(e)
+  }
+
+  if (configPath) {
+    return await nodegit.Config.openOndisk(configPath)
+  }
+
+  return null
+}
+
+/**
+ *
+ * @param {Repository} repo
+ * @returns {Config}
+ */
+export async function openRepoConfig(repo) {
+  return await repo.config()
+}
+
+/**
+ *
+ * @param {Config} config
+ * @returns {name:String, email:String}
+ */
+export async function userNameEmail(config) {
+  const name = await config.getStringBuf('user.name')
+  const email = await config.getStringBuf('user.email')
+
+  return { name, email }
+}
+
+/**
  * Opens git repository by specified path
  * @param {String} path
  * @returns {Repository}
@@ -104,7 +162,7 @@ export async function removeFromIndex(index, path) {
  */
 export async function writeIndex(index) {
   await index.write()
-  await index.writeTree()
+  return await index.writeTree()
 }
 
 function fileStatus(file) {
@@ -256,6 +314,32 @@ export async function push(remote, username, password) {
       // transferProgress: progress => console.log('clone progress:', progress)
     }
   })
+}
+
+export async function commit(repo, treeOid, message, name = 'User', email = 'no email') {
+  const author = nodegit.Signature.now(name, email)
+  const committer = author
+
+  let head
+
+  try {
+    head = await nodegit.Reference.nameToId(repo, 'HEAD')
+  } catch (e) {
+    console.log('COMMIT:GET_HEAD ERROR:', e)
+  }
+
+  let parent
+  if (head) {
+    parent = await repo.getCommit(head)
+  }
+
+  let commitId
+  try {
+    commitId = await repo.createCommit('HEAD', author, committer, message, treeOid, [parent])
+  } catch (e) {
+    console.log('COMMIT:CREATE_COMMIT ERROR:', e)
+  }
+  return commitId
 }
 
 /**

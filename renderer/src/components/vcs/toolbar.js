@@ -1,3 +1,6 @@
+const { ipcRenderer, remote } = window.require('electron')
+const { callMain, answerMain } = require('../../../ipc').default(ipcRenderer)
+
 import React, { memo, useRef, useState, useEffect, useMemo, useCallback } from 'react'
 import styled from 'styled-components'
 
@@ -82,8 +85,9 @@ const Toolbar = () => {
     <RootStyle>
       <LeftGroupStyle>
         <CommitButton
-          onClick={() => {
+          onClick={async () => {
             console.log('COMMIT')
+            await callMain('commit:create', 'commit message...')
           }}
         />
         <PullButton

@@ -3,10 +3,18 @@ const { callRenderer, answerRenderer } = require('./ipc')(ipcMain, BrowserWindow
 import { join, resolve } from 'path'
 import * as URL from 'url'
 import {
+  findConfig,
+  openRepoConfig,
+  userNameEmail,
   openRepository,
   references,
   status,
+  refreshIndex,
+  writeIndex,
+  addToIndex,
+  removeFromIndex,
   log,
+  commit,
   commitInfo,
   resetToCommit,
   checkoutToCommit,
@@ -15,6 +23,7 @@ import {
 
 let repo
 let emptyRepo = false
+let user
 
 app.on('ready', async () => {
   const window = new BrowserWindow({
@@ -61,6 +70,20 @@ answerRenderer('repository:open', async (browserWindow, path) => {
     if (repo) {
       console.log('repo is opened')
     }
+
+    let config = await findConfig()
+    if (!config) {
+      config = await openRepoConfig(repo)
+    }
+
+    if (config) {
+      const { name, email } = (await userNameEmail(config)) || {}
+      if (name && email) {
+        user = { name, email }
+
+        console.log('USER:', user)
+      }
+    }
   } catch (e) {
     console.log('ERROR OPENING REPO:', e)
   }
@@ -104,6 +127,30 @@ answerRenderer('commit:get-info', async (browserWindow, sha) => {
   }
 
   return commitInfo(repo, sha)
+})
+
+answerRenderer('commit:create', async (browserWindow, message) => {
+  console.log('commit:create ', message)
+
+  checkRepo()
+
+  // ПОКА ДОБАВИМ В ИНДЕКС ВСЕ ИЗМЕНЕННЫЕ ФАЙЛЫ!!!
+
+  try {
+    const index = await refreshIndex(repo)
+
+    const items = await status(repo)
+    for (const { path, status } of items) {
+      if (status === 'M' || status === 'A' || status === 'R' || status === 'D') {
+        await addToIndex(index, path)
+      }
+    }
+
+    const treeOid = await writeIndex(index)
+    await commit(repo, treeOid, message, user.name, user.email)
+  } catch (e) {
+    console.log('COMMIT ERROR:', e)
+  }
 })
 
 answerRenderer('repository:checkout', async (browserWindow, sha) => {
