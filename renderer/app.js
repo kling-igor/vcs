@@ -16,6 +16,10 @@ const GlobalStyle = createGlobalStyle`
   .List {
     width: 100%;
   }
+
+  .ReactVirtualized__List:focus{
+    outline: none;
+  }
 `
 
 const RootStyle = styled.div`

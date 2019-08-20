@@ -1,25 +1,31 @@
 import React, { memo, useRef, useState, useEffect, useMemo, useCallback } from 'react'
 import styled from 'styled-components'
 
-import {
-  CommitIcon,
-  MergeIcon,
-  ForkIcon,
-  AnotherMergeIcon,
-  AddBranchIcon,
-  RepoIcon,
-  CompareIcon,
-  PullIcon,
-  PushIcon
-} from './icons'
+import { CommitIcon, MergeIcon, AddBranchIcon, RepoIcon, CompareIcon, PullIcon, PushIcon } from './icons'
 
 const ButtonStyle = styled.div`
   display: block;
+  margin-left: 8px;
+  margin-right: 8px;
+`
+
+const WrapperStyle = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+`
+
+const TitleStyle = styled.span`
+  font-size: 11px;
+  font-family: Arial, Helvetica, sans-serif;
+  text-align: center;
+  color: ${({ color }) => color};
 `
 
 // const compose = (...fns) => fns.reduceRight((prevFn, nextFn) => (...args) => nextFn(prevFn(...args)), value => value)
 
-const IconButton = Svg =>
+const IconButton = (Svg, title) =>
   memo(({ active = false, enabled = true, color = 'gray', hoverColor = 'black', onClick = () => {} }) => {
     const [hovering, setHovering] = useState(false)
 
@@ -38,28 +44,34 @@ const IconButton = Svg =>
     const fill = active || hovering ? hoverColor : color
 
     return (
-      <ButtonStyle onMouseOver={handleMouseOver} onMouseOut={handleMouseOut} onClick={clickHandler}>
-        <Svg fill={fill} />
-      </ButtonStyle>
+      <WrapperStyle onMouseOver={handleMouseOver} onMouseOut={handleMouseOut} onClick={clickHandler}>
+        <ButtonStyle>
+          <Svg fill={fill} />
+        </ButtonStyle>
+        <TitleStyle color={fill}>{title}</TitleStyle>
+      </WrapperStyle>
     )
   })
 
-const CommitButton = IconButton(CommitIcon)
-const MergeButton = IconButton(MergeIcon)
-const ForkButton = IconButton(ForkIcon)
+const CommitButton = IconButton(CommitIcon, 'Commit')
+const PullButton = IconButton(PullIcon, 'Pull')
+const PushButton = IconButton(PushIcon, 'Push')
 
-const AnotherMergeButton = IconButton(AnotherMergeIcon)
-const AddBranchButton = IconButton(AddBranchIcon)
-const RepoButton = IconButton(RepoIcon)
-const CompareButton = IconButton(CompareIcon)
-
-const PullButton = IconButton(PullIcon)
-const PushButton = IconButton(PushIcon)
+const AddBranchButton = IconButton(AddBranchIcon, 'Branch')
+const MergeButton = IconButton(MergeIcon, 'Merge')
+const RepoButton = IconButton(RepoIcon, 'Repo')
+const CompareButton = IconButton(CompareIcon, 'Compare')
 
 const RootStyle = styled.div`
   height: 48px;
   width: 100%;
   background-color: pink;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`
+
+const LeftGroupStyle = styled.div`
   display: flex;
   justify-content: flex-start;
   align-items: center;
@@ -68,49 +80,44 @@ const RootStyle = styled.div`
 const Toolbar = () => {
   return (
     <RootStyle>
-      <CommitButton
-        onClick={() => {
-          console.log('COMMIT')
-        }}
-      />
-      <MergeButton
-        onClick={() => {
-          console.log('MERGE')
-        }}
-      />
-      <ForkButton
-        onClick={() => {
-          console.log('FORK')
-        }}
-      />
-      <AnotherMergeButton
-        onClick={() => {
-          console.log('ANOTHER MERGE')
-        }}
-      />
-      <AddBranchButton
-        onClick={() => {
-          console.log('ADD BRANCH')
-        }}
-      />
+      <LeftGroupStyle>
+        <CommitButton
+          onClick={() => {
+            console.log('COMMIT')
+          }}
+        />
+        <PullButton
+          onClick={() => {
+            console.log('PULL')
+          }}
+        />
+        <PushButton
+          onClick={() => {
+            console.log('PUSH')
+          }}
+        />
+
+        <AddBranchButton
+          onClick={() => {
+            console.log('ADD BRANCH')
+          }}
+        />
+        <MergeButton
+          onClick={() => {
+            console.log('ANOTHER MERGE')
+          }}
+        />
+
+        <CompareButton
+          onClick={() => {
+            console.log('COMPARE')
+          }}
+        />
+      </LeftGroupStyle>
+
       <RepoButton
         onClick={() => {
           console.log('REPO')
-        }}
-      />
-      <CompareButton
-        onClick={() => {
-          console.log('COMPARE')
-        }}
-      />
-      <PullButton
-        onClick={() => {
-          console.log('PULL')
-        }}
-      />
-      <PushButton
-        onClick={() => {
-          console.log('PUSH')
         }}
       />
     </RootStyle>
