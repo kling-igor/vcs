@@ -115,13 +115,13 @@ export async function cloneRepo(url, path, username, password) {
   })
 }
 
-export async function references(repo) {
+export async function getReferences(repo) {
   const repoRefs = []
 
   try {
     const refs = await repo.getReferenceNames(nodegit.Reference.TYPE.LISTALL)
-    try {
-      for (const refName of refs) {
+    for (const refName of refs) {
+      try {
         const reference = await repo.getReference(refName)
         if (reference.isConcrete()) {
           console.log('Concrete reference:', refName, reference.target().toString())
@@ -134,12 +134,12 @@ export async function references(repo) {
         } else if (reference.isSymbolic()) {
           console.log('Symbolic reference:', refName, reference.symbolicTarget().toString())
         }
+      } catch (e) {
+        console.log('UNABLE TO GET REFERENCE:', refName, e)
       }
-    } catch (e) {
-      console.log('unable to get reference info:', e)
     }
   } catch (e) {
-    console.log('UNABLE TO GET REFS')
+    console.log('UNABLE TO GET REFERENCE NAMES')
   }
 
   return repoRefs
@@ -505,7 +505,7 @@ export async function commitInfo(repo, sha) {
     }
 */
 
-    const repoRefs = await references(repo)
+    const repoRefs = await getReferences(repo)
 
     const labels = repoRefs.filter(item => item.sha === sha).map(({ name }) => name)
 
@@ -560,18 +560,23 @@ export async function log(repo) {
 
   const fillRoutes = (from, to, iterable) => iterable.map((branch, index) => [from(index), to(index), branch])
 
-  const repoRefs = await references(repo)
+  const repoRefs = await getReferences(repo)
 
   const workDirStatus = await status(repo)
+
   const headCommit = await repo.getHeadCommit()
-  const masterCommit = await repo.getMasterCommit()
+
+  let masterCommit
+
+  try {
+    masterCommit = await repo.getMasterCommit()
+  } catch (e) {
+    console.log('UNABLE TO GET MASTER:', e)
+  }
 
   if (workDirStatus.length > 0) {
-    console.log('WORK IS DIRTY!!!: ', headCommit.sha())
     const branch = getBranch(headCommit.sha()) // TODO: если еще не было коммитов и это изменения в новом репозитарии ?
     const offset = reserve.indexOf(branch)
-    console.log('BRANCH:', branch)
-    console.log('OFFSET:', offset)
 
     commits.push({
       sha: null,
@@ -587,26 +592,29 @@ export async function log(repo) {
   }
 
   // если HEAD не на master
-  const headNotOnMaster = headCommit.sha() !== masterCommit.sha()
-  // console.log('HEAD:', headCommit.sha())
-  // console.log('MASTER:', masterCommit.sha())
-  // console.log('headNotOnMaster:', headNotOnMaster)
+  const headNotOnMaster = !!masterCommit && masterCommit.sha() !== headCommit.sha()
 
-  // если head сдвинут, то историю будем обходит с master коммитов (а если они не самые свежие ???)
-  const commit = headNotOnMaster ? masterCommit : headCommit
+  // если head сдвинут, то историю будем обходить с master коммитов (а если они не самые свежие или если их нет вообще ???)
+  const commit = !!masterCommit ? masterCommit : headCommit
 
-  const revWalk = repo.createRevWalk()
-  revWalk.sorting(nodegit.Revwalk.SORT.TOPOLOGICAL)
-  revWalk.push(commit.sha())
+  let revWalk
+  let oid
 
-  const walk = async () => {
+  try {
+    revWalk = repo.createRevWalk()
+    revWalk.sorting(nodegit.Revwalk.SORT.TOPOLOGICAL)
+    revWalk.push(commit.sha())
+    oid = await revWalk.next()
+  } catch (e) {
+    console.log('revWalk.next() ERROR', e)
+  }
+
+  while (oid) {
     try {
-      const oid = await revWalk.next()
-      if (!oid) return
-
       const commit = await repo.getCommit(oid)
 
       const sha = commit.toString()
+
       const parents = commit.parents().map(parent => parent.toString())
       const [parent, otherParent] = parents
 
@@ -692,20 +700,19 @@ export async function log(repo) {
       })
 
       if (parents.length === 0) {
-        return {
-          // опционально добавляем HEAD ссылку
-          refs: headNotOnMaster ? [{ name: 'HEAD', sha: headCommit.sha() }, ...repoRefs] : repoRefs,
-          commits,
-          commiters
-        }
+        break
       }
 
-      // TODO:!!! НАГРУЖАЕТСЯ СТЕК!!!! - использовать другое решение
-      return await walk()
+      oid = await revWalk.next()
     } catch (e) {
-      console.log(e)
+      console.log('WHILE: ERROR:', e)
     }
-  }
+  } // while
 
-  return await walk()
+  return {
+    // опционально добавляем HEAD ссылку
+    refs: headNotOnMaster ? [{ name: 'HEAD', sha: headCommit.sha() }, ...repoRefs] : repoRefs,
+    commits,
+    commiters
+  }
 }

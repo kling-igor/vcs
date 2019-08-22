@@ -57,7 +57,7 @@ const drawCommit = (ctx, topOffset, commit, yIndex) => {
 
   ctx.fillStyle = !sha || isHead ? '#ffffff' : branchColor(branch)
   ctx.strokeStyle = branchColor(branch)
-  ctx.lineWidth = !sha || isHead ? 8 : LINE_WIDTH * 2 + (!sha ? 4 : 0)
+  ctx.lineWidth = !sha || isHead ? 8 : LINE_WIDTH * 2 - 1 // + (!sha ? 2 : 0)
   ctx.beginPath()
   ctx.arc(x, y, innerRadius, 0, 2 * Math.PI) // Draw a circle
   ctx.stroke() // Draw the outer line

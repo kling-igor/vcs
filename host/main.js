@@ -8,7 +8,7 @@ import {
   getUserNameEmail,
   getRemotes,
   openRepository,
-  references,
+  getReferences,
   status,
   refreshIndex,
   writeIndex,
@@ -129,7 +129,7 @@ answerRenderer('repository:get-head', async browserWindow => {
 answerRenderer('repository:get-references', async browserWindow => {
   checkRepo()
 
-  return await references(repo)
+  return await getReferences(repo)
 })
 
 answerRenderer('commit:get-info', async (browserWindow, sha) => {

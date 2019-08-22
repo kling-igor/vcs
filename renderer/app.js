@@ -40,19 +40,24 @@ export default class App extends Component {
   }
 
   async componentDidMount() {
-    await callMain('repository:open', '../test-repo')
+    await callMain('repository:open', /*'../test-repo'*/ '/Users/kling/Altarix/client')
 
-    const status = await callMain('repository:get-status')
-    console.log(status)
+    // const status = await callMain('repository:get-status')
+    // console.log(status)
 
-    const references = await callMain('repository:get-references')
-    console.log(references)
+    // const references = await callMain('repository:get-references')
+    // console.log(references)
 
-    const data = await callMain('gitlog')
+    console.log('GITLOG!!!')
+    try {
+      const data = await callMain('gitlog')
 
-    if (data) {
-      const { commits, commiters, refs } = data
-      this.setState({ commits, commiters, refs })
+      if (data) {
+        const { commits, commiters, refs } = data
+        this.setState({ commits, commiters, refs })
+      }
+    } catch (e) {
+      console.log('GITLOG ERROR:', e)
     }
   }
 
@@ -198,8 +203,8 @@ export default class App extends Component {
         <GlobalStyle />
         <RootStyle>
           <Toolbar />
-          <CommitPage />
-          {/* <HistoryPage
+          {/* <CommitPage /> */}
+          <HistoryPage
             commits={this.state.commits}
             commiters={this.state.commiters}
             refs={this.state.refs}
@@ -208,7 +213,7 @@ export default class App extends Component {
             onPathSelect={this.onPathSelect}
             originalFile={this.state.originalFile}
             modifiedFile={this.state.modifiedFile}
-          /> */}
+          />
         </RootStyle>
       </>
     )
