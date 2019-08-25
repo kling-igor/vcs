@@ -17,6 +17,7 @@ import {
   log,
   commit,
   commitInfo,
+  fileDiffToParent,
   resetToCommit,
   checkoutToCommit,
   headCommit,
@@ -201,7 +202,7 @@ answerRenderer('commit:file-diff', async (browserWindow, sha, filePath) => {
   return fileDiffToParent(repo, sha, filePath)
 })
 
-const disposable = answerRenderer('gitlog', async browserWindow => {
+const disposable = answerRenderer('repository:log', async browserWindow => {
   checkRepo()
 
   return log(repo)

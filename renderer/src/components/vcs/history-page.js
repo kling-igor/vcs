@@ -1,116 +1,92 @@
-import React, { Component, memo, useCallback, useState, useEffect } from 'react'
+/**
+ * Отображение gitlog
+ */
+const { remote } = window.require('electron')
+
+import React, { Component } from 'react'
+import { observer, inject } from 'mobx-react'
 import SplitPane, { Pane } from '../react-split'
-import styled from 'styled-components'
-
-import { History } from './history'
-import { CommitInfoPane } from './commit-info'
 import { DiffPane } from './diff-pane'
-import { FileTree } from './file-tree'
+import { History } from './history'
 
-const RootStyle = styled.div`
-  width: 100%;
-  height: 100%;
-`
+@observer
+class HistoryPage extends Component {
+  state = {
+    layout: ['20000', '20000']
+  }
 
-// const onMainSplitResize = layout => {
-//   console.log(layout)
-// }
+  setLayout = layout => {
+    this.setState({ layout })
+  }
 
-const onSecondarySplitResize = layout => {
-  console.log(layout)
-}
+  onContextMenu = sha => {
+    // show context menu!!!
+  }
 
-const HistoryPage = memo(
-  ({
-    commits,
-    commiters,
-    refs,
-    onCommitSelect,
-    onHistoryContextMenu,
-    onPathSelect,
-    originalFile,
-    modifiedFile,
-    layout: { primary = ['200', '200'], secondary = ['200', '200'], inner = ['200', '200'] } = {},
-    onLayoutChange = () => {}
-  }) => {
-    const [commitInfo, setCommitInfo] = useState(null)
+  // может быть инициировано из модели!!!
+  confirmBranchSwitch(sha, workdirIsClean, branchName) {
+    let message = ''
+    let detail = ''
 
-    const [mainLayout, setMainLayout] = useState(primary)
-    const [secondaryLayout, setSecondaryLayout] = useState(secondary)
-    const [innerLayout, setInnerLayout] = useState(inner)
+    if (branchName && branchName !== 'HEAD') {
+      message = `Confirm Branch Switch`
+      detail = `Are you sure you want to switch your working copy to the branch '${branchName}'?`
+    } else {
+      message = `Confirm change working copy`
+      detail = `Are you sure you want to checkout '${sha}'? Doing so will make your working copy a 'detached HEAD', which means you won't be on a branch anymore. If you want to commit after this you'll probably want to either checkout a branch again, or create a new branch. Is this ok?`
+    }
 
-    useEffect(() => {
-      const serialized = { primary: mainLayout, secondary: secondaryLayout, inner: innerLayout }
-      console.log('serialized:', serialized)
-      onLayoutChange(serialized)
-    }, [mainLayout, secondaryLayout, innerLayout])
-
-    const onRowClick = useCallback(
-      async sha => {
-        if (sha) {
-          const info = await onCommitSelect(sha)
-          setCommitInfo(info)
+    return new Promise((resolve, reject) => {
+      remote.dialog.showMessageBox(
+        {
+          type: 'question',
+          message,
+          detail,
+          buttons: ['OK', 'Cancel'],
+          defaultId: 0,
+          cancelId: 1,
+          checkboxLabel: workdirIsClean ? '' : 'Discard local changes'
+          // icon: warningIcon
+        },
+        (index, checkboxChecked) => {
+          if (index === 0) {
+            resolve({ discardLocalChanges: !!checkboxChecked })
+          } else {
+            reject()
+          }
         }
-      },
-      [onCommitSelect]
-    )
+      )
+    })
+  }
 
-    const onContextMenu = useCallback(
-      sha => {
-        onHistoryContextMenu(sha)
-      },
-      [onHistoryContextMenu]
-    )
+  render() {
+    const upperSize = +this.state.layout[0] / 100
+    const lowerSize = +this.state.layout[1] / 100
 
-    const onFilePathClick = useCallback(
-      async path => {
-        await onPathSelect(path)
-      },
-      [onPathSelect]
-    )
+    const { commits, commiters, refs, originalFile, modifiedFile, onCommitSelect } = this.props.storage
 
-    const upperSize = +mainLayout[0] / 100
-    const lowerSize = +mainLayout[1] / 100
-
-    const leftSize = +secondaryLayout[0] / 100
-    const rightSize = +secondaryLayout[1] / 100
-
-    const upperInnerSize = +innerLayout[0] / 100
-    const lowerInnerSize = +innerLayout[1] / 100
+    console.log('STORAGE:', this.props.storage)
+    console.log('HISTORY PAGE COMMITERS:', commiters)
+    console.log('originalFile:', originalFile)
+    console.log('modifiedFile:', modifiedFile)
 
     return (
-      <SplitPane split="horizontal" allowResize resizersSize={0} onResizeEnd={setMainLayout}>
+      <SplitPane split="horizontal" allowResize resizersSize={0} onResizeEnd={this.setLayout}>
         <Pane size={upperSize} minSize="50px" maxSize="100%">
           <History
             commits={commits}
             commiters={commiters}
             refs={refs}
-            onRowClick={onRowClick}
-            onContextMenu={onContextMenu}
+            onRowClick={onCommitSelect}
+            onContextMenu={this.onContextMenu}
           />
         </Pane>
         <Pane size={lowerSize} minSize="50px" maxSize="100%">
-          <SplitPane split="vertical" allowResize resizersSize={0} onResizeEnd={setSecondaryLayout}>
-            <Pane size={leftSize} minSize="200px" maxSize="100%">
-              <RootStyle style={{ background: 'magenta' }}>
-                <SplitPane split="horizontal" allowResize resizersSize={0} onResizeEnd={setInnerLayout}>
-                  <Pane size={upperInnerSize} minSize="50px" maxSize="100%">
-                    <FileTree commitInfo={commitInfo} onSelect={onFilePathClick} />
-                  </Pane>
-                  <Pane size={lowerInnerSize} minSize="50px" maxSize="100%">
-                    <CommitInfoPane commitInfo={commitInfo} />
-                  </Pane>
-                </SplitPane>
-              </RootStyle>
-            </Pane>
-            <Pane size={rightSize} minSize="400px" maxSize="100%">
-              <DiffPane originalFile={originalFile} modifiedFile={modifiedFile} />
-            </Pane>
-          </SplitPane>
+          <DiffPane originalFile={originalFile} modifiedFile={modifiedFile} />
         </Pane>
       </SplitPane>
     )
   }
-)
+}
 
 export default HistoryPage

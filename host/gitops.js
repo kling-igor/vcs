@@ -415,26 +415,31 @@ export async function fileDiffToParent(repo, sha, filePath) {
   let originalContent = ''
   let modifiedContent = ''
 
-  const [parentSha] = commit.parents()
-  if (parentSha) {
-    const parentCommit = await repo.getCommit(parentSha)
+  try {
+    const [parentSha] = commit.parents()
+    if (parentSha) {
+      const parentCommit = await repo.getCommit(parentSha)
 
-    const originalEntry = await parentCommit.getEntry(filePath)
+      const originalEntry = await parentCommit.getEntry(filePath)
 
-    if (originalEntry && originalEntry.isFile()) {
-      originalContent = (await originalEntry.getBlob()).toString()
+      if (originalEntry && originalEntry.isFile()) {
+        originalContent = (await originalEntry.getBlob()).toString()
+      }
     }
-  }
 
-  const modifiedEntry = await commit.getEntry(filePath)
+    const modifiedEntry = await commit.getEntry(filePath)
 
-  if (modifiedEntry.isFile()) {
-    modifiedContent = (await modifiedEntry.getBlob()).toString()
+    if (modifiedEntry.isFile()) {
+      modifiedContent = (await modifiedEntry.getBlob()).toString()
 
-    return {
-      originalContent,
-      modifiedContent
+      return {
+        originalContent,
+        modifiedContent
+      }
     }
+  } catch (e) {
+    console.log('FILE DIFF ERROR:', e)
+    return { details: e }
   }
 
   return { details: 'ERROR!!!!' }
@@ -518,7 +523,13 @@ export async function commitInfo(repo, sha) {
       date: commit.time(),
       message: commit.message(),
       parents: commit.parents().map(parent => parent.toString()),
-      paths,
+      paths: paths.map(({ newPath }) => {
+        const parts = newPath.split('/')
+        const filename = parts.pop()
+        const path = parts.join('/')
+        // TODO: missing status!!!
+        return { filename, path }
+      }),
       labels
     }
   } catch (e) {
@@ -708,6 +719,8 @@ export async function log(repo) {
       console.log('WHILE: ERROR:', e)
     }
   } // while
+
+  console.log('COMMITERS:', commiters)
 
   return {
     // опционально добавляем HEAD ссылку

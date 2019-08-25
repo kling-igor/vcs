@@ -33,7 +33,7 @@ module.exports = env => ({
     __dirname: false
   },
 
-  devtool: env.dev ? 'source-map' : false,
+  devtool: 'source-map',
 
   resolve: {
     modules: [__dirname]
