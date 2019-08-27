@@ -16,6 +16,7 @@ const dock = new Dock()
 
 import VCSView from './src/components/vcs'
 import ChangesFilelist from './src/components/vcs/changesfilelist'
+import CommitInfo from './src/components/vcs/commit-info'
 
 import VCS from './vcs'
 const storage = new VCS()
@@ -86,6 +87,11 @@ export default class App extends Component {
       pageTitle: 'GIT',
       panes: [],
       pageHeaderButtons: []
+    })
+
+    dock.addPane('vcs', {
+      title: 'COMMIT INFO',
+      component: <CommitInfo storage={storage} />
     })
 
     dock.addPane('vcs', {

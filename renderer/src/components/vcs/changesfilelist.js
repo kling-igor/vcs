@@ -165,8 +165,6 @@ const scrollbarsStyle = {
 
 // https://www.git-scm.com/docs/git-status#_short_format
 const ChangesFileList = observer(({ storage: { commitInfo, onCommitFileSelect, commitSelectedFile } }) => {
-  console.log('commitInfo:', toJS(commitInfo))
-
   if (!commitInfo) return null
 
   const { paths = [] } = commitInfo

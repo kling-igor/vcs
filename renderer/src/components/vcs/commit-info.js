@@ -1,5 +1,6 @@
 import React, { memo } from 'react'
 import styled from 'styled-components'
+import { observer } from 'mobx-react'
 import moment from 'moment'
 import { Scrollbars } from 'react-custom-scrollbars'
 
@@ -31,6 +32,7 @@ const TableStyle = styled.table`
 const LeftColumnStyle = styled.td`
   text-align: right;
   width: 50px;
+  user-select: none;
 `
 
 const RightColumnStyle = styled.td`
@@ -43,6 +45,13 @@ const TextStyle = styled.span`
   overflow: hidden;
   cursor: pointer;
   user-select: none;
+`
+
+const HorizontalLayoutStyle = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: flex-start;
 `
 
 // background: ${({
@@ -60,7 +69,7 @@ const ScrollBarThumbStyle = styled.div`
   border-radius: 4px;
 `
 
-export const CommitInfoPane = memo(({ commitInfo }) => {
+const CommitInfo = observer(({ storage: { commitInfo } }) => {
   if (!commitInfo) return null
 
   const {
@@ -90,21 +99,10 @@ export const CommitInfoPane = memo(({ commitInfo }) => {
       renderThumbVertical={({ style, ...props }) => <ScrollBarThumbStyle />}
     >
       <RootStyle className="bp3-ui-text bp3-text-small">
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'flex-start',
-            alignItems: 'flex-start'
-          }}
-        >
-          <div>
-            <IconStyle color={'blue'}>{LETTERS}</IconStyle>
-          </div>
-          <div>
-            <span>{message}</span>
-          </div>
-        </div>
+        <HorizontalLayoutStyle>
+          <IconStyle color={'blue'}>{LETTERS}</IconStyle>
+          <span>{message}</span>
+        </HorizontalLayoutStyle>
 
         <TableStyle>
           <tbody>
@@ -150,3 +148,5 @@ export const CommitInfoPane = memo(({ commitInfo }) => {
     </ContainerWithScrollbarsStyle>
   )
 })
+
+export default CommitInfo

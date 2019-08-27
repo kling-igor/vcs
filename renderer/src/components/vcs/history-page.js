@@ -82,7 +82,7 @@ class HistoryPage extends Component {
           />
         </Pane>
         <Pane size={lowerSize} minSize="50px" maxSize="100%">
-          <DiffPane originalFile={originalFile} modifiedFile={modifiedFile} />
+            <DiffPane originalFile={originalFile} modifiedFile={modifiedFile} />
         </Pane>
       </SplitPane>
     )
