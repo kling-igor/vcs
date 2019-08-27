@@ -9,8 +9,8 @@ class VCS {
   @observable mode = 'commit' // log | commit
 
   // commiter info
-  @observable name = 'Igor Kling'
-  @observable email = 'klingigor@gmail.com'
+  @observable name = ''
+  @observable email = ''
 
   // commit
   @observable commitMessage = ''
@@ -26,6 +26,7 @@ class VCS {
   @observable.ref commits = []
   @observable.ref commiters = []
   @observable.ref refs = []
+  @observable.ref remotes = []
 
   // diff editor
   @observable originalFile = ''
@@ -43,7 +44,19 @@ class VCS {
 
   @action
   async openRepo(path) {
-    await callMain('repository:open', path)
+    const { user, remotes } = await callMain('repository:open', path)
+
+    if (user) {
+      const { name, email } = user
+      transaction(() => {
+        this.name = name
+        this.email = email
+      })
+    }
+
+    if (remotes) {
+      this.remotes = remotes
+    }
   }
 
   @action.bound

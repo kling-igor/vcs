@@ -76,6 +76,8 @@ answerRenderer('repository:open', async (browserWindow, path) => {
       console.log('repo is opened')
     }
 
+    const result = {}
+
     let config = await findConfig()
     if (!config) {
       config = await openRepoConfig(repo)
@@ -87,6 +89,8 @@ answerRenderer('repository:open', async (browserWindow, path) => {
         if (name && email) {
           user = { name, email }
 
+          result.user = user
+
           console.log('USER:', user)
         }
       } catch (e) {
@@ -95,9 +99,12 @@ answerRenderer('repository:open', async (browserWindow, path) => {
 
       try {
         remotes = await getRemotes(repo)
+        result.remotes = remotes
       } catch (e) {
         console.log('UNABLE TO GET REMOTES INFO', e)
       }
+
+      return result
     }
   } catch (e) {
     console.log('ERROR OPENING REPO:', e)
