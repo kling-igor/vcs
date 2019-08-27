@@ -1,4 +1,4 @@
-import React, { memo, useMemo, useState, useEffect } from 'react'
+import React, { memo, useMemo, useState, useEffect, useCallback } from 'react'
 import styled from 'styled-components'
 import { Button, Intent, Icon, TextArea } from '@blueprintjs/core'
 import { IconNames } from '@blueprintjs/icons'
@@ -93,13 +93,15 @@ const commitButtonStyle = { paddingLeft: 16, paddingRight: 16 }
 const cancelButtonStyle = { ...commitButtonStyle, marginRight: 8 }
 const historyButtonStyle = { width: '30px', height: '30px', marginRight: '8px', outline: 'none' }
 
-export default memo(({ name, email, onChange, text }) => {
+export default memo(({ name, email, onChange, text, previousCommits = [], onCommit, onCancelCommit }) => {
   const [commitable, setCommitable] = useState(false)
   const hash = useMemo(() => MD5(email).toString(), [email])
 
   useEffect(() => {
     setCommitable((text && text.length > 0 && text.trim()) || false)
   }, [text])
+
+  const showPreviousCommits = useCallback(() => {}, [previousCommits])
 
   return (
     <HorizontalConatiner>
@@ -115,10 +117,9 @@ export default memo(({ name, email, onChange, text }) => {
           <Button
             small
             minimal
+            disabled={!previousCommits.length}
             icon={IconNames.HISTORY}
-            onClick={() => {
-              console.log('HISTORY MESSAGES')
-            }}
+            onClick={showPreviousCommits}
             intent={Intent.PRIMARY}
             // disabled={!hasHistoryChanges}
             style={historyButtonStyle}
@@ -126,10 +127,10 @@ export default memo(({ name, email, onChange, text }) => {
         </UpperHorizontalConatiner>
         <CommitAreaStyle onChange={onChange} value={text} />
         <ButtonsContainerStyle>
-          <Button small style={cancelButtonStyle}>
+          <Button small style={cancelButtonStyle} onClick={onCancelCommit}>
             Cancel
           </Button>
-          <Button small intent="primary" style={commitButtonStyle} disabled={!commitable}>
+          <Button small intent="primary" style={commitButtonStyle} disabled={!commitable} onClick={onCommit}>
             Commit
           </Button>
         </ButtonsContainerStyle>

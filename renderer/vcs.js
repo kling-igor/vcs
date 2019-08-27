@@ -6,8 +6,23 @@ import { callMain } from './ipc'
 import { observable, action, transaction, computed } from 'mobx'
 
 class VCS {
-  @observable mode = 'log' // log | commit
+  @observable mode = 'commit' // log | commit
 
+  // commiter info
+  @observable name = 'Igor Kling'
+  @observable email = 'klingigor@gmail.com'
+
+  // commit
+  @observable commitMessage = ''
+
+  @action.bound
+  setCommitMessage(event) {
+    this.commitMessage = event.target.value
+  }
+
+  @observable.ref previousCommits = []
+
+  // git tree
   @observable.ref commits = []
   @observable.ref commiters = []
   @observable.ref refs = []
@@ -129,6 +144,19 @@ class VCS {
     } catch (e) {
       console.log('canceled:', e)
     }
+  }
+
+  @action.bound
+  onCommit() {
+    console.log('commit')
+
+    //  берем сообщение коммита и добавляем в начало списка (если уникальное)
+    //  очищаем сообщение коммита!!
+  }
+
+  @action.bound
+  onCancelCommit() {
+    this.mode = 'log'
   }
 }
 
