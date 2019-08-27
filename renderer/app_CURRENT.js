@@ -53,7 +53,24 @@ export default class App extends Component {
     dock.addPage('vcs', {
       pageTitle: 'GIT',
       panes: [],
-      pageHeaderButtons: []
+      pageHeaderButtons: [
+        {
+          icon: './assets/ui/git/git-commit.svg',
+          onClick: () => {
+            {
+            }
+          },
+          tooltip: 'Commit'
+        },
+        {
+          icon: './assets/ui/git/git-log.svg',
+          onClick: () => {
+            {
+            }
+          },
+          tooltip: 'Log'
+        }
+      ]
     })
 
     // dock.addPane('changes', {

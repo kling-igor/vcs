@@ -158,6 +158,16 @@ class VCS {
   onCancelCommit() {
     this.mode = 'log'
   }
+
+  @action.bound
+  commitMode() {
+    this.mode = 'commit'
+  }
+
+  @action.bound
+  logMode() {
+    this.mode = 'log'
+  }
 }
 
 export default VCS
