@@ -8,6 +8,12 @@ import { observable, action, transaction, computed } from 'mobx'
 class VCS {
   @observable mode = 'commit' // log | commit
 
+  onModeChange = () => {}
+
+  setModeChangeHandler(handler) {
+    this.onModeChange = handler
+  }
+
   // commiter info
   @observable name = ''
   @observable email = ''
@@ -169,17 +175,21 @@ class VCS {
 
   @action.bound
   onCancelCommit() {
-    this.mode = 'log'
+    this.logMode()
   }
 
   @action.bound
   commitMode() {
+    if (this.mode === 'commit') return
     this.mode = 'commit'
+    this.onModeChange(this.mode)
   }
 
   @action.bound
   logMode() {
+    if (this.mode === 'log') return
     this.mode = 'log'
+    this.onModeChange(this.mode)
   }
 }
 

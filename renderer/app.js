@@ -100,15 +100,37 @@ export default class App extends Component {
       ]
     })
 
-    dock.addPane('vcs', {
-      title: 'COMMIT INFO',
-      component: <CommitInfo storage={storage} />
-    })
+    const replacePanes = mode => {
+      dock.removePane('vcs', 0)
+      dock.removePane('vcs', 0)
 
-    dock.addPane('vcs', {
-      title: 'CHANGES',
-      component: <ChangesFilelist storage={storage} />
-    })
+      if (mode === 'commit') {
+        dock.addPane('vcs', {
+          title: 'STAGED',
+          component: <div />
+        })
+
+        dock.addPane('vcs', {
+          title: 'CHANGES',
+          component: <div />
+        })
+      } else if (mode === 'log') {
+        dock.addPane('vcs', {
+          title: 'COMMIT INFO',
+          component: <CommitInfo storage={storage} />
+        })
+
+        dock.addPane('vcs', {
+          title: 'CHANGES',
+          component: <ChangesFilelist storage={storage} />
+        })
+      }
+    }
+
+    storage.setModeChangeHandler(replacePanes)
+
+    // set initial panes
+    replacePanes(storage.mode)
 
     dock.showPage('vcs')
 
