@@ -11,16 +11,16 @@ const CANVAS_WIDTH = 500
 const colors = [
   '#a0a5a9',
   '#84b817',
-  '#003688',
   '#e32017',
+  '#ee7c0e',
+  '#ffd300',
+  '#f3a9bb',
   '#b36305',
   '#00a4a7',
-  '#ffd300',
   '#00782a',
-  '#f3a9bb',
+  '#003688',
   '#9b0056',
-  '#95cdba',
-  '#ee7c0e'
+  '#95cdba'
 ]
 
 const CanvasStyle = styled.canvas`

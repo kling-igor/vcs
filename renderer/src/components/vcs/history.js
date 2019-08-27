@@ -10,12 +10,46 @@ const RowStyle = styled.div`
   padding-left: 20px;
   height: ${() => `${ROW_HEIGHT}px`};
 
-  color: black;
-  background-color: ${({ odd }) => (odd ? '#f0f0f0' : 'white')};
+  background-color: ${({
+    odd,
+    selected,
+    theme: {
+      type,
+      list: { activeSelectionBackground }
+    }
+  }) => {
+    const oddColor = type === 'light' ? '#e2e2e2' : '#505050'
+
+    return selected ? activeSelectionBackground : odd ? oddColor : 'transparent'
+  }};
+
+  color: ${({
+    selected,
+    theme: {
+      list: { activeSelectionForeground, focusForeground }
+    }
+  }) => {
+    return selected ? activeSelectionForeground : focusForeground
+  }};
+
   :hover {
-    color: white;
-    background-color: #0098d4;
+    background-color: ${({
+      selected,
+      theme: {
+        list: { activeSelectionBackground, hoverBackground }
+      }
+    }) => (selected ? activeSelectionBackground : hoverBackground)};
+
+    color: ${({
+      selected,
+      theme: {
+        list: { activeSelectionForeground, hoverForeground }
+      }
+    }) => {
+      return selected ? activeSelectionForeground : hoverForeground
+    }};
   }
+
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -89,32 +123,65 @@ const BranchStyle = styled.span`
 `
 // TODO: useContext onRowClick
 
-export const History = memo(({ commits = [], commiters = [], refs = [], onRowClick, onContextMenu }) => {
-  const onClickHandler = useCallback(event => onRowClick(event.currentTarget.dataset.sha), [onRowClick])
-  const onContextMenuHandler = useCallback(event => onContextMenu(event.currentTarget.dataset.sha), [onContextMenu])
+export const History = memo(
+  ({ commits = [], commiters = [], refs = [], onCommitSelect, onContextMenu, selectedCommit }) => {
+    const onClickHandler = useCallback(event => onCommitSelect(event.currentTarget.dataset.sha), [])
+    const onContextMenuHandler = useCallback(event => onContextMenu(event.currentTarget.dataset.sha), [])
 
-  const rowRenderer = ({ index, isScrolling, key, style }) => {
-    const { sha, message, routes, commiter, date } = commits[index]
-    const offset = routes.length > 0 ? routes.length : 1
+    const rowRenderer = ({ index, isScrolling, key, style }) => {
+      const { sha, message, routes, commiter, date } = commits[index]
+      const offset = routes.length > 0 ? routes.length : 1
 
-    // // подсчет кол-ва параллельных роутов
-    // let offset = routes.reduce((result, route) => {
-    //   const [from, to] = route
-    //   if (from === to) return result + 1
+      // // подсчет кол-ва параллельных роутов
+      // let offset = routes.reduce((result, route) => {
+      //   const [from, to] = route
+      //   if (from === to) return result + 1
 
-    //   return result
-    // }, 0)
+      //   return result
+      // }, 0)
 
-    // if (offset === 0) {
-    //   offset = 1
-    // }
+      // if (offset === 0) {
+      //   offset = 1
+      // }
 
-    const datetime = moment.unix(date).format('MMMM Do YYYY, H:mm:ss')
+      const datetime = moment.unix(date).format('MMMM Do YYYY, H:mm:ss')
 
-    if (!sha) {
+      if (!sha) {
+        return (
+          <RowStyle
+            key={key}
+            style={style}
+            odd={index % 2}
+            onClick={onClickHandler}
+            onContextMenu={onContextMenuHandler}
+          >
+            <TextStyle offset={offset * X_STEP}>
+              <b>{message}</b>
+            </TextStyle>
+            <TimeStampStyle>{datetime}</TimeStampStyle>
+          </RowStyle>
+        )
+      }
+
+      const { name, email } = commiters[commiter]
+      const commitRefs = refs.filter(item => item.sha === sha)
+
       return (
-        <RowStyle key={key} style={style} odd={index % 2} onClick={onClickHandler} onContextMenu={onContextMenuHandler}>
+        <RowStyle
+          key={key}
+          style={style}
+          odd={index % 2}
+          onClick={onClickHandler}
+          onContextMenu={onContextMenuHandler}
+          data-sha={sha}
+          selected={sha === selectedCommit}
+        >
           <TextStyle offset={offset * X_STEP}>
+            <b className="bp3-monospace-text">{sha.slice(0, 8)}</b>{' '}
+            <em>
+              {name} {email}
+            </em>{' '}
+            {!!commitRefs.length > 0 && commitRefs.map(item => <BranchStyle key={item.name}>{item.name}</BranchStyle>)}
             <b>{message}</b>
           </TextStyle>
           <TimeStampStyle>{datetime}</TimeStampStyle>
@@ -122,54 +189,30 @@ export const History = memo(({ commits = [], commiters = [], refs = [], onRowCli
       )
     }
 
-    const { name, email } = commiters[commiter]
-    const commitRefs = refs.filter(item => item.sha === sha)
-
     return (
-      <RowStyle
-        key={key}
-        style={style}
-        odd={index % 2}
-        onClick={onClickHandler}
-        onContextMenu={onContextMenuHandler}
-        data-sha={sha}
-      >
-        <TextStyle offset={offset * X_STEP}>
-          <b className="bp3-monospace-text">{sha.slice(0, 8)}</b>{' '}
-          <em>
-            {name} {email}
-          </em>{' '}
-          {!!commitRefs.length > 0 && commitRefs.map(item => <BranchStyle key={item.name}>{item.name}</BranchStyle>)}
-          <b>{message}</b>
-        </TextStyle>
-        <TimeStampStyle>{datetime}</TimeStampStyle>
-      </RowStyle>
+      <AutoSizer>
+        {({ width, height }) => (
+          <ScrollSync>
+            {({ clientHeight, clientWidth, onScroll, scrollHeight, scrollLeft, scrollTop, scrollWidth }) => (
+              <div className="Table">
+                <div className="LeftColumn">{<Tree height={height} scrollTop={scrollTop} commits={commits} />}</div>
+                <div className="RightColumn">
+                  <List
+                    onScroll={onScroll}
+                    width={width}
+                    height={height}
+                    overscanRowCount={1}
+                    rowRenderer={rowRenderer}
+                    rowCount={commits.length}
+                    rowHeight={ROW_HEIGHT}
+                    // scrollToIndex={scrollToIndex}
+                  />
+                </div>
+              </div>
+            )}
+          </ScrollSync>
+        )}
+      </AutoSizer>
     )
   }
-
-  return (
-    <AutoSizer>
-      {({ width, height }) => (
-        <ScrollSync>
-          {({ clientHeight, clientWidth, onScroll, scrollHeight, scrollLeft, scrollTop, scrollWidth }) => (
-            <div className="Table">
-              <div className="LeftColumn">{<Tree height={height} scrollTop={scrollTop} commits={commits} />}</div>
-              <div className="RightColumn">
-                <List
-                  onScroll={onScroll}
-                  width={width}
-                  height={height}
-                  overscanRowCount={1}
-                  rowRenderer={rowRenderer}
-                  rowCount={commits.length}
-                  rowHeight={ROW_HEIGHT}
-                  // scrollToIndex={scrollToIndex}
-                />
-              </div>
-            </div>
-          )}
-        </ScrollSync>
-      )}
-    </AutoSizer>
-  )
-})
+)

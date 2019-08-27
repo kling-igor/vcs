@@ -3,7 +3,7 @@
 
 import { callMain } from './ipc'
 
-import { observable, action, transaction } from 'mobx'
+import { observable, action, transaction, computed } from 'mobx'
 
 class VCS {
   @observable mode = 'log' // log | commit
@@ -17,6 +17,12 @@ class VCS {
   @observable modifiedFile = ''
 
   @observable.ref commitInfo = null
+
+  @computed get selectedCommit() {
+    if (!this.commitInfo) return null
+
+    return this.commitInfo.commit
+  }
 
   @observable commitSelectedFile = null
 

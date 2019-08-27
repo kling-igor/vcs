@@ -3,6 +3,7 @@ import styled from 'styled-components'
 import { observer } from 'mobx-react'
 import moment from 'moment'
 import { Scrollbars } from 'react-custom-scrollbars'
+import MD5 from 'crypto-js/md5'
 
 const RootStyle = styled.div`
   width: 100%;
@@ -10,17 +11,19 @@ const RootStyle = styled.div`
   display: block;
 `
 
-const IconStyle = styled.span`
+const GravatarStyle = styled.img`
   display: inline-block;
   height: 40px;
   width: 40px;
+  min-width: 40px;
+  max-width: 40px;
+  min-height: 40px;
+  max-height: 40px;
   line-height: 40px;
-  text-align: center;
-  border-radius: 40px;
-  color: white;
-  background-color: ${({ color }) => color};
-  font-size: 1.25em;
+  border-radius: 50%;
   margin: 8px;
+  user-select: none;
+  pointer-events: none;
 `
 
 const TableStyle = styled.table`
@@ -43,7 +46,6 @@ const TextStyle = styled.span`
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
-  cursor: pointer;
   user-select: none;
 `
 
@@ -81,13 +83,15 @@ const CommitInfo = observer(({ storage: { commitInfo } }) => {
     labels
   } = commitInfo
 
-  const parentsString = parents.length > 0 ? parents.join(', ') : null
-  const labelsString = labels.length > 0 ? labels.join(', ').toUpperCase() : null
+  const hash = MD5(email).toString()
 
-  const LETTERS = name
-    .split(' ')
-    .map(item => item.slice(0, 1))
-    .slice(0, 2)
+  const parentsString = parents.length > 0 ? parents.join(', ') : null
+  const labelsString = labels.length > 0 ? labels.join(', ') : null
+
+  // const LETTERS = name
+  //   .split(' ')
+  //   .map(item => item.slice(0, 1))
+  //   .slice(0, 2)
 
   return (
     <ContainerWithScrollbarsStyle
@@ -100,7 +104,12 @@ const CommitInfo = observer(({ storage: { commitInfo } }) => {
     >
       <RootStyle className="bp3-ui-text bp3-text-small">
         <HorizontalLayoutStyle>
-          <IconStyle color={'blue'}>{LETTERS}</IconStyle>
+          <GravatarStyle
+            src={`https://www.gravatar.com/avatar/${hash}?s=100&d=identicon`}
+            draggable="false"
+            width={40}
+            height={40}
+          />
           <span>{message}</span>
         </HorizontalLayoutStyle>
 

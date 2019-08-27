@@ -5,8 +5,8 @@ import { observer } from 'mobx-react'
 
 import SplitPane, { Pane } from './src/components/react-split'
 
-// import theme from './src/themes/ui/dark'
-import theme from './src/themes/ui/light'
+import theme from './src/themes/ui/dark'
+// import theme from './src/themes/ui/light'
 
 import Workspace from './workspace'
 const workspace = new Workspace()

@@ -63,7 +63,7 @@ class HistoryPage extends Component {
     const upperSize = +this.state.layout[0] / 100
     const lowerSize = +this.state.layout[1] / 100
 
-    const { commits, commiters, refs, originalFile, modifiedFile, onCommitSelect } = this.props.storage
+    const { commits, commiters, refs, originalFile, modifiedFile, onCommitSelect, selectedCommit } = this.props.storage
 
     console.log('STORAGE:', this.props.storage)
     console.log('HISTORY PAGE COMMITERS:', commiters)
@@ -77,12 +77,13 @@ class HistoryPage extends Component {
             commits={commits}
             commiters={commiters}
             refs={refs}
-            onRowClick={onCommitSelect}
+            onCommitSelect={onCommitSelect}
             onContextMenu={this.onContextMenu}
+            selectedCommit={selectedCommit}
           />
         </Pane>
         <Pane size={lowerSize} minSize="50px" maxSize="100%">
-            <DiffPane originalFile={originalFile} modifiedFile={modifiedFile} />
+          <DiffPane originalFile={originalFile} modifiedFile={modifiedFile} />
         </Pane>
       </SplitPane>
     )
