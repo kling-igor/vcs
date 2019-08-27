@@ -21,6 +21,15 @@ class VCS {
   // commit
   @observable commitMessage = ''
 
+  @observable.ref changedFiles = []
+  @observable.ref stagedFiles = []
+
+  @action.bound
+  onChangedFilesChanged(files) {}
+
+  @action.bound
+  onStagedFilesChanged(files) {}
+
   @action.bound
   setCommitMessage(event) {
     this.commitMessage = event.target.value
@@ -47,6 +56,66 @@ class VCS {
   }
 
   @observable commitSelectedFile = null
+
+  // ui-optimistic addition to index specified files
+  @action
+  addToStage(collection) {
+    let selected = collection.slice()
+
+    const [filtered, remained] = this.changedFiles.reduce(
+      (acc, item) => {
+        const fullPath = `${item.path}/${item.filename}`
+        const index = selected.findIndex(i => i === fullPath)
+        if (index !== -1) {
+          acc[0].push(item)
+          selected = [...selected.slice(0, index), ...selected.slice(index + 1)]
+        } else {
+          acc[1].push(item)
+        }
+
+        return acc
+      },
+      [[], []]
+    )
+
+    transaction(() => {
+      this.stagedFiles = sort([...new Set([...this.stagedFiles, ...filtered])])
+      this.changedFiles = sort(remained)
+    })
+
+    // вызываем операцию добавления в индекс
+    // по факту операции меняем состояние
+  }
+
+  // ui-optimistic removing from index specified files
+  @action
+  removeFromStage(collection) {
+    let selected = collection.slice()
+
+    const [filtered, remained] = this.stagedFiles.reduce(
+      (acc, item) => {
+        const fullPath = `${item.path}/${item.filename}`
+        const index = selected.findIndex(i => i === fullPath)
+        if (index !== -1) {
+          acc[0].push(item)
+          selected = [...selected.slice(0, index), ...selected.slice(index + 1)]
+        } else {
+          acc[1].push(item)
+        }
+
+        return acc
+      },
+      [[], []]
+    )
+
+    transaction(() => {
+      this.changedFiles = sort([...new Set([...this.changedFiles, ...filtered])])
+      this.stagedFiles = sort(remained)
+    })
+
+    // вызываем операцию удаления из индекса
+    // по факту операции меняем состояние
+  }
 
   @action
   async openRepo(path) {

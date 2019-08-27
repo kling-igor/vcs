@@ -17,6 +17,8 @@ const dock = new Dock()
 import VCSView from './src/components/vcs'
 import ChangesFilelist from './src/components/vcs/changesfilelist'
 import CommitInfo from './src/components/vcs/commit-info'
+import ChangedFiles from './src/components/vcs/changed-files'
+import StagedFiles from './src/components/vcs/staged-files'
 
 import VCS from './vcs'
 const storage = new VCS()
@@ -96,6 +98,13 @@ export default class App extends Component {
           icon: './assets/ui/git/git-log.svg',
           onClick: storage.logMode,
           tooltip: 'Log'
+        },
+        {
+          icon: './assets/ui/refresh.svg',
+          onClick: () => {
+            console.log('GIT STATUS')
+          },
+          tooltip: 'Refresh'
         }
       ]
     })
@@ -107,12 +116,12 @@ export default class App extends Component {
       if (mode === 'commit') {
         dock.addPane('vcs', {
           title: 'STAGED',
-          component: <div />
+          component: <StagedFiles storage={storage} />
         })
 
         dock.addPane('vcs', {
           title: 'CHANGES',
-          component: <div />
+          component: <ChangedFiles storage={storage} />
         })
       } else if (mode === 'log') {
         dock.addPane('vcs', {
