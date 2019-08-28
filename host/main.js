@@ -1,6 +1,9 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 const { callRenderer, answerRenderer } = require('./ipc')(ipcMain, BrowserWindow)
 import { join, resolve } from 'path'
+import { EventEmitter } from 'events'
+import { CompositeDisposable } from 'event-kit'
+import { FileSystemOperations } from './file-operations'
 import * as URL from 'url'
 import {
   findConfig,
@@ -71,7 +74,7 @@ app.on('window-all-closed', () => {
 
 answerRenderer('repository:open', async (browserWindow, path) => {
   try {
-    repo = await openRepository(resolve(__dirname, path))
+    repo = await openRepository(path)
     if (repo) {
       console.log('repo is opened')
     }
@@ -209,8 +212,75 @@ answerRenderer('commit:file-diff', async (browserWindow, sha, filePath) => {
   return fileDiffToParent(repo, sha, filePath)
 })
 
-const disposable = answerRenderer('repository:log', async browserWindow => {
+answerRenderer('repository:log', async browserWindow => {
   checkRepo()
 
   return log(repo)
+})
+
+/* FAKE APPLICATION (from editor) */
+
+const fileOperations = new FileSystemOperations()
+
+answerRenderer('open-project', (browserWindow, projectPath) => {
+  return new Promise((resolve, reject) => {
+    fileOperations
+      .openProject(projectPath)
+      .then(notifier => {
+        notifier.on('ready', fileTree => {
+          browserWindow.webContents.send('file-tree:ready', fileTree)
+        })
+
+        notifier.on('path-add', path => {
+          browserWindow.webContents.send('file-tree:path-add', path)
+        })
+
+        notifier.on('path-remove', path => {
+          browserWindow.webContents.send('file-tree:path-remove', path)
+        })
+
+        // notifier.on('path-rename', (src, dst) => {
+        //   browserWindow.webContents.send('file-tree:path-rename', src, dst)
+        // })
+
+        notifier.on('path-rename', ([source, destination]) => {
+          browserWindow.webContents.send('file-tree:path-rename', source, destination)
+        })
+
+        notifier.on('path-change', path => {
+          browserWindow.webContents.send('file-tree:path-change', path)
+        })
+
+        resolve()
+      })
+      .catch(reject)
+  })
+})
+
+ipcMain.on('close-project', event => {
+  fileOperations.closeProject()
+})
+
+answerRenderer('folder-create', (browserWindow, folderPath) => {
+  return fileOperations.createFolder(folderPath)
+})
+
+answerRenderer('open-file', (browserWindow, filePath) => {
+  return fileOperations.openFile(filePath)
+})
+
+answerRenderer('save-file', (browserWindow, filePath, buffer) => {
+  return fileOperations.saveFile(filePath, buffer)
+})
+
+answerRenderer('rename-file', (browserWindow, src, dst) => {
+  return fileOperations.rename(src, dst)
+})
+
+answerRenderer('remove-file', (browserWindow, path) => {
+  return fileOperations.removeFile(path)
+})
+
+answerRenderer('remove-folder', (browserWindow, path) => {
+  return fileOperations.removeFolder(path)
 })

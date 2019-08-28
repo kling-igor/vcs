@@ -1,11 +1,40 @@
 // const { ipcRenderer } = window.require('electron')
 // const { callMain } = require('./ipc').default(ipcRenderer)
-
+import { CompositeDisposable, Disposable } from 'event-kit'
 import { callMain } from './ipc'
 
 import { observable, action, transaction, computed } from 'mobx'
 
-class VCS {
+/**
+ * Convenient function
+ * @param {EventEmitter} emitter
+ * @param {String} eventName
+ * @param {Function} handler
+ * @returns {Disposable}
+ */
+const disposableEventHandler = (emitter, eventName, handler) => {
+  emitter.on(eventName, handler)
+
+  return new Disposable(() => {
+    emitter.off(eventName, handler)
+  })
+}
+
+const sort = array =>
+  array.sort((a, b) => {
+    const aStr = `${a.path}/${a.filename}`
+    const bStr = `${b.path}/${b.filename}`
+
+    if (aStr > bStr) {
+      return 1
+    }
+    if (aStr < bStr) {
+      return -1
+    }
+    return 0
+  })
+
+export class VCS {
   @observable mode = 'commit' // log | commit
 
   onModeChange = () => {}
@@ -23,17 +52,6 @@ class VCS {
 
   @observable.ref changedFiles = []
   @observable.ref stagedFiles = []
-
-  @action.bound
-  onChangedFilesChanged(files) {}
-
-  @action.bound
-  onStagedFilesChanged(files) {}
-
-  @action.bound
-  setCommitMessage(event) {
-    this.commitMessage = event.target.value
-  }
 
   @observable.ref previousCommits = []
 
@@ -56,6 +74,22 @@ class VCS {
   }
 
   @observable commitSelectedFile = null
+
+  constructor({ project, applicationDelegate }) {
+    this.project = project
+    this.applicationDelegate = applicationDelegate
+  }
+
+  @action.bound
+  onChangedFilesChanged(files) {}
+
+  @action.bound
+  onStagedFilesChanged(files) {}
+
+  @action.bound
+  setCommitMessage(event) {
+    this.commitMessage = event.target.value
+  }
 
   // ui-optimistic addition to index specified files
   @action
@@ -132,6 +166,47 @@ class VCS {
     if (remotes) {
       this.remotes = remotes
     }
+
+    // on project open
+    disposableEventHandler(this.project, 'project-opened', () => {
+      this.projectDisposables = new CompositeDisposable()
+
+      this.projectDisposables.add(
+        this.applicationDelegate.onProjectFilePathAdd((sender, path) => {
+          console.log(`[VCS] added ${path.replace(this.project.projectPath, '')}`)
+        }),
+
+        this.applicationDelegate.onProjectFilePathRemove((sender, path) => {
+          const relativePath = path.replace(this.project.projectPath, '')
+          console.log(`[VCS] removed ${relativePath}`)
+          // this.fileTreeView.remove(relativePath)
+        }),
+
+        this.applicationDelegate.onProjectFilePathRename((sender, src, dst) => {
+          console.log(
+            `[VCS] renaming ${src.replace(this.project.projectPath, '')} to ${dst.replace(
+              this.project.projectPath,
+              ''
+            )}`
+          )
+          // this.fileTreeView.rename(
+          //   src.replace(vision.project.projectPath, ''),
+          //   dst.replace(vision.project.projectPath, '')
+          // )
+        }),
+
+        this.applicationDelegate.onProjectFilePathChange((sender, path) => {
+          console.log(`[VCS] changed outside of IDE ${path.replace(this.project.projectPath, '')}`)
+        })
+      )
+    })
+
+    disposableEventHandler(this.project, 'project-closed', () => {
+      if (this.projectDisposables) {
+        this.projectDisposables.dispose()
+        this.projectDisposables = null
+      }
+    })
   }
 
   @action.bound
@@ -261,5 +336,3 @@ class VCS {
     this.onModeChange(this.mode)
   }
 }
-
-export default VCS

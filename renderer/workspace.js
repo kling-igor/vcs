@@ -1,7 +1,7 @@
 import { remote } from 'electron'
 
 // STUB
-export default class Workspace {
+export class Workspace {
   showContextMenu({ title, items }) {
     const contextMenu = new remote.Menu()
     if (title) {

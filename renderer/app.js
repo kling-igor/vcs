@@ -1,6 +1,8 @@
 import React, { Component } from 'react'
 import styled, { ThemeProvider, createGlobalStyle } from 'styled-components'
 
+import { resolve, join } from 'path'
+
 import { observer } from 'mobx-react'
 
 import SplitPane, { Pane } from './src/components/react-split'
@@ -8,8 +10,16 @@ import SplitPane, { Pane } from './src/components/react-split'
 // import theme from './src/themes/ui/dark'
 import theme from './src/themes/ui/light'
 
-import Workspace from './workspace'
+import { Project } from './project'
+import { ApplicationDelegate } from './application-delegate'
+import { Workspace } from './workspace'
+import { VCS } from './vcs'
+
 const workspace = new Workspace()
+
+const applicationDelegate = new ApplicationDelegate()
+
+const project = new Project({ applicationDelegate })
 
 import { Dock } from './src/components/dock'
 const dock = new Dock()
@@ -20,8 +30,7 @@ import CommitInfo from './src/components/vcs/commit-info'
 import ChangedFiles from './src/components/vcs/changed-files'
 import StagedFiles from './src/components/vcs/staged-files'
 
-import VCS from './vcs'
-const storage = new VCS()
+const vcs = new VCS({ project, applicationDelegate })
 
 const GlobalStyle = createGlobalStyle`
   @font-face {
@@ -91,12 +100,12 @@ export default class App extends Component {
       pageHeaderButtons: [
         {
           icon: './assets/ui/git/git-commit.svg',
-          onClick: storage.commitMode,
+          onClick: vcs.commitMode,
           tooltip: 'Commit'
         },
         {
           icon: './assets/ui/git/git-log.svg',
-          onClick: storage.logMode,
+          onClick: vcs.logMode,
           tooltip: 'Log'
         },
         {
@@ -116,34 +125,35 @@ export default class App extends Component {
       if (mode === 'commit') {
         dock.addPane('vcs', {
           title: 'STAGED',
-          component: <StagedFiles storage={storage} />
+          component: <StagedFiles storage={vcs} />
         })
 
         dock.addPane('vcs', {
           title: 'CHANGES',
-          component: <ChangedFiles storage={storage} />
+          component: <ChangedFiles storage={vcs} />
         })
       } else if (mode === 'log') {
         dock.addPane('vcs', {
           title: 'COMMIT INFO',
-          component: <CommitInfo storage={storage} />
+          component: <CommitInfo storage={vcs} />
         })
 
         dock.addPane('vcs', {
           title: 'CHANGES',
-          component: <ChangesFilelist storage={storage} />
+          component: <ChangesFilelist storage={vcs} />
         })
       }
     }
 
-    storage.setModeChangeHandler(replacePanes)
+    vcs.setModeChangeHandler(replacePanes)
 
     // set initial panes
-    replacePanes(storage.mode)
+    replacePanes(vcs.mode)
 
     dock.showPage('vcs')
 
-    storage.openRepo('../test-repo').then(() => storage.getLog())
+    project.open({ projectPath: resolve(__dirname, '../test-repo') })
+    vcs.openRepo(resolve(__dirname, '../test-repo')).then(() => vcs.getLog())
   }
 
   setVerticalLayout = layout => {
@@ -166,7 +176,7 @@ export default class App extends Component {
                 <DockWidget />
               </Pane>
               <Pane size={rightSize} minSize="400px" maxSize="100%">
-                <VCSView storage={storage} />
+                <VCSView storage={vcs} />
               </Pane>
             </SplitPane>
           </RootStyle>
