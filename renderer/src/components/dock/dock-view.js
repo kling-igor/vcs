@@ -197,10 +197,20 @@ const Button = ({ src, disabled, onClick }) => {
   const [hovered, setHovered] = useState(false)
   const [pressing, setPressing] = useState(false)
 
-  const handleMouseEnter = () => setHovered(true)
-  const handleMouseLeave = () => setHovered(false)
-  const handleMousePress = () => setPressing(true)
-  const handleMouseRelease = () => setPressing(false)
+  const handleMouseEnter = () => {
+    setHovered(true)
+  }
+  const handleMouseLeave = () => {
+    setHovered(false)
+    setPressing(false)
+  }
+  const handleMousePress = () => {
+    setPressing(true)
+  }
+  const handleMouseRelease = () => {
+    setPressing(false)
+    setHovered(false)
+  }
 
   const size = hovered && pressing ? 20 : 16
 
@@ -340,17 +350,8 @@ const renderPageHeader = ({ theme, pageTitle, pageHeaderButtons = [] }) => {
               onClick()
             }
           }
-          return (
-            <DockHeaderButtonStyle
-              key={icon}
-              draggable={false}
-              src={svgThemedName(theme, icon)}
-              width={16}
-              height={16}
-              onClick={onClickHandler}
-              disabled={disabled}
-            />
-          )
+
+          return <Button key={icon} src={svgThemedName(theme, icon)} disabled={disabled} onClick={onClickHandler} />
         })}
       </RightAlignedBlock>
     </DockHeaderStyle>

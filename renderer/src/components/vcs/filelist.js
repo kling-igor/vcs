@@ -148,93 +148,31 @@ const Checkbox = memo(({ indeterminate, ...props }) => {
   return <input ref={ref} type="checkbox" {...props} />
 })
 
+const scrollBarsStyle = { width: '100%', height: '100%' }
+
 // https://www.git-scm.com/docs/git-status#_short_format
 
-const FileList = ({ files, caption, onSelectionChanged }) => {
-  const [checkboxes, setCheckboxes] = useState({})
-  // const [allChecked, setAllChecked] = useState(false)
-  // const [indeterminate, setIndeterminate] = useState(false)
-
-  useEffect(() => {
-    // первоначальное заполнение checkboxes (все false)
-    setCheckboxes(old =>
-      // TODO: может придти обновленный состав files и нужно в новом наборе восстановить состояния чекбоксов, который были до этого !!!
-      files.reduce((obj, { filename, path }) => {
-        obj[`${path}/${filename}`] = !!old[`${path}/${filename}`]
-        return obj
-      }, {})
-    )
-  }, [files])
-
+const FileList = ({ files, onSelectionChanged }) => {
   const handleInputChange = useCallback(
     event => {
-      const key = event.currentTarget.dataset.path
-      setCheckboxes(old => {
-        return { ...old, [key]: !old[key] }
-      })
+      const index = event.currentTarget.dataset.index
+      files[index].selected = !files[index].selected
+
+      onSelectionChanged([...files])
     },
-    [checkboxes]
+    [files]
   )
-
-  useEffect(() => {
-    const entries = Object.entries(checkboxes)
-
-    // let isAllChecked = entries.length > 0
-    // let isAllUnchecked = true
-    const selected = entries.reduce((acc, [key, selected]) => {
-      if (selected) {
-        // isAllUnchecked = false
-        return [...acc, key]
-      } else {
-        // isAllChecked = false
-        return acc
-      }
-    }, [])
-
-    // setAllChecked(isAllChecked)
-
-    // const isPartiallyChecked = !isAllChecked && !isAllUnchecked
-    // setIndeterminate(isPartiallyChecked)
-
-    onSelectionChanged(selected)
-  }, [checkboxes])
-
-  // const handleCaptionInputChange = useCallback(event => {
-  //   const { checked } = event.target
-
-  //   setCheckboxes(prev =>
-  //     Object.keys(prev).reduce((obj, key) => {
-  //       obj[key] = checked
-  //       return obj
-  //     }, {})
-  //   )
-  // })
 
   return (
     <ListRootStyle>
-      {/* <CaptionStyle>
-        <Checkbox indeterminate={indeterminate} checked={allChecked || false} onChange={handleCaptionInputChange} />
-        <CaptionText>{caption}</CaptionText>
-      </CaptionStyle> */}
-      <Scrollbars
-        style={{ width: '100%', height: '100%' }}
-        thumbMinSize={30}
-        autoHide
-        autoHideTimeout={1000}
-        autoHideDuration={200}
-      >
+      <Scrollbars style={scrollBarsStyle} thumbMinSize={30} autoHide autoHideTimeout={1000} autoHideDuration={200}>
         <ListStyle>
-          {files.map(({ filename, path, status }) => {
+          {files.map(({ filename, path, status, selected }, index) => {
             const decoratedPath = path === '.' ? '' : path
             return (
               <ListItemContainerStyle key={`${path}/${filename}`}>
                 <ListItemLeftGroupStyle>
-                  <input
-                    type="checkbox"
-                    checked={checkboxes[`${path}/${filename}`] || false}
-                    onChange={handleInputChange}
-                    data-path={`${path}/${filename}`}
-                  />
+                  <input type="checkbox" checked={!!selected} onChange={handleInputChange} data-index={index} />
                   <ListItemFilenameStyle>{filename}</ListItemFilenameStyle>
                   <ListItemPathStyle>{decoratedPath}</ListItemPathStyle>
                 </ListItemLeftGroupStyle>

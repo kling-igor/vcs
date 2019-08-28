@@ -85,10 +85,14 @@ export class VCS {
   }
 
   @action.bound
-  onChangedFilesChanged(files) {}
+  onChangedFilesChanged(files) {
+    this.changedFiles = files
+  }
 
   @action.bound
-  onStagedFilesChanged(files) {}
+  onStagedFilesChanged(files) {
+    this.stagedFiles = files
+  }
 
   @action.bound
   setCommitMessage(event) {
@@ -162,15 +166,29 @@ export class VCS {
     const [stagedFiles, changedFiles] = statuses.reduce(
       (acc, item) => {
         const { status } = item
+
+        let selected = false
+
+        if (status.includes('I')) {
+          const foundInStaged = this.stagedFiles.find(
+            ({ path, filename }) => path === item.path && filename === item.filename
+          )
+
+          selected = (foundInStaged && foundInStaged.selected) || false
+
+          acc[0].push({ ...item, selected })
+        }
         if (status === 'I') {
-          acc[0].push(item)
           return acc
         }
-        if (status.includes('I')) {
-          acc[0].push(item)
-        }
 
-        acc[1].push(item)
+        const foundInChanged = this.changedFiles.find(
+          ({ path, filename }) => path === item.path && filename === item.filename
+        )
+
+        selected = (foundInChanged && foundInChanged.selected) || false
+
+        acc[1].push({ ...item, selected })
         return acc
       },
       [[], []]
@@ -383,24 +401,39 @@ export class VCS {
       items: [
         {
           label: 'Select All',
-          click: () => {
-            /* this.selectAllStagedFiles() */
-          },
+          click: action(() => {
+            this.stagedFiles = this.selectAllFiles(this.stagedFiles)
+          }),
           enabled: this.stagedFiles.length > 0
         },
         {
           label: 'Unselect All',
-          click: () => {
-            /* this.unselectAllStagedFiles() */
-          },
+          click: action(() => {
+            this.stagedFiles = this.unselectAllFiles(this.stagedFiles)
+          }),
           enabled: this.stagedFiles.length > 0
         },
         {
           label: 'Inverse Selection',
-          click: () => {
-            /* this.inverseSelectionOfStagedFiles() */
-          },
+          click: action(() => {
+            this.stagedFiles = this.inverseSelection(this.stagedFiles)
+          }),
           enabled: this.stagedFiles.length > 0
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: 'Unstage Selected',
+          click: action(() => {
+            // vcs.unstageSelected()
+          })
+        },
+        {
+          label: 'Unstage All',
+          click: action(() => {
+            // vcs.unstageAll()
+          })
         }
       ]
     })
@@ -412,26 +445,53 @@ export class VCS {
       items: [
         {
           label: 'Select All',
-          click: () => {
-            /* this.selectAllChangedFiles() */
-          },
+          click: action(() => {
+            this.changedFiles = this.selectAllFiles(this.changedFiles)
+          }),
           enabled: this.changedFiles.length > 0
         },
         {
           label: 'Unselect All',
-          click: () => {
-            /* this.unselectAllChangedFiles() */
-          },
+          click: action(() => {
+            this.changedFiles = this.unselectAllFiles(this.changedFiles)
+          }),
           enabled: this.changedFiles.length > 0
         },
         {
           label: 'Inverse Selection',
-          click: () => {
-            /* this.inverseSelectionOfChangedFiles() */
-          },
+          click: action(() => {
+            this.changedFiles = this.inverseSelection(this.changedFiles)
+          }),
           enabled: this.changedFiles.length > 0
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: 'Stage Selected',
+          click: action(() => {
+            // vcs.stageSelectedFiles()
+          })
+        },
+        {
+          label: 'Stage All',
+          click: action(() => {
+            // vcs.stageAllFiles()
+          })
         }
       ]
     })
+  }
+
+  selectAllFiles(collection) {
+    return collection.map(item => ({ ...item, selected: true }))
+  }
+
+  unselectAllFiles(collection) {
+    return collection.map(item => ({ ...item, selected: false }))
+  }
+
+  inverseSelection(collection) {
+    return collection.map(item => ({ ...item, selected: !item.selected }))
   }
 }
