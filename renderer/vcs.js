@@ -1,6 +1,7 @@
 // const { ipcRenderer } = window.require('electron')
 // const { callMain } = require('./ipc').default(ipcRenderer)
 import { CompositeDisposable, Disposable } from 'event-kit'
+import { join } from 'path'
 import * as _ from 'lodash'
 import { callMain } from './ipc'
 
@@ -397,6 +398,9 @@ export class VCS {
 
   @action.bound
   showStagedFilesMenu() {
+    const hasStagedFiles = this.stagedFiles.length > 0
+    const selectedStagedFilesCount = this.stagedFiles.reduce((acc, { selected }) => (acc + selected ? 1 : 0), 0)
+
     this.workspace.showContextMenu({
       items: [
         {
@@ -404,36 +408,34 @@ export class VCS {
           click: action(() => {
             this.stagedFiles = this.selectAllFiles(this.stagedFiles)
           }),
-          enabled: this.stagedFiles.length > 0
+          enabled: hasStagedFiles
         },
         {
           label: 'Unselect All',
           click: action(() => {
             this.stagedFiles = this.unselectAllFiles(this.stagedFiles)
           }),
-          enabled: this.stagedFiles.length > 0
+          enabled: hasStagedFiles
         },
         {
           label: 'Inverse Selection',
           click: action(() => {
             this.stagedFiles = this.inverseSelection(this.stagedFiles)
           }),
-          enabled: this.stagedFiles.length > 0
+          enabled: hasStagedFiles
         },
         {
           type: 'separator'
         },
         {
           label: 'Unstage Selected',
-          click: action(() => {
-            // vcs.unstageSelected()
-          })
+          click: this.unstageSelectedFiles,
+          enabled: hasStagedFiles && selectedStagedFilesCount > 0
         },
         {
           label: 'Unstage All',
-          click: action(() => {
-            // vcs.unstageAll()
-          })
+          click: this.unstageAllFiles,
+          enabled: hasStagedFiles
         }
       ]
     })
@@ -441,6 +443,9 @@ export class VCS {
 
   @action.bound
   showChangedFilesMenu() {
+    const hasChangedFiles = this.changedFiles.length > 0
+    const selectedChangesFilesCount = this.changedFiles.reduce((acc, { selected }) => (acc + selected ? 1 : 0), 0)
+
     this.workspace.showContextMenu({
       items: [
         {
@@ -448,36 +453,34 @@ export class VCS {
           click: action(() => {
             this.changedFiles = this.selectAllFiles(this.changedFiles)
           }),
-          enabled: this.changedFiles.length > 0
+          enabled: hasChangedFiles
         },
         {
           label: 'Unselect All',
           click: action(() => {
             this.changedFiles = this.unselectAllFiles(this.changedFiles)
           }),
-          enabled: this.changedFiles.length > 0
+          enabled: hasChangedFiles
         },
         {
           label: 'Inverse Selection',
           click: action(() => {
             this.changedFiles = this.inverseSelection(this.changedFiles)
           }),
-          enabled: this.changedFiles.length > 0
+          enabled: hasChangedFiles
         },
         {
           type: 'separator'
         },
         {
           label: 'Stage Selected',
-          click: action(() => {
-            // vcs.stageSelectedFiles()
-          })
+          click: this.stageSelectedFiles,
+          enabled: hasChangedFiles && selectedChangesFilesCount > 0
         },
         {
           label: 'Stage All',
-          click: action(() => {
-            // vcs.stageAllFiles()
-          })
+          click: this.stageAllFiles,
+          enabled: hasChangedFiles
         }
       ]
     })
@@ -493,5 +496,54 @@ export class VCS {
 
   inverseSelection(collection) {
     return collection.map(item => ({ ...item, selected: !item.selected }))
+  }
+
+  @action.bound
+  async stageSelectedFiles() {
+    const paths = this.changedFiles.reduce((acc, item) => {
+      if (item.selected) {
+        return [...acc, join(item.path, item.filename)]
+      }
+
+      return acc
+    }, [])
+    if (paths.length > 0) {
+      await callMain('stage:add', paths)
+      await this.status()
+    }
+  }
+
+  @action.bound
+  async stageAllFiles() {
+    const paths = this.changedFiles.reduce((acc, item) => [...acc, join(item.path, item.filename)], [])
+    if (paths.length > 0) {
+      await callMain('stage:add', paths)
+      await this.status()
+    }
+  }
+
+  @action.bound
+  async unstageSelectedFiles() {
+    const paths = this.stagedFiles.reduce((acc, item) => {
+      if (item.selected) {
+        return [...acc, join(item.path, item.filename)]
+      }
+
+      return acc
+    }, [])
+    if (paths.length > 0) {
+      await callMain('stage:remove', paths)
+      await this.status()
+    }
+  }
+
+  @action.bound
+  async unstageAllFiles() {
+    const paths = this.stagedFiles.reduce((acc, item) => [...acc, join(item.path, item.filename)], [])
+    if (paths.length > 0) {
+      await callMain('stage:remove', paths)
+
+      await this.status()
+    }
   }
 }

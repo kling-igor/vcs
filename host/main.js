@@ -155,8 +155,6 @@ answerRenderer('commit:get-info', async (browserWindow, sha) => {
 })
 
 answerRenderer('commit:create', async (browserWindow, message) => {
-  console.log('commit:create ', message)
-
   checkRepo()
 
   // ПОКА ДОБАВИМ В ИНДЕКС ВСЕ ИЗМЕНЕННЫЕ ФАЙЛЫ!!!
@@ -175,6 +173,36 @@ answerRenderer('commit:create', async (browserWindow, message) => {
     await commit(repo, treeOid, message, user.name, user.email)
   } catch (e) {
     console.log('COMMIT ERROR:', e)
+  }
+})
+
+answerRenderer('stage:add', async (browserWindow, paths) => {
+  checkRepo()
+
+  try {
+    const index = await refreshIndex(repo)
+    for (const path of paths) {
+      await addToIndex(index, path)
+    }
+
+    await writeIndex(index)
+  } catch (e) {
+    console.log('ERROR ON ADDING TO INDEX', e)
+  }
+})
+
+answerRenderer('stage:remove', async (browserWindow, paths) => {
+  checkRepo()
+
+  try {
+    const index = await refreshIndex(repo)
+    for (const path of paths) {
+      await removeFromIndex(index, path)
+    }
+
+    await writeIndex(index)
+  } catch (e) {
+    console.log('ERROR ON REMOVING FROM INDEX', e)
   }
 })
 
