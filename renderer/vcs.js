@@ -164,23 +164,43 @@ export class VCS {
   async status() {
     const statuses = await callMain('repository:get-status')
 
+    console.log('STATUSES:', statuses)
+
     const [stagedFiles, changedFiles] = statuses.reduce(
       (acc, item) => {
         const { status } = item
 
         let selected = false
 
+        let workdirStatus = ''
+
         if (status.includes('I')) {
           const foundInStaged = this.stagedFiles.find(
             ({ path, filename }) => path === item.path && filename === item.filename
           )
 
+          let stagedStatus = status.replace('I', '')
+          if (stagedStatus.includes('A')) {
+            workdirStatus = stagedStatus.replace('A', '')
+            stagedStatus = 'A'
+          } else if (stagedStatus.includes('D')) {
+            workdirStatus = stagedStatus.replace('D', '')
+            stagedStatus = 'D'
+          } else if (stagedStatus.includes('M')) {
+            workdirStatus = stagedStatus.replace('M', '')
+            stagedStatus = 'M'
+          } else if (stagedStatus.includes('R')) {
+            workdirStatus = stagedStatus.replace('R', '')
+            stagedStatus = 'R'
+          }
+
           selected = (foundInStaged && foundInStaged.selected) || false
 
-          acc[0].push({ ...item, selected })
-        }
-        if (status === 'I') {
-          return acc
+          acc[0].push({ ...item, selected, status: stagedStatus })
+
+          if (!workdirStatus) {
+            return acc
+          }
         }
 
         const foundInChanged = this.changedFiles.find(
@@ -189,7 +209,7 @@ export class VCS {
 
         selected = (foundInChanged && foundInChanged.selected) || false
 
-        acc[1].push({ ...item, selected })
+        acc[1].push({ ...item, selected, status: workdirStatus || item.status })
         return acc
       },
       [[], []]
