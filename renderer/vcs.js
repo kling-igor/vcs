@@ -167,53 +167,55 @@ export class VCS {
       this.remotes = remotes
     }
 
+    this.disposables = new CompositeDisposable()
+
     // on project open
-    disposableEventHandler(this.project, 'project-opened', () => {
-      this.projectDisposables = new CompositeDisposable()
+    this.disposables.add(
+      disposableEventHandler(this.project, 'project-opened', () => {
+        this.projectDisposables = new CompositeDisposable()
 
-      this.projectDisposables.add(
-        this.applicationDelegate.onProjectFilePathAdd((sender, path) => {
-          console.log(`[VCS] added ${path.replace(this.project.projectPath, '')}`)
-        }),
+        this.projectDisposables.add(
+          this.applicationDelegate.onProjectFilePathAdd((sender, path) => {
+            console.log(`[VCS] added ${path.replace(this.project.projectPath, '')}`)
+          }),
 
-        this.applicationDelegate.onProjectFilePathRemove((sender, path) => {
-          const relativePath = path.replace(this.project.projectPath, '')
-          console.log(`[VCS] removed ${relativePath}`)
-          // this.fileTreeView.remove(relativePath)
-        }),
+          this.applicationDelegate.onProjectFilePathRemove((sender, path) => {
+            const relativePath = path.replace(this.project.projectPath, '')
+            console.log(`[VCS] removed ${relativePath}`)
+            // this.fileTreeView.remove(relativePath)
+          }),
 
-        this.applicationDelegate.onProjectFilePathRename((sender, src, dst) => {
-          console.log(
-            `[VCS] renaming ${src.replace(this.project.projectPath, '')} to ${dst.replace(
-              this.project.projectPath,
-              ''
-            )}`
-          )
-          // this.fileTreeView.rename(
-          //   src.replace(vision.project.projectPath, ''),
-          //   dst.replace(vision.project.projectPath, '')
-          // )
-        }),
+          this.applicationDelegate.onProjectFilePathRename((sender, src, dst) => {
+            console.log(
+              `[VCS] renaming ${src.replace(this.project.projectPath, '')} to ${dst.replace(
+                this.project.projectPath,
+                ''
+              )}`
+            )
+            // this.fileTreeView.rename(
+            //   src.replace(vision.project.projectPath, ''),
+            //   dst.replace(vision.project.projectPath, '')
+            // )
+          }),
 
-        this.applicationDelegate.onProjectFilePathChange((sender, path) => {
-          console.log(`[VCS] changed outside of IDE ${path.replace(this.project.projectPath, '')}`)
-        })
-      )
-    })
+          this.applicationDelegate.onProjectFilePathChange((sender, path) => {
+            console.log(`[VCS] changed outside of IDE ${path.replace(this.project.projectPath, '')}`)
+          })
+        )
+      }),
 
-    disposableEventHandler(this.project, 'project-closed', () => {
-      if (this.projectDisposables) {
-        this.projectDisposables.dispose()
-        this.projectDisposables = null
-      }
-    })
+      disposableEventHandler(this.project, 'project-closed', () => {
+        if (this.projectDisposables) {
+          this.projectDisposables.dispose()
+          this.projectDisposables = null
+        }
+      })
+    )
   }
 
   @action.bound
   async getLog() {
     const data = await callMain('repository:log')
-
-    console.log('DATA:', data)
 
     if (data) {
       const { commits, commiters, refs } = data

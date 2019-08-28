@@ -152,8 +152,9 @@ export default class App extends Component {
 
     dock.showPage('vcs')
 
-    project.open({ projectPath: resolve(__dirname, '../test-repo') })
-    vcs.openRepo(resolve(__dirname, '../test-repo')).then(() => vcs.getLog())
+    await vcs.openRepo(resolve(__dirname, '../test-repo'))
+    await project.open({ projectPath: resolve(__dirname, '../test-repo') })
+    await vcs.getLog()
   }
 
   setVerticalLayout = layout => {
