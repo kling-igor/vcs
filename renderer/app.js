@@ -30,7 +30,7 @@ import CommitInfo from './src/components/vcs/commit-info'
 import ChangedFiles from './src/components/vcs/changed-files'
 import StagedFiles from './src/components/vcs/staged-files'
 
-const vcs = new VCS({ project, applicationDelegate })
+const vcs = new VCS({ workspace, project, applicationDelegate })
 
 const GlobalStyle = createGlobalStyle`
   @font-face {
@@ -125,12 +125,26 @@ export default class App extends Component {
       if (mode === 'commit') {
         dock.addPane('vcs', {
           title: 'STAGED',
-          component: <StagedFiles storage={vcs} />
+          component: <StagedFiles storage={vcs} />,
+          paneHeaderButtons: [
+            {
+              icon: './assets/ui/ellipsis.svg',
+              onClick: vcs.showStagedFilesMenu,
+              tooltip: ''
+            }
+          ]
         })
 
         dock.addPane('vcs', {
           title: 'CHANGES',
-          component: <ChangedFiles storage={vcs} />
+          component: <ChangedFiles storage={vcs} />,
+          paneHeaderButtons: [
+            {
+              icon: './assets/ui/ellipsis.svg',
+              onClick: vcs.showChangedFilesMenu,
+              tooltip: ''
+            }
+          ]
         })
       } else if (mode === 'log') {
         dock.addPane('vcs', {

@@ -1,5 +1,5 @@
 import nodegit from 'nodegit'
-import { resolve, join } from 'path'
+import { resolve, join, dirname, basename } from 'path'
 import { ensureDir, writeFile } from 'fs-extra'
 
 /**
@@ -213,11 +213,16 @@ function fileStatus(file) {
 /**
  * Gets file statuses
  * @param {Repository} repo
- * @returns {{path:String, status:String}[]}
+ * @returns {{filename:String, path:String, status:String}[]}
  */
 export async function status(repo) {
   const statuses = await repo.getStatus()
-  return statuses.map(file => ({ path: file.path(), status: fileStatus(file) }))
+  return statuses.map(file => {
+    const filename = basename(file.path())
+    const path = dirname(file.path())
+    const status = fileStatus(file)
+    return { filename, path, status }
+  })
 }
 
 /**

@@ -69,6 +69,7 @@ const ListRootStyle = styled.div`
   justify-content: flex-start;
   align-items: flex-start;
   width: 100%;
+  height: 100%;
   overflow: hidden;
 `
 
@@ -151,8 +152,8 @@ const Checkbox = memo(({ indeterminate, ...props }) => {
 
 const FileList = ({ files, caption, onSelectionChanged }) => {
   const [checkboxes, setCheckboxes] = useState({})
-  const [allChecked, setAllChecked] = useState(false)
-  const [indeterminate, setIndeterminate] = useState(false)
+  // const [allChecked, setAllChecked] = useState(false)
+  // const [indeterminate, setIndeterminate] = useState(false)
 
   useEffect(() => {
     // первоначальное заполнение checkboxes (все false)
@@ -178,43 +179,43 @@ const FileList = ({ files, caption, onSelectionChanged }) => {
   useEffect(() => {
     const entries = Object.entries(checkboxes)
 
-    let isAllChecked = entries.length > 0
-    let isAllUnchecked = true
+    // let isAllChecked = entries.length > 0
+    // let isAllUnchecked = true
     const selected = entries.reduce((acc, [key, selected]) => {
       if (selected) {
-        isAllUnchecked = false
+        // isAllUnchecked = false
         return [...acc, key]
       } else {
-        isAllChecked = false
+        // isAllChecked = false
         return acc
       }
     }, [])
 
-    setAllChecked(isAllChecked)
+    // setAllChecked(isAllChecked)
 
-    const isPartiallyChecked = !isAllChecked && !isAllUnchecked
-    setIndeterminate(isPartiallyChecked)
+    // const isPartiallyChecked = !isAllChecked && !isAllUnchecked
+    // setIndeterminate(isPartiallyChecked)
 
     onSelectionChanged(selected)
   }, [checkboxes])
 
-  const handleCaptionInputChange = useCallback(event => {
-    const { checked } = event.target
+  // const handleCaptionInputChange = useCallback(event => {
+  //   const { checked } = event.target
 
-    setCheckboxes(prev =>
-      Object.keys(prev).reduce((obj, key) => {
-        obj[key] = checked
-        return obj
-      }, {})
-    )
-  })
+  //   setCheckboxes(prev =>
+  //     Object.keys(prev).reduce((obj, key) => {
+  //       obj[key] = checked
+  //       return obj
+  //     }, {})
+  //   )
+  // })
 
   return (
     <ListRootStyle>
-      <CaptionStyle>
+      {/* <CaptionStyle>
         <Checkbox indeterminate={indeterminate} checked={allChecked || false} onChange={handleCaptionInputChange} />
         <CaptionText>{caption}</CaptionText>
-      </CaptionStyle>
+      </CaptionStyle> */}
       <Scrollbars
         style={{ width: '100%', height: '100%' }}
         thumbMinSize={30}
@@ -223,21 +224,24 @@ const FileList = ({ files, caption, onSelectionChanged }) => {
         autoHideDuration={200}
       >
         <ListStyle>
-          {files.map(({ filename, path, status }) => (
-            <ListItemContainerStyle key={`${path}/${filename}`}>
-              <ListItemLeftGroupStyle>
-                <input
-                  type="checkbox"
-                  checked={checkboxes[`${path}/${filename}`] || false}
-                  onChange={handleInputChange}
-                  data-path={`${path}/${filename}`}
-                />
-                <ListItemFilenameStyle>{filename}</ListItemFilenameStyle>
-                <ListItemPathStyle>{path}</ListItemPathStyle>
-              </ListItemLeftGroupStyle>
-              <StatusBadge value={status} />
-            </ListItemContainerStyle>
-          ))}
+          {files.map(({ filename, path, status }) => {
+            const decoratedPath = path === '.' ? '' : path
+            return (
+              <ListItemContainerStyle key={`${path}/${filename}`}>
+                <ListItemLeftGroupStyle>
+                  <input
+                    type="checkbox"
+                    checked={checkboxes[`${path}/${filename}`] || false}
+                    onChange={handleInputChange}
+                    data-path={`${path}/${filename}`}
+                  />
+                  <ListItemFilenameStyle>{filename}</ListItemFilenameStyle>
+                  <ListItemPathStyle>{decoratedPath}</ListItemPathStyle>
+                </ListItemLeftGroupStyle>
+                <StatusBadge value={status} />
+              </ListItemContainerStyle>
+            )
+          })}
         </ListStyle>
       </Scrollbars>
     </ListRootStyle>

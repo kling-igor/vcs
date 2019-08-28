@@ -1,6 +1,7 @@
 // const { ipcRenderer } = window.require('electron')
 // const { callMain } = require('./ipc').default(ipcRenderer)
 import { CompositeDisposable, Disposable } from 'event-kit'
+import * as _ from 'lodash'
 import { callMain } from './ipc'
 
 import { observable, action, transaction, computed } from 'mobx'
@@ -75,9 +76,12 @@ export class VCS {
 
   @observable commitSelectedFile = null
 
-  constructor({ project, applicationDelegate }) {
+  constructor({ workspace, project, applicationDelegate }) {
+    this.workspace = workspace
     this.project = project
     this.applicationDelegate = applicationDelegate
+
+    this.debouncedStatus = _.debounce(this.status, 1000)
   }
 
   @action.bound
@@ -151,6 +155,35 @@ export class VCS {
     // по факту операции меняем состояние
   }
 
+  @action.bound
+  async status() {
+    const statuses = await callMain('repository:get-status')
+
+    const [stagedFiles, changedFiles] = statuses.reduce(
+      (acc, item) => {
+        const { status } = item
+        if (status === 'I') {
+          acc[0].push(item)
+          return acc
+        }
+        if (status.includes('I')) {
+          acc[0].push(item)
+        }
+
+        acc[1].push(item)
+        return acc
+      },
+      [[], []]
+    )
+
+    transaction(() => {
+      // TODO:  предварительно в changedFiles и stagedFiles добавляем статусы соответствующих элементов
+
+      this.changedFiles = changedFiles
+      this.stagedFiles = stagedFiles
+    })
+  }
+
   @action
   async openRepo(path) {
     const { user, remotes } = await callMain('repository:open', path)
@@ -177,12 +210,14 @@ export class VCS {
         this.projectDisposables.add(
           this.applicationDelegate.onProjectFilePathAdd((sender, path) => {
             console.log(`[VCS] added ${path.replace(this.project.projectPath, '')}`)
+            this.debouncedStatus()
           }),
 
           this.applicationDelegate.onProjectFilePathRemove((sender, path) => {
             const relativePath = path.replace(this.project.projectPath, '')
             console.log(`[VCS] removed ${relativePath}`)
             // this.fileTreeView.remove(relativePath)
+            this.debouncedStatus()
           }),
 
           this.applicationDelegate.onProjectFilePathRename((sender, src, dst) => {
@@ -192,6 +227,7 @@ export class VCS {
                 ''
               )}`
             )
+            this.debouncedStatus()
             // this.fileTreeView.rename(
             //   src.replace(vision.project.projectPath, ''),
             //   dst.replace(vision.project.projectPath, '')
@@ -200,6 +236,7 @@ export class VCS {
 
           this.applicationDelegate.onProjectFilePathChange((sender, path) => {
             console.log(`[VCS] changed outside of IDE ${path.replace(this.project.projectPath, '')}`)
+            this.debouncedStatus()
           })
         )
       }),
@@ -211,6 +248,8 @@ export class VCS {
         }
       })
     )
+
+    this.debouncedStatus()
   }
 
   @action.bound
@@ -336,5 +375,63 @@ export class VCS {
     if (this.mode === 'log') return
     this.mode = 'log'
     this.onModeChange(this.mode)
+  }
+
+  @action.bound
+  showStagedFilesMenu() {
+    this.workspace.showContextMenu({
+      items: [
+        {
+          label: 'Select All',
+          click: () => {
+            /* this.selectAllStagedFiles() */
+          },
+          enabled: this.stagedFiles.length > 0
+        },
+        {
+          label: 'Unselect All',
+          click: () => {
+            /* this.unselectAllStagedFiles() */
+          },
+          enabled: this.stagedFiles.length > 0
+        },
+        {
+          label: 'Inverse Selection',
+          click: () => {
+            /* this.inverseSelectionOfStagedFiles() */
+          },
+          enabled: this.stagedFiles.length > 0
+        }
+      ]
+    })
+  }
+
+  @action.bound
+  showChangedFilesMenu() {
+    this.workspace.showContextMenu({
+      items: [
+        {
+          label: 'Select All',
+          click: () => {
+            /* this.selectAllChangedFiles() */
+          },
+          enabled: this.changedFiles.length > 0
+        },
+        {
+          label: 'Unselect All',
+          click: () => {
+            /* this.unselectAllChangedFiles() */
+          },
+          enabled: this.changedFiles.length > 0
+        },
+        {
+          label: 'Inverse Selection',
+          click: () => {
+            /* this.inverseSelectionOfChangedFiles() */
+          },
+          enabled: this.changedFiles.length > 0
+        }
+      ]
+    })
   }
 }

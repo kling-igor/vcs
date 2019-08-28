@@ -326,9 +326,6 @@ const renderDockPane = (
 
 const renderPageHeader = ({ theme, pageTitle, pageHeaderButtons = [] }) => {
   if (!pageTitle) return null
-
-  console.log('pageHeaderButtons:', pageHeaderButtons)
-
   return (
     <DockHeaderStyle>
       <LeftAlignedBlock>
