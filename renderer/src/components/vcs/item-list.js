@@ -4,8 +4,6 @@ import { Scrollbars } from 'react-custom-scrollbars'
 
 const ListItemContainerStyle = styled.li`
   padding: 0;
-  padding-left: 4px;
-  padding-right: 8px;
   margin: 0;
   list-style-type: none;
   display: flex;
@@ -16,32 +14,58 @@ const ListItemContainerStyle = styled.li`
 
   cursor: pointer;
   user-select: none;
+
+  background-color: ${({
+    selected,
+    theme: {
+      type,
+      list: { activeSelectionBackground }
+    }
+  }) => (selected ? activeSelectionBackground : 'transparent')};
+
+  color: ${({
+    selected,
+    theme: {
+      list: { activeSelectionForeground, focusForeground }
+    }
+  }) => (selected ? activeSelectionForeground : focusForeground)};
+
   :hover {
-    background-color: blue;
-    color: white;
+    background-color: ${({
+      selected,
+      theme: {
+        list: { activeSelectionBackground, hoverBackground }
+      }
+    }) => (selected ? activeSelectionBackground : hoverBackground)};
+
+    color: ${({
+      selected,
+      theme: {
+        list: { activeSelectionForeground, hoverForeground }
+      }
+    }) => (selected ? activeSelectionForeground : hoverForeground)};
   }
 `
 
-const ListItemLeftGroupStyle = styled.div`
+const ListItemNameStyle = styled.div`
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
   justify-content: flex-start;
   align-items: baseline;
-`
-
-const ListItemNameStyle = styled.span`
-  white-space: nowrap;
+  margin-left: 8px;
+  margin-right: 8px;
 `
 
 const ListStyle = styled.ul`
   font-size: 13px;
   font-family: 'Open Sans', sans-serif;
-  line-height: 1.2em;
+  line-height: 1.7em;
   white-space: nowrap;
   padding: 0;
   margin: 0px;
-  margin-top: 0px;
+  padding-top: 4px;
+  padding-bottom: 4px;
 `
 
 const ListRootStyle = styled.div`
@@ -56,17 +80,24 @@ const ListRootStyle = styled.div`
 
 const scrollBarsStyle = { width: '100%', height: '100%' }
 
-const ItemList = ({ items }) => {
+const ItemList = ({ items, onItemSelect, selectedCommit, onContextMenu }) => {
+  const onClickHandler = useCallback(event => onItemSelect(event.currentTarget.dataset.sha), [])
+  const onContextMenuHandler = useCallback(event => onContextMenu(event.currentTarget.dataset.sha), [])
+
   return (
     <ListRootStyle>
       <Scrollbars style={scrollBarsStyle} thumbMinSize={30} autoHide autoHideTimeout={1000} autoHideDuration={200}>
         <ListStyle>
-          {items.map(({ name, sha }, index) => {
+          {items.map(({ name, sha }) => {
             return (
-              <ListItemContainerStyle key={name}>
-                <ListItemLeftGroupStyle>
-                  <ListItemNameStyle>{name}</ListItemNameStyle>
-                </ListItemLeftGroupStyle>
+              <ListItemContainerStyle
+                key={name}
+                data-sha={sha}
+                onClick={onClickHandler}
+                onContextMenu={onContextMenuHandler}
+                selected={sha === selectedCommit}
+              >
+                <ListItemNameStyle>{name}</ListItemNameStyle>
               </ListItemContainerStyle>
             )
           })}

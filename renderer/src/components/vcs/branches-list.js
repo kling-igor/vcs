@@ -1,8 +1,10 @@
 import React from 'react'
 import { observer } from 'mobx-react'
 
-const BranchesList = observer(({ storage: { stagedFiles, onStagedFilesChanged } }) => {
-  return <div />
+import ItemList from './item-list'
+
+const BranchesList = observer(({ storage: { heads, selectedCommit, onCommitSelect } }) => {
+  return <ItemList items={heads} selectedCommit={selectedCommit} onItemSelect={onCommitSelect} />
 })
 
 export default BranchesList
