@@ -60,7 +60,9 @@ export class VCS {
   // git tree
   @observable.ref commits = []
   @observable.ref commiters = []
-  @observable.ref refs = []
+  @observable.ref heads = []
+  @observable.ref remoteHeads = []
+  @observable.ref tags = []
   @observable.ref remotes = []
 
   // diff editor
@@ -298,10 +300,29 @@ export class VCS {
     if (data) {
       const { commits, commiters, refs } = data
 
+      console.log('REFS:', refs)
+
+      const [heads, remoteHeads, tags] = refs.reduce(
+        (acc, { name, sha }) => {
+          if (name.includes('refs/heads/')) {
+            acc[0].push({ name: name.replace('refs/heads/', ''), sha })
+          } else if (name.includes('refs/remotes/')) {
+            acc[1].push({ name: name.replace('refs/remotes/', ''), sha })
+          } else if (name.includes('refs/tags/')) {
+            acc[2].push({ name: name.replace('refs/tags/', ''), sha })
+          }
+
+          return acc
+        },
+        [[], [], []]
+      )
+
       transaction(() => {
         this.commits = commits
         this.commiters = commiters
-        this.refs = refs
+        this.heads = heads
+        this.remoteHeads = remoteHeads
+        this.tags = tags
       })
     }
   }

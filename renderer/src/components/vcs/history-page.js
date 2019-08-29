@@ -63,12 +63,17 @@ class HistoryPage extends Component {
     const upperSize = +this.state.layout[0] / 100
     const lowerSize = +this.state.layout[1] / 100
 
-    const { commits, commiters, refs, originalFile, modifiedFile, onCommitSelect, selectedCommit } = this.props.storage
-
-    console.log('STORAGE:', this.props.storage)
-    console.log('HISTORY PAGE COMMITERS:', commiters)
-    console.log('originalFile:', originalFile)
-    console.log('modifiedFile:', modifiedFile)
+    const {
+      commits,
+      commiters,
+      heads,
+      remoteHeads,
+      tags,
+      originalFile,
+      modifiedFile,
+      onCommitSelect,
+      selectedCommit
+    } = this.props.storage
 
     return (
       <SplitPane split="horizontal" allowResize resizersSize={0} onResizeEnd={this.setLayout}>
@@ -76,7 +81,9 @@ class HistoryPage extends Component {
           <History
             commits={commits}
             commiters={commiters}
-            refs={refs}
+            heads={heads}
+            remoteHeads={remoteHeads}
+            tags={tags}
             onCommitSelect={onCommitSelect}
             onContextMenu={this.onContextMenu}
             selectedCommit={selectedCommit}

@@ -25,10 +25,14 @@ import { Dock } from './src/components/dock'
 const dock = new Dock()
 
 import VCSView from './src/components/vcs'
-import ChangesFilelist from './src/components/vcs/changesfilelist'
+import ChangesFileList from './src/components/vcs/changedfiles-list'
 import CommitInfo from './src/components/vcs/commit-info'
 import ChangedFiles from './src/components/vcs/changed-files'
 import StagedFiles from './src/components/vcs/staged-files'
+
+import BranchesList from './src/components/vcs/branches-list.js'
+import TagsList from './src/components/vcs/tags-list.js'
+import RemotesList from './src/components/vcs/remotes-list.js'
 
 const vcs = new VCS({ workspace, project, applicationDelegate })
 
@@ -120,8 +124,7 @@ export default class App extends Component {
     })
 
     const replacePanes = mode => {
-      dock.removePane('vcs', 0)
-      dock.removePane('vcs', 0)
+      dock.removePanes('vcs')
 
       if (mode === 'commit') {
         dock.addPane('vcs', {
@@ -155,7 +158,40 @@ export default class App extends Component {
 
         dock.addPane('vcs', {
           title: 'CHANGES',
-          component: <ChangesFilelist storage={vcs} />
+          component: <ChangesFileList storage={vcs} />
+        })
+
+        dock.addPane('vcs', {
+          title: 'BRANCHES',
+          component: <BranchesList storage={vcs} />,
+          paneHeaderButtons: [
+            {
+              icon: './assets/ui/ellipsis.svg',
+              tooltip: ''
+            }
+          ]
+        })
+
+        dock.addPane('vcs', {
+          title: 'TAGS',
+          component: <TagsList storage={vcs} />,
+          paneHeaderButtons: [
+            {
+              icon: './assets/ui/ellipsis.svg',
+              tooltip: ''
+            }
+          ]
+        })
+
+        dock.addPane('vcs', {
+          title: 'REMOTES',
+          component: <RemotesList storage={vcs} />,
+          paneHeaderButtons: [
+            {
+              icon: './assets/ui/ellipsis.svg',
+              tooltip: ''
+            }
+          ]
         })
       }
     }

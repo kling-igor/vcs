@@ -184,6 +184,15 @@ export class Dock {
     }
   }
 
+  @action.bound
+  removePanes(pageId) {
+    const page = this.pages[pageId]
+    if (page) {
+      page.panes = []
+      this.pages = { ...this.pages }
+    }
+  }
+
   pageButtons(pageId) {
     const page = this.pages[pageId]
     if (page) {

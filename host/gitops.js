@@ -126,11 +126,20 @@ export async function getReferences(repo) {
         if (reference.isConcrete()) {
           console.log('Concrete reference:', refName, reference.target().toString())
 
-          const name = refName.replace('refs/heads/', '').replace('refs/remotes/', '')
-          repoRefs.push({
-            name,
-            sha: reference.target().toString()
-          })
+          if (reference.isTag()) {
+            const targetRef = await reference.peel(nodegit.Object.TYPE.COMMIT)
+            const commit = await repo.getCommit(targetRef)
+            repoRefs.push({
+              name: refName,
+              sha: commit.toString()
+            })
+          } else {
+            // const name = refName.replace('refs/heads/', '').replace('refs/remotes/', '')
+            repoRefs.push({
+              name: refName,
+              sha: reference.target().toString()
+            })
+          }
         } else if (reference.isSymbolic()) {
           console.log('Symbolic reference:', refName, reference.symbolicTarget().toString())
         }
