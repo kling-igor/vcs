@@ -390,11 +390,25 @@ export class VCS {
   }
 
   @action.bound
-  onCommit() {
-    console.log('commit')
+  async onCommit() {
+    if (this.stagedFiles.length === 0) return
 
-    //  берем сообщение коммита и добавляем в начало списка (если уникальное)
-    //  очищаем сообщение коммита!!
+    await callMain('commit:create', this.commitMessage)
+
+    const stippedMessage = this.commitMessage.slice(0, 80)
+    if (this.previousCommits[0] !== stippedMessage) {
+      this.previousCommits = this.previousCommits.unshift(stippedMessage)
+    }
+
+    await this.getLog()
+    await this.status()
+
+    transaction(() => {
+      this.stagedFiles = []
+      this.commitMessage = ''
+    })
+
+    this.logMode()
   }
 
   @action.bound

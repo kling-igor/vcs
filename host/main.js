@@ -157,20 +157,10 @@ answerRenderer('commit:get-info', async (browserWindow, sha) => {
 answerRenderer('commit:create', async (browserWindow, message) => {
   checkRepo()
 
-  // ПОКА ДОБАВИМ В ИНДЕКС ВСЕ ИЗМЕНЕННЫЕ ФАЙЛЫ!!!
-
   try {
-    const index = await refreshIndex(repo)
-
-    const items = await status(repo)
-    for (const { path, status } of items) {
-      if (status === 'M' || status === 'A' || status === 'R' || status === 'D') {
-        await addToIndex(index, path)
-      }
-    }
-
-    const treeOid = await writeIndex(index)
-    await commit(repo, treeOid, message, user.name, user.email)
+    const index = await repo.index()
+    await writeIndex(index)
+    await commit(repo, message, user.name, user.email)
   } catch (e) {
     console.log('COMMIT ERROR:', e)
   }

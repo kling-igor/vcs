@@ -176,11 +176,9 @@ export async function removeFromIndex(index, path) {
 /**
  * Writes to index
  * @param {Index} index
- * @returns {OID}
  */
 export async function writeIndex(index) {
   await index.write()
-  return await index.writeTree()
 }
 
 function fileStatus(file) {
@@ -381,26 +379,21 @@ export async function push(remote, username, password = '') {
   }
 }
 
-export async function commit(repo, treeOid, message, name = 'User', email = 'no email') {
+export async function commit(repo, message, name = 'User', email = 'no email') {
+  const index = await repo.index()
+  const treeOid = await index.writeTree()
+
   const author = nodegit.Signature.now(name, email)
   const committer = author
 
-  let head
-
-  try {
-    head = await nodegit.Reference.nameToId(repo, 'HEAD')
-  } catch (e) {
-    console.log('COMMIT:GET_HEAD ERROR:', e)
-  }
-
-  let parent
-  if (head) {
-    parent = await repo.getCommit(head)
-  }
+  const branchRef = await repo.head()
+  const branchName = branchRef.name()
+  const branchOid = await nodegit.Reference.nameToId(repo, branchName)
+  const parent = await repo.getCommit(branchOid)
 
   let commitId
   try {
-    commitId = await repo.createCommit('HEAD', author, committer, message, treeOid, [parent])
+    commitId = await repo.createCommit(branchName, author, committer, message, treeOid, [parent])
   } catch (e) {
     console.log('COMMIT:CREATE_COMMIT ERROR:', e)
   }
