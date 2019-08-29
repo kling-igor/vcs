@@ -14,6 +14,25 @@ class CommitPage extends Component {
     this.setState({ layout })
   }
 
+  showPreviousCommits = () => {
+    const {
+      storage: { previousCommits, setCommitMessage }
+    } = this.props
+
+    const items = previousCommits.map(item => ({
+      label: item,
+      click: () => {
+        setCommitMessage({
+          target: {
+            value: item
+          }
+        })
+      }
+    }))
+
+    this.props.workspace.showContextMenu({ items })
+  }
+
   render() {
     const upperSize = +this.state.layout[0] / 100
     const lowerSize = +this.state.layout[1] / 100
@@ -44,6 +63,7 @@ class CommitPage extends Component {
             onChange={setCommitMessage}
             text={commitMessage}
             previousCommits={previousCommits}
+            onShowPreviousCommits={this.showPreviousCommits}
             onCommit={onCommit}
             onCancelCommit={onCancelCommit}
           />

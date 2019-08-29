@@ -110,8 +110,9 @@ export default class App extends Component {
         },
         {
           icon: './assets/ui/refresh.svg',
-          onClick: () => {
-            console.log('GIT STATUS')
+          onClick: async () => {
+            await vcs.getLog()
+            await vcs.status()
           },
           tooltip: 'Refresh'
         }
@@ -191,7 +192,7 @@ export default class App extends Component {
                 <DockWidget />
               </Pane>
               <Pane size={rightSize} minSize="400px" maxSize="100%">
-                <VCSView storage={vcs} />
+                <VCSView storage={vcs} workspace={workspace} />
               </Pane>
             </SplitPane>
           </RootStyle>

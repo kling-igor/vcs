@@ -93,48 +93,48 @@ const commitButtonStyle = { paddingLeft: 16, paddingRight: 16 }
 const cancelButtonStyle = { ...commitButtonStyle, marginRight: 8 }
 const historyButtonStyle = { width: '30px', height: '30px', marginRight: '8px', outline: 'none' }
 
-export default memo(({ name, email, onChange, text, previousCommits = [], onCommit, onCancelCommit }) => {
-  const [commitable, setCommitable] = useState(false)
-  const hash = useMemo(() => MD5(email).toString(), [email])
+export default memo(
+  ({ name, email, onChange, text, previousCommits, onShowPreviousCommits, onCommit, onCancelCommit }) => {
+    const [commitable, setCommitable] = useState(false)
+    const hash = useMemo(() => MD5(email).toString(), [email])
 
-  useEffect(() => {
-    setCommitable((text && text.length > 0 && text.trim()) || false)
-  }, [text])
+    useEffect(() => {
+      setCommitable((text && text.length > 0 && text.trim()) || false)
+    }, [text])
 
-  const showPreviousCommits = useCallback(() => {}, [previousCommits])
-
-  return (
-    <HorizontalConatiner>
-      <GravatarStyle
-        src={`https://www.gravatar.com/avatar/${hash}?s=100&d=identicon`}
-        draggable="false"
-        width={50}
-        height={50}
-      />
-      <VerticalContainerStyle>
-        <UpperHorizontalConatiner>
-          <NameEmailStyle>{`${name} <${email}>`}</NameEmailStyle>
-          <Button
-            small
-            minimal
-            disabled={!previousCommits.length}
-            icon={IconNames.HISTORY}
-            onClick={showPreviousCommits}
-            intent={Intent.PRIMARY}
-            // disabled={!hasHistoryChanges}
-            style={historyButtonStyle}
-          />
-        </UpperHorizontalConatiner>
-        <CommitAreaStyle onChange={onChange} value={text} />
-        <ButtonsContainerStyle>
-          <Button small style={cancelButtonStyle} onClick={onCancelCommit}>
-            Cancel
-          </Button>
-          <Button small intent="primary" style={commitButtonStyle} disabled={!commitable} onClick={onCommit}>
-            Commit
-          </Button>
-        </ButtonsContainerStyle>
-      </VerticalContainerStyle>
-    </HorizontalConatiner>
-  )
-})
+    return (
+      <HorizontalConatiner>
+        <GravatarStyle
+          src={`https://www.gravatar.com/avatar/${hash}?s=100&d=identicon`}
+          draggable="false"
+          width={50}
+          height={50}
+        />
+        <VerticalContainerStyle>
+          <UpperHorizontalConatiner>
+            <NameEmailStyle>{`${name} <${email}>`}</NameEmailStyle>
+            <Button
+              small
+              minimal
+              disabled={previousCommits.length === 0}
+              icon={IconNames.HISTORY}
+              onClick={onShowPreviousCommits}
+              intent={Intent.PRIMARY}
+              // disabled={!hasHistoryChanges}
+              style={historyButtonStyle}
+            />
+          </UpperHorizontalConatiner>
+          <CommitAreaStyle onChange={onChange} value={text} />
+          <ButtonsContainerStyle>
+            <Button small style={cancelButtonStyle} onClick={onCancelCommit}>
+              Cancel
+            </Button>
+            <Button small intent="primary" style={commitButtonStyle} disabled={!commitable} onClick={onCommit}>
+              Commit
+            </Button>
+          </ButtonsContainerStyle>
+        </VerticalContainerStyle>
+      </HorizontalConatiner>
+    )
+  }
+)

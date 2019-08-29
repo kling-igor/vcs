@@ -13,9 +13,7 @@ const RootStyle = styled.div`
 @observer
 class VCSView extends Component {
   render() {
-    const { storage } = this.props
-
-    console.log('storage.mode:', storage.mode)
+    const { storage, workspace } = this.props
 
     if (storage.mode === 'log') {
       return (
@@ -26,7 +24,7 @@ class VCSView extends Component {
     } else if (storage.mode === 'commit') {
       return (
         <RootStyle>
-          <CommitPage storage={storage} />
+          <CommitPage storage={storage} workspace={workspace} />
         </RootStyle>
       )
     }

@@ -395,15 +395,15 @@ export class VCS {
 
     await callMain('commit:create', this.commitMessage)
 
-    const stippedMessage = this.commitMessage.slice(0, 80)
-    if (this.previousCommits[0] !== stippedMessage) {
-      this.previousCommits = this.previousCommits.unshift(stippedMessage)
-    }
-
     await this.getLog()
     await this.status()
 
     transaction(() => {
+      const stippedMessage = this.commitMessage.slice(0, 80)
+      if (this.previousCommits[0] !== stippedMessage) {
+        this.previousCommits = [stippedMessage, ...this.previousCommits]
+      }
+
       this.stagedFiles = []
       this.commitMessage = ''
     })
