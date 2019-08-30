@@ -78,25 +78,6 @@ export function confirmBranchRebase(branch) {
   return confirmActionMessage(message, detail)
 }
 
-export function confirmBranchRename(name) {
-  return new Promise((resolve, reject) => {
-    prompt({
-      title: 'Rename Branch',
-      label: 'New branch name:',
-      value: name,
-      inputAttrs: { type: 'text', required: true }
-    })
-      .then(result => {
-        if (result === null) {
-          reject()
-        } else {
-          resolve(result)
-        }
-      })
-      .catch(() => {})
-  })
-}
-
 export function confirmBranchDelete(branch) {
   const message = 'Confirm Branch Deletion'
   const detail = `Are you sure you want to delete the branch '${branch}'?`
