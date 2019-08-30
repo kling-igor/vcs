@@ -34,6 +34,10 @@ import BranchesList from './src/components/vcs/branches-list.js'
 import TagsList from './src/components/vcs/tags-list.js'
 import RemotesList from './src/components/vcs/remotes-list.js'
 
+import * as Dialog from './dialogs'
+
+const noop = () => {}
+
 const vcs = new VCS({ workspace, project, applicationDelegate })
 
 const GlobalStyle = createGlobalStyle`
@@ -97,51 +101,79 @@ export default class App extends Component {
     verticalLayout: ['20000', '20000']
   }
 
-  onStagedFileContextMenu = sha => {
+  onStagedFileContextMenu = path => {
     workspace.showContextMenu({
       items: [
         {
           label: `Unstage from index`,
-          click: () => {}
+          click: () => {
+            Dialog.confirmUnstageFile()
+              .then(() => {
+                console.log('UNSTAGING ', path)
+              })
+              .catch(noop)
+          }
         },
         {
           type: 'separator'
         },
         {
           label: `Copy Path to Clipboard`,
-          click: () => {}
+          click: () => {
+            console.log('COPYING TO CLIPBOARD:', path)
+          }
         }
       ]
     })
   }
 
-  onChangedFileContextMenu = sha => {
+  onChangedFileContextMenu = path => {
     workspace.showContextMenu({
       items: [
         {
           label: `Add to index`,
-          click: () => {}
+          click: () => {
+            Dialog.confirmStageFile()
+              .then(() => {
+                console.log('STAGING ', path)
+              })
+              .catch(noop)
+          }
         },
         {
           label: `Remove`,
-          click: () => {}
+          click: () => {
+            Dialog.confirmFileRemove(path)
+              .then(() => {
+                console.log('REMOVING ', path)
+              })
+              .catch(noop)
+          }
         },
         {
           label: `Stop tracking`,
-          click: () => {}
+          click: () => {
+            Dialog.confirmFileStopTracking(path)
+              .then(() => {
+                console.log('STOP TRACKING ', path)
+              })
+              .catch(noop)
+          }
         },
         {
           label: `Discard Changes`,
-          click: () => {}
+          click: () => {
+            Dialog.confirmDiscardFileChanges(path)
+              .then(() => {
+                console.log('DISCARDING FILE CHANGES ', path)
+              })
+              .catch(noop)
+          }
         },
-        {
-          label: `Ignore...`,
-          click: () => {}
-        },
-        {
-          label: `Reset...`,
-          click: () => {}
-        },
+        // {
+        //   label: `Ignore...`,
+        //   click: () => {}
+        // },
         {
           type: 'separator'
         },
@@ -178,7 +210,9 @@ export default class App extends Component {
         },
         {
           label: `Copy Path to Clipboard`,
-          click: () => {}
+          click: () => {
+            console.log('COPYING TO CLIPBOARD:', path)
+          }
         }
       ]
     })
@@ -198,15 +232,33 @@ export default class App extends Component {
       items: [
         {
           label: `Checkout ${name}`,
-          click: () => {}
+          click: () => {
+            Dialog.confirmBranchSwitch(name)
+              .then(discardLocalChanges => {
+                console.log(`SWITCHING BRANCH TO ${name} DISCARDING LOCAL CHANGES: ${discardLocalChanges}`)
+              })
+              .catch(noop)
+          }
         },
         {
           label: `Merge ${name}`,
-          click: () => {}
+          click: () => {
+            Dialog.confirmBranchMerge()
+              .then(commitImmediatley => {
+                console.log(`MERGING INTO CURRENT BRANCH AND COMMITING ${commitImmediatley}`)
+              })
+              .catch(noop)
+          }
         },
         {
           label: `Rebase ${name}`,
-          click: () => {}
+          click: () => {
+            Dialog.confirmBranchRebase(name)
+              .then(() => {
+                console.log('REBASING CURRENT CHANGES TO ', name)
+              })
+              .catch(noop)
+          }
         },
         {
           type: 'separator'
@@ -220,11 +272,23 @@ export default class App extends Component {
         },
         {
           label: `Rename...`,
-          click: () => {}
+          click: () => {
+            Dialog.confirmBranchRename(name)
+              .then(newName => {
+                console.log(`RENAMING BRANCH ${name} to ${newName}...`)
+              })
+              .catch(noop)
+          }
         },
         {
           label: `Delete ${name}`,
-          click: () => {}
+          click: () => {
+            Dialog.confirmBranchDelete(name)
+              .then(deleteRemoteBranch => {
+                console.log(`DELETING BRANCH ${name} AND DELETING REMOTE ${deleteRemoteBranch}`)
+              })
+              .catch(noop)
+          }
         },
         {
           type: 'separator'
@@ -251,7 +315,13 @@ export default class App extends Component {
       items: [
         {
           label: `Checkout ${name}`,
-          click: () => {}
+          click: () => {
+            Dialog.confirmCheckoutToDetachedHead(name)
+              .then(discardLocalChanges => {
+                console.log('CHECKOUTING TO ', name, ' DISCARD LOCAL CHANGES:', discardLocalChanges)
+              })
+              .catch(noop)
+          }
         },
         {
           type: 'separator'
@@ -262,7 +332,13 @@ export default class App extends Component {
         },
         {
           label: `Delete ${name}`,
-          click: () => {}
+          click: () => {
+            Dialog.confirmTagDelete(name)
+              .then(removeFromRemote => {
+                console.log(`REMOVING TAG ${name} AND FROM REMOTE: ${removeFromRemote}`)
+              })
+              .catch(noop)
+          }
         },
         {
           type: 'separator'
