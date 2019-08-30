@@ -136,23 +136,26 @@ const StatusBadge = memo(({ value }) => {
   )
 })
 
-const Checkbox = memo(({ indeterminate, ...props }) => {
-  const ref = useRef(null)
+// const Checkbox = memo(({ indeterminate, ...props }) => {
+//   const ref = useRef(null)
 
-  useEffect(() => {
-    if (ref.current) {
-      ref.current.indeterminate = indeterminate
-    }
-  }, [indeterminate])
+//   useEffect(() => {
+//     if (ref.current) {
+//       ref.current.indeterminate = indeterminate
+//     }
+//   }, [indeterminate])
 
-  return <input ref={ref} type="checkbox" {...props} />
-})
+//   return <input ref={ref} type="checkbox" {...props} />
+// })
 
 const scrollBarsStyle = { width: '100%', height: '100%' }
 
 // https://www.git-scm.com/docs/git-status#_short_format
 
-const FileList = ({ files, onSelectionChanged }) => {
+const FileList = ({ files, onSelectionChanged, onItemSelect = () => {}, onContextMenu }) => {
+  const onClickHandler = useCallback(event => onItemSelect(event.currentTarget.dataset.path), [])
+  const onContextMenuHandler = useCallback(event => onContextMenu(event.currentTarget.dataset.path), [])
+
   const handleInputChange = useCallback(
     event => {
       const index = event.currentTarget.dataset.index
@@ -169,8 +172,14 @@ const FileList = ({ files, onSelectionChanged }) => {
         <ListStyle>
           {files.map(({ filename, path, status, selected }, index) => {
             const decoratedPath = path === '.' ? '' : path
+            const fullPath = `${path}/${filename}`
             return (
-              <ListItemContainerStyle key={`${path}/${filename}`}>
+              <ListItemContainerStyle
+                key={fullPath}
+                onClick={onClickHandler}
+                onContextMenu={onContextMenuHandler}
+                data-path={fullPath}
+              >
                 <ListItemLeftGroupStyle>
                   <input type="checkbox" checked={!!selected} onChange={handleInputChange} data-index={index} />
                   <ListItemFilenameStyle>{filename}</ListItemFilenameStyle>

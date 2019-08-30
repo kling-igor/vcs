@@ -97,6 +97,188 @@ export default class App extends Component {
     verticalLayout: ['20000', '20000']
   }
 
+  onStagedFileContextMenu = sha => {
+    workspace.showContextMenu({
+      items: [
+        {
+          label: `Unstage from index`,
+          click: () => {}
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: `Copy Path to Clipboard`,
+          click: () => {}
+        }
+      ]
+    })
+  }
+
+  onChangedFileContextMenu = sha => {
+    workspace.showContextMenu({
+      items: [
+        {
+          label: `Add to index`,
+          click: () => {}
+        },
+        {
+          label: `Remove`,
+          click: () => {}
+        },
+        {
+          label: `Stop tracking`,
+          click: () => {}
+        },
+        {
+          label: `Discard Changes`,
+          click: () => {}
+        },
+        {
+          label: `Ignore...`,
+          click: () => {}
+        },
+        {
+          label: `Reset...`,
+          click: () => {}
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: 'Resolve Conflicts',
+          submenu: [
+            {
+              label: "Resolve Using 'Mine'",
+              click: () => {}
+            },
+            {
+              label: "Resolve Using 'Theirs'",
+              click: () => {}
+            },
+            {
+              type: 'separator'
+            },
+            {
+              label: 'Restart Merge',
+              click: () => {}
+            },
+            {
+              label: 'Mark Resolved',
+              click: () => {}
+            },
+            {
+              label: 'Mark Unresolved',
+              click: () => {}
+            }
+          ]
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: `Copy Path to Clipboard`,
+          click: () => {}
+        }
+      ]
+    })
+  }
+
+  onBranchContextMenu = sha => {
+    const { name } = vcs.heads.find(item => item.sha === sha)
+
+    const remotesSubmenu = vcs.remotes.map(item => ({
+      label: item.name,
+      click: () => {
+        console.log('PUSH BRANCH TO:', item.url)
+      }
+    }))
+
+    workspace.showContextMenu({
+      items: [
+        {
+          label: `Checkout ${name}`,
+          click: () => {}
+        },
+        {
+          label: `Merge ${name}`,
+          click: () => {}
+        },
+        {
+          label: `Rebase ${name}`,
+          click: () => {}
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: `Push to`,
+          submenu: remotesSubmenu
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: `Rename...`,
+          click: () => {}
+        },
+        {
+          label: `Delete ${name}`,
+          click: () => {}
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: 'Copy Branch Name to Clipboard',
+          click: () => {}
+        }
+      ]
+    })
+  }
+
+  onTagContextMenu = sha => {
+    const { name } = vcs.tags.find(item => item.sha === sha)
+
+    const remotesSubmenu = vcs.remotes.map(item => ({
+      label: item.name,
+      click: () => {
+        console.log('PUSH TAG TO:', item.url)
+      }
+    }))
+
+    workspace.showContextMenu({
+      items: [
+        {
+          label: `Checkout ${name}`,
+          click: () => {}
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: `Push to`,
+          submenu: remotesSubmenu
+        },
+        {
+          label: `Delete ${name}`,
+          click: () => {}
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: 'Copy Tag Name to Clipboard',
+          click: () => {}
+        }
+      ]
+    })
+  }
+
+  onRemoteContextMenu = name => {
+    console.log('ON REMOTE CONTEXT MENU:', name)
+  }
+
   async componentDidMount() {
     dock.addPage('vcs', {
       pageTitle: 'GIT',
@@ -129,7 +311,7 @@ export default class App extends Component {
       if (mode === 'commit') {
         dock.addPane('vcs', {
           title: 'STAGED',
-          component: <StagedFiles storage={vcs} />,
+          component: <StagedFiles storage={vcs} onContextMenu={this.onStagedFileContextMenu} />,
           paneHeaderButtons: [
             {
               icon: './assets/ui/ellipsis.svg',
@@ -141,7 +323,7 @@ export default class App extends Component {
 
         dock.addPane('vcs', {
           title: 'CHANGES',
-          component: <ChangedFiles storage={vcs} />,
+          component: <ChangedFiles storage={vcs} onContextMenu={this.onChangedFileContextMenu} />,
           paneHeaderButtons: [
             {
               icon: './assets/ui/ellipsis.svg',
@@ -163,7 +345,7 @@ export default class App extends Component {
 
         dock.addPane('vcs', {
           title: 'BRANCHES',
-          component: <BranchesList storage={vcs} />,
+          component: <BranchesList storage={vcs} onContextMenu={this.onBranchContextMenu} />,
           paneHeaderButtons: [
             {
               icon: './assets/ui/ellipsis.svg',
@@ -174,7 +356,7 @@ export default class App extends Component {
 
         dock.addPane('vcs', {
           title: 'TAGS',
-          component: <TagsList storage={vcs} />,
+          component: <TagsList storage={vcs} onContextMenu={this.onTagContextMenu} />,
           paneHeaderButtons: [
             {
               icon: './assets/ui/ellipsis.svg',
@@ -185,7 +367,7 @@ export default class App extends Component {
 
         dock.addPane('vcs', {
           title: 'REMOTES',
-          component: <RemotesList storage={vcs} />,
+          component: <RemotesList storage={vcs} onContextMenu={this.onRemoteContextMenu} />,
           paneHeaderButtons: [
             {
               icon: './assets/ui/ellipsis.svg',

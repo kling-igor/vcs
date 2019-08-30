@@ -18,7 +18,7 @@ class VCSView extends Component {
     if (storage.mode === 'log') {
       return (
         <RootStyle>
-          <HistoryPage storage={storage} />
+          <HistoryPage storage={storage} workspace={workspace} />
         </RootStyle>
       )
     } else if (storage.mode === 'commit') {

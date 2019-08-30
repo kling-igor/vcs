@@ -3,8 +3,15 @@ import { observer } from 'mobx-react'
 
 import ItemList from './item-list'
 
-const BranchesList = observer(({ storage: { remoteHeads, selectedCommit, onCommitSelect } }) => {
-  return <ItemList items={remoteHeads} selectedCommit={selectedCommit} onItemSelect={onCommitSelect} />
+const BranchesList = observer(({ storage: { remoteHeads, selectedCommit, onCommitSelect }, onContextMenu }) => {
+  return (
+    <ItemList
+      items={remoteHeads}
+      selectedCommit={selectedCommit}
+      onItemSelect={onCommitSelect}
+      onContextMenu={onContextMenu}
+    />
+  )
 })
 
 export default BranchesList

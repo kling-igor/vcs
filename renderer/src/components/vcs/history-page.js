@@ -20,7 +20,57 @@ class HistoryPage extends Component {
   }
 
   onContextMenu = sha => {
-    // show context menu!!!
+    if (!sha) return
+
+    const {
+      storage: { currentCommit },
+      workspace
+    } = this.props
+
+    // TODO: в VCS добавить знание о текущем коммите рабочего каталога
+
+    workspace.showContextMenu({
+      items: [
+        {
+          label: 'Checkout...',
+          click: () => {}
+        },
+        {
+          label: 'Merge...',
+          click: () => {}
+        },
+        {
+          label: 'Rebase...',
+          click: () => {}
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: 'Tag...',
+          click: () => {}
+        },
+        {
+          label: 'Branch...',
+          click: () => {}
+        },
+        {
+          label: 'Reset master to this commit',
+          click: () => {}
+        },
+        {
+          label: 'Reverse commit...',
+          click: () => {}
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: 'Copy SHA-1 to Clipboard',
+          click: () => {}
+        }
+      ]
+    })
   }
 
   // может быть инициировано из модели!!!
