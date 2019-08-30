@@ -19,96 +19,6 @@ class HistoryPage extends Component {
     this.setState({ layout })
   }
 
-  onContextMenu = sha => {
-    if (!sha) return
-
-    const {
-      storage: { currentCommit },
-      workspace
-    } = this.props
-
-    // TODO: в VCS добавить знание о текущем коммите рабочего каталога
-
-    workspace.showContextMenu({
-      items: [
-        {
-          label: 'Checkout...',
-          click: () => {}
-        },
-        {
-          label: 'Merge...',
-          click: () => {}
-        },
-        {
-          label: 'Rebase...',
-          click: () => {}
-        },
-        {
-          type: 'separator'
-        },
-        {
-          label: 'Tag...',
-          click: () => {}
-        },
-        {
-          label: 'Branch...',
-          click: () => {}
-        },
-        {
-          label: 'Reset master to this commit',
-          click: () => {}
-        },
-        {
-          label: 'Reverse commit...',
-          click: () => {}
-        },
-        {
-          type: 'separator'
-        },
-        {
-          label: 'Copy SHA-1 to Clipboard',
-          click: () => {}
-        }
-      ]
-    })
-  }
-
-  // может быть инициировано из модели!!!
-  confirmBranchSwitch(sha, workdirIsClean, branchName) {
-    let message = ''
-    let detail = ''
-
-    if (branchName && branchName !== 'HEAD') {
-      message = `Confirm Branch Switch`
-      detail = `Are you sure you want to switch your working copy to the branch '${branchName}'?`
-    } else {
-      message = `Confirm change working copy`
-      detail = `Are you sure you want to checkout '${sha}'? Doing so will make your working copy a 'detached HEAD', which means you won't be on a branch anymore. If you want to commit after this you'll probably want to either checkout a branch again, or create a new branch. Is this ok?`
-    }
-
-    return new Promise((resolve, reject) => {
-      remote.dialog.showMessageBox(
-        {
-          type: 'question',
-          message,
-          detail,
-          buttons: ['OK', 'Cancel'],
-          defaultId: 0,
-          cancelId: 1,
-          checkboxLabel: workdirIsClean ? '' : 'Discard local changes'
-          // icon: warningIcon
-        },
-        (index, checkboxChecked) => {
-          if (index === 0) {
-            resolve({ discardLocalChanges: !!checkboxChecked })
-          } else {
-            reject()
-          }
-        }
-      )
-    })
-  }
-
   render() {
     const upperSize = +this.state.layout[0] / 100
     const lowerSize = +this.state.layout[1] / 100
@@ -135,7 +45,7 @@ class HistoryPage extends Component {
             remoteHeads={remoteHeads}
             tags={tags}
             onCommitSelect={onCommitSelect}
-            onContextMenu={this.onContextMenu}
+            onContextMenu={this.props.onContextMenu}
             selectedCommit={selectedCommit}
           />
         </Pane>

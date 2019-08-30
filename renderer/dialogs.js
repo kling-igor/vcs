@@ -1,5 +1,4 @@
 const { remote } = window.require('electron')
-import prompt from 'electron-prompt'
 
 function confirmActionMessage(message, detail, option) {
   return new Promise((resolve, reject) => {
@@ -47,13 +46,13 @@ export function confirmFileRemove(filepath) {
 }
 
 export function confirmFileStopTracking(filepath) {
-  const message = 'Stop tracking file?'
+  const message = 'Stop Tracking File?'
   const detail = `The following file will be removed from the version control but will remain on your disk: ${filepath}`
   return confirmActionMessage(message, detail)
 }
 
 export function confirmDiscardFileChanges(filepath) {
-  const message = 'Discard changes?'
+  const message = 'Discard Changes?'
   const detail = `Are you sure you want to discard all your changes to the following file: ${filepath}`
   return confirmActionMessage(message, detail)
 }
@@ -61,6 +60,13 @@ export function confirmDiscardFileChanges(filepath) {
 export function confirmBranchSwitch(branch) {
   const message = 'Confirm Branch Switch'
   const detail = `Are you sure you want to switch your working copy to the branch '${branch}'?`
+  const option = 'Discard local changes'
+  return confirmActionMessage(message, detail, option)
+}
+
+export function confirmCheckoutToDetachedHead(tagOrSha) {
+  const message = 'Confirm Change Working Copy'
+  const detail = `Are you sure you want to checkout ${tagOrSha}? Doing so will make your working copy a 'detached HEAD', which means you won't be on a branch anymore. If you want to commit after this you'll probably want either checkout a branch again, or create a new branch. Is this ok?`
   const option = 'Discard local changes'
   return confirmActionMessage(message, detail, option)
 }
@@ -85,16 +91,33 @@ export function confirmBranchDelete(branch) {
   return confirmActionMessage(message, detail, option)
 }
 
-export function confirmCheckoutToDetachedHead(tag) {
-  const message = 'Confirm Change Working Copy'
-  const detail = `Are you sure you want to checkout ${tag}? Doing so will make your working copy a 'detached HEAD', which means you won't be on a branch anymore. If you want to commit after this you'll probably want either checkout a branch again, or create a new branch. Is this ok?`
-  const option = 'Discard local changes'
-  return confirmActionMessage(message, detail, option)
-}
-
 export function confirmTagDelete(tag) {
   const message = 'Confirm Remove Tag'
   const detail = `Are you sure you want to remove ${tag}?`
   const option = 'Remove tag from all remotes'
   return confirmActionMessage(message, detail, option)
+}
+
+export function confirmSoftBranchPointerReset(branch) {
+  const message = 'Confirm Branch Soft Reset'
+  const detail = `Are you sure you want to move ${branch} branch pointer? All local changes will be keep. Is this ok?`
+  return confirmActionMessage(message, detail)
+}
+
+export function confirmMixedBranchPointerReset(branch) {
+  const message = 'Confirm Branch Mixed Reset'
+  const detail = `Are you sure you want to move ${branch} branch pointer? Working copy will be keep but index will be reset. Is this ok?`
+  return confirmActionMessage(message, detail)
+}
+
+export function confirmHardBranchPointerReset(branch) {
+  const message = 'Confirm Branch Hard Reset'
+  const detail = `Are you sure you want to move ${branch} branch pointer? All working copy changes will be discarded. Is this ok?`
+  return confirmActionMessage(message, detail)
+}
+
+export function confirmBackout() {
+  const message = 'Confirm Backout'
+  const detail = `Are you sure you want reverse the selected changes?`
+  return confirmActionMessage(message, detail)
 }

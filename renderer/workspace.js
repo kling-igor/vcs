@@ -16,8 +16,17 @@ export class Workspace {
 
     const menuItems = Array.isArray(items) ? items : items()
 
-    menuItems.forEach(({ type = 'normal', label, enabled, click }) => {
-      contextMenu.append(new remote.MenuItem({ type, label, click, enabled: enabled != null ? enabled : true }))
+    // type = 'normal',
+    menuItems.forEach(({ type, label, enabled, click, submenu }) => {
+      contextMenu.append(
+        new remote.MenuItem({
+          type,
+          label,
+          click,
+          submenu,
+          enabled: enabled != null ? enabled : true
+        })
+      )
     })
 
     contextMenu.popup()
@@ -95,21 +104,5 @@ export class Workspace {
         <QuickPick items={items} placeHolder={placeHolder} noResultsText={noResultsText} onSelect={onSelect} />
       )
     })
-  }
-
-  showContextMenu({ title, items }) {
-    const contextMenu = new remote.Menu()
-    if (title) {
-      contextMenu.append(new remote.MenuItem({ label: title, enabled: false }))
-      contextMenu.append(new remote.MenuItem({ type: 'separator' }))
-    }
-
-    const menuItems = Array.isArray(items) ? items : items()
-
-    menuItems.forEach(({ type = 'normal', label, enabled, click }) => {
-      contextMenu.append(new remote.MenuItem({ type, label, click, enabled: enabled != null ? enabled : true }))
-    })
-
-    contextMenu.popup()
   }
 }

@@ -461,6 +461,159 @@ export default class App extends Component {
     console.log('ON REMOTE CONTEXT MENU:', name)
   }
 
+  onGitLogContextMenu = sha => {
+    if (!sha) return
+
+    const { currentCommit, heads, tags } = vcs
+
+    const branch = heads.find(item => item.sha === sha)
+
+    const tag = tags.find(item => item.sha === sha)
+
+    // TODO: в VCS добавить знание о текущем коммите рабочего каталога
+
+    workspace.showContextMenu({
+      items: [
+        {
+          label: 'Checkout...',
+          click: () => {
+            let name = sha
+            let detachedHead = true
+            if (branch) {
+              name = branch.name
+              detachedHead = false
+            } else if (tag) {
+              name === tag.name
+            }
+
+            if (detachedHead) {
+              Dialog.confirmCheckoutToDetachedHead(name)
+                .then(discardLocalChanges => {
+                  console.log(`SWITCHING TO DETACH HEAD ${name} `, name)
+                })
+                .catch(noop)
+            } else {
+              Dialog.confirmBranchSwitch(name)
+                .then(discardLocalChanges => {
+                  console.log(`SWITCHING TO BRANCH ${name} `, name)
+                })
+                .catch(noop)
+            }
+          }
+        },
+        {
+          label: 'Merge...',
+          click: () => {
+            Dialog.confirmBranchMerge()
+              .then(commitImmediatley => {
+                console.log(`MERGING INTO CURRENT BRANCH AND COMMITING ${commitImmediatley}`)
+              })
+              .catch(noop)
+          }
+        },
+        {
+          label: 'Rebase...',
+          click: () => {
+            Dialog.confirmBranchRebase(name)
+              .then(() => {
+                console.log('REBASING CURRENT CHANGES TO ', name)
+              })
+              .catch(noop)
+          }
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: 'Tag...',
+          click: () => {
+            workspace
+              .showInputUnique({
+                items: tags.map(({ name }) => ({ label: name })),
+                placeHolder: 'Tag name',
+                validateInput: input => /^[a-zA-Z0-9\-_.]+$/.test(input)
+              })
+              .then(value => {
+                if (value) {
+                  console.log(`CREATING TAG ${value} ON COMMIT ${sha}`)
+                }
+              })
+              .catch(noop)
+          }
+        },
+        {
+          label: 'Branch...',
+          click: () => {
+            workspace
+              .showInputUnique({
+                items: heads.map(({ name }) => ({ label: name })),
+                placeHolder: 'New branch',
+                validateInput: input => /^[a-zA-Z0-9\-_.]+$/.test(input)
+              })
+              .then(value => {
+                if (value) {
+                  console.log(`CREATING BRANCH ${value} ON COMMIT ${sha}`)
+                }
+              })
+              .catch(noop)
+          }
+        },
+        {
+          label: 'Reset branch to this commit...',
+          submenu: [
+            {
+              label: 'Soft...',
+              click: () => {
+                Dialog.confirmSoftBranchPointerReset('master')
+                  .then(() => {
+                    console.log(`SOFT BRANCH RESETTING...`)
+                  })
+                  .catch(noop)
+              }
+            },
+            {
+              label: 'Mixed...',
+              click: () => {
+                Dialog.confirmMixedBranchPointerReset('master')
+                  .then(() => {
+                    console.log(`MIXED BRANCH RESETTING...`)
+                  })
+                  .catch(noop)
+              }
+            },
+            {
+              label: 'Hard...',
+              click: () => {
+                Dialog.confirmHardBranchPointerReset('master')
+                  .then(() => {
+                    console.log(`HARD BRANCH RESETTING...`)
+                  })
+                  .catch(noop)
+              }
+            }
+          ]
+        },
+        {
+          label: 'Reverse commit...',
+          click: () => {
+            Dialog.confirmBackout()
+              .then(() => {
+                console.log(`BACKOUTING COMMIT...`)
+              })
+              .catch(noop)
+          }
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: 'Copy SHA-1 to Clipboard',
+          click: () => {}
+        }
+      ]
+    })
+  }
+
   async componentDidMount() {
     dock.addPage('vcs', {
       pageTitle: 'GIT',
@@ -592,7 +745,7 @@ export default class App extends Component {
                 <DockWidget />
               </Pane>
               <Pane size={rightSize} minSize="400px" maxSize="100%">
-                <VCSView storage={vcs} workspace={workspace} />
+                <VCSView storage={vcs} workspace={workspace} onGitLogContextMenu={this.onGitLogContextMenu} />
               </Pane>
             </SplitPane>
           </RootStyle>

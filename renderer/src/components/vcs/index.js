@@ -13,12 +13,12 @@ const RootStyle = styled.div`
 @observer
 class VCSView extends Component {
   render() {
-    const { storage, workspace } = this.props
+    const { storage, workspace, onGitLogContextMenu } = this.props
 
     if (storage.mode === 'log') {
       return (
         <RootStyle>
-          <HistoryPage storage={storage} workspace={workspace} />
+          <HistoryPage storage={storage} onContextMenu={onGitLogContextMenu} />
         </RootStyle>
       )
     } else if (storage.mode === 'commit') {
