@@ -25,6 +25,7 @@ import {
   checkoutBranch,
   checkoutToCommit,
   createBranch,
+  deleteBranch,
   headCommit,
   pull,
   push
@@ -242,6 +243,12 @@ answerRenderer('branch:create', async (browserWindow, name, commit) => {
   checkRepo()
 
   return createBranch(repo, name, commit)
+})
+
+answerRenderer('branch:delete', async (browserWindow, name) => {
+  checkRepo()
+
+  return deleteBranch(repo, name)
 })
 
 /* FAKE APPLICATION (from editor) */

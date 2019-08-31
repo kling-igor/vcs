@@ -67,6 +67,8 @@ export class VCS {
 
   @observable headCommit = null
 
+  @observable currentBranch = null
+
   // diff editor
   @observable originalFile = ''
   @observable modifiedFile = ''
@@ -167,8 +169,18 @@ export class VCS {
   @action.bound
   async createBranch(name) {
     await callMain('branch:create', name, this.headCommit)
+    await callMain('repository:checkout-branch', name, false)
     await this.getLog()
-    await this.status()
+
+    console.log('CURRENT BRANCH:', this.currentBranch)
+  }
+
+  @action.bound
+  async deleteBranch(name) {
+    await callMain('branch:delete', name)
+    await this.getLog()
+
+    console.log('CURRENT BRANCH:', this.currentBranch)
   }
 
   @action.bound
@@ -305,9 +317,7 @@ export class VCS {
     const data = await callMain('repository:log')
 
     if (data) {
-      const { commits, commiters, refs, headCommit } = data
-
-      console.log('REFS:', refs)
+      const { commits, commiters, refs, headCommit, currentBranch } = data
 
       const [heads, remoteHeads, tags] = refs.reduce(
         (acc, { name, sha }) => {
@@ -331,6 +341,7 @@ export class VCS {
         this.remoteHeads = remoteHeads
         this.tags = tags
         this.headCommit = headCommit
+        this.currentBranch = currentBranch
       })
     }
   }
@@ -388,24 +399,16 @@ export class VCS {
 
   @action.bound
   async onBranchCheckout(branch, discardLocalChanges) {
-    try {
-      await callMain('repository:checkout-branch', branch, discardLocalChanges)
-      await this.getLog()
-      await this.status()
-    } catch (e) {
-      console.log('CHECKOUT ERROR:', e)
-    }
+    await callMain('repository:checkout-branch', branch, discardLocalChanges)
+    await this.getLog()
+    await this.status()
   }
 
   @action.bound
   async onCheckoutToCommit(sha, discardLocalChanges) {
-    try {
-      await callMain('repository:checkout-commit', sha, discardLocalChanges)
-      await this.getLog()
-      await this.status()
-    } catch (e) {
-      console.log('CHECKOUT ERROR:', e)
-    }
+    await callMain('repository:checkout-commit', sha, discardLocalChanges)
+    await this.getLog()
+    await this.status()
   }
 
   @action.bound

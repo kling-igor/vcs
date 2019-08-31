@@ -258,6 +258,11 @@ export async function createBranch(repo, name, commit) {
   return await repo.createBranch(name, commit, 0 /* do not overwrite if exists */)
 }
 
+export async function deleteBranch(repo, name) {
+  const branchRef = await nodegit.Branch.lookup(repo, name, nodegit.Branch.BRANCH.LOCAL)
+  nodegit.Branch.delete(branchRef)
+}
+
 /**
  * Deletes tag
  * @param {Repository} repo
@@ -593,6 +598,8 @@ export async function log(repo) {
 
   const headCommit = await repo.getHeadCommit()
 
+  const currentBranch = await repo.getCurrentBranch()
+
   let masterCommit
 
   try {
@@ -743,6 +750,7 @@ export async function log(repo) {
     refs: headNotOnMaster ? [{ name: 'HEAD', sha: headCommit.sha() }, ...repoRefs] : repoRefs,
     commits,
     commiters,
-    headCommit: headCommit.sha()
+    headCommit: headCommit.sha(),
+    currentBranch: currentBranch.shorthand()
   }
 }

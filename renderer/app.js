@@ -315,9 +315,11 @@ export default class App extends Component {
   }
 
   onBranchContextMenu = sha => {
-    const { name } = vcs.heads.find(item => item.sha === sha)
+    const { heads, remotes, currentBranch } = vcs
 
-    const remotesSubmenu = vcs.remotes.map(item => ({
+    const { name } = heads.find(item => item.sha === sha)
+
+    const remotesSubmenu = remotes.map(item => ({
       label: item.name,
       click: () => {
         console.log('PUSH BRANCH TO:', item.url)
@@ -372,14 +374,7 @@ export default class App extends Component {
           click: () => {
             workspace
               .showInputUnique({
-                items: [
-                  {
-                    label: 'master'
-                  },
-                  {
-                    label: 'add'
-                  }
-                ],
+                items: remotes.map(({ name: label }) => ({ label })),
                 placeHolder: 'New branch name',
                 validateInput: input => /^[a-zA-Z0-9\-_]+$/.test(input)
               })
@@ -397,9 +392,14 @@ export default class App extends Component {
             Dialog.confirmBranchDelete(name)
               .then(deleteRemoteBranch => {
                 console.log(`DELETING BRANCH ${name} AND DELETING REMOTE ${deleteRemoteBranch}`)
+
+                vcs.deleteBranch(name).catch(e => {
+                  console.log('ERROR DELETING BRANCH:', e)
+                })
               })
               .catch(noop)
-          }
+          },
+          enabled: currentBranch !== name
         },
         {
           type: 'separator'
