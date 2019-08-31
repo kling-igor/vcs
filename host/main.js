@@ -21,7 +21,9 @@ import {
   commit,
   commitInfo,
   fileDiffToParent,
-  resetToCommit,
+  softResetToCommit,
+  mixedResetToCommit,
+  hardResetToCommit,
   checkoutBranch,
   checkoutToCommit,
   createBranch,
@@ -263,6 +265,24 @@ answerRenderer('tag:delete', async (browserWindow, name) => {
   checkRepo()
 
   return deleteTagByName(repo, name)
+})
+
+answerRenderer('commit:reset-soft', async (browserWindow, sha) => {
+  checkRepo()
+
+  return softResetToCommit(repo, sha)
+})
+
+answerRenderer('commit:reset-mixed', async (browserWindow, sha) => {
+  checkRepo()
+
+  return mixedResetToCommit(repo, sha)
+})
+
+answerRenderer('commit:reset-hard', async (browserWindow, sha) => {
+  checkRepo()
+
+  return hardResetToCommit(repo, sha)
 })
 
 /* FAKE APPLICATION (from editor) */

@@ -106,13 +106,13 @@ export function confirmSoftBranchPointerReset(branch) {
 
 export function confirmMixedBranchPointerReset(branch) {
   const message = 'Confirm Branch Mixed Reset'
-  const detail = `Are you sure you want to move ${branch} branch pointer? Working copy will be keep but index will be reset. Is this ok?`
+  const detail = `Are you sure you want to move ${branch} branch pointer? Working copy will be keep but staged changes will be lost. Is this ok?`
   return confirmActionMessage(message, detail)
 }
 
 export function confirmHardBranchPointerReset(branch) {
   const message = 'Confirm Branch Hard Reset'
-  const detail = `Are you sure you want to move ${branch} branch pointer? All working copy changes will be discarded. Is this ok?`
+  const detail = `Are you sure you want to move ${branch} branch pointer? All working copy and staged changes will be lost. Is this ok?`
   return confirmActionMessage(message, detail)
 }
 

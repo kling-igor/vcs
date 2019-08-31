@@ -306,10 +306,24 @@ export async function checkoutToCommit(repo, sha, discardLocalChanges) {
   return repo.setHeadDetached(commit)
 }
 
-export async function resetToCommit(repo, sha) {
+async function resetToCommit(repo, sha, kind, options = {}) {
   const oid = nodegit.Oid.fromString(sha)
   const commit = await repo.getCommit(oid)
-  return nodegit.Reset.reset(repo, commit, nodegit.Reset.TYPE.HARD, {})
+  return nodegit.Reset.reset(repo, commit, kind, options)
+}
+
+export async function softResetToCommit(repo, sha) {
+  return resetToCommit(repo, sha, nodegit.Reset.TYPE.SOFT)
+}
+
+export async function mixedResetToCommit(repo, sha) {
+  return resetToCommit(repo, sha, nodegit.Reset.TYPE.MIXED)
+}
+
+export async function hardResetToCommit(repo, sha) {
+  return resetToCommit(repo, sha, nodegit.Reset.TYPE.HARD, {
+    checkoutStrategy: nodegit.Checkout.STRATEGY.FORCE
+  })
 }
 
 export async function checkoutRemoteBranch(repo, branchName) {

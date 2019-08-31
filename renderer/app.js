@@ -599,39 +599,43 @@ export default class App extends Component {
           enabled: sha === headCommit
         },
         {
-          label: 'Reset branch to this commit...',
-          submenu: [
-            {
-              label: 'Soft...',
-              click: () => {
-                Dialog.confirmSoftBranchPointerReset('master')
-                  .then(() => {
-                    console.log(`SOFT BRANCH RESETTING...`)
-                  })
-                  .catch(noop)
-              }
-            },
-            {
-              label: 'Mixed...',
-              click: () => {
-                Dialog.confirmMixedBranchPointerReset('master')
-                  .then(() => {
-                    console.log(`MIXED BRANCH RESETTING...`)
-                  })
-                  .catch(noop)
-              }
-            },
-            {
-              label: 'Hard...',
-              click: () => {
-                Dialog.confirmHardBranchPointerReset('master')
-                  .then(() => {
-                    console.log(`HARD BRANCH RESETTING...`)
-                  })
-                  .catch(noop)
-              }
-            }
-          ]
+          type: 'separator'
+        },
+        {
+          label: 'Soft Reset Branch...',
+          click: () => {
+            Dialog.confirmSoftBranchPointerReset('master')
+              .then(() => {
+                console.log(`SOFT BRANCH RESETTING...`)
+                vcs.softResetCommit(sha)
+              })
+              .catch(noop)
+          }
+        },
+        {
+          label: 'Mixed Reset Branch...',
+          click: () => {
+            Dialog.confirmMixedBranchPointerReset('master')
+              .then(() => {
+                console.log(`MIXED BRANCH RESETTING...`)
+                vcs.mixedResetCommit(sha)
+              })
+              .catch(noop)
+          }
+        },
+        {
+          label: 'Hard Reset Branch...',
+          click: () => {
+            Dialog.confirmHardBranchPointerReset('master')
+              .then(() => {
+                console.log(`HARD BRANCH RESETTING...`)
+                vcs.hardResetCommit(sha)
+              })
+              .catch(noop)
+          }
+        },
+        {
+          type: 'separator'
         },
         {
           label: 'Reverse commit...',

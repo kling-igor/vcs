@@ -192,6 +192,24 @@ export class VCS {
   }
 
   @action.bound
+  async softResetCommit(sha) {
+    await callMain('commit:reset-soft', sha)
+    await this.getLog()
+  }
+
+  @action.bound
+  async mixedResetCommit(sha) {
+    await callMain('commit:reset-mixed', sha)
+    await this.getLog()
+  }
+
+  @action.bound
+  async hardResetCommit(sha) {
+    await callMain('commit:reset-hard', sha)
+    await this.getLog()
+  }
+
+  @action.bound
   async status() {
     const statuses = await callMain('repository:get-status')
 
