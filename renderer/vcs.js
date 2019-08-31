@@ -171,16 +171,24 @@ export class VCS {
     await callMain('branch:create', name, this.headCommit)
     await callMain('repository:checkout-branch', name, false)
     await this.getLog()
-
-    console.log('CURRENT BRANCH:', this.currentBranch)
   }
 
   @action.bound
   async deleteBranch(name) {
     await callMain('branch:delete', name)
     await this.getLog()
+  }
 
-    console.log('CURRENT BRANCH:', this.currentBranch)
+  @action.bound
+  async createTag(target, name, message) {
+    await callMain('tag:create', target, name, message)
+    await this.getLog()
+  }
+
+  @action.bound
+  async deleteTag(name) {
+    await callMain('tag:delete', name)
+    await this.getLog()
   }
 
   @action.bound

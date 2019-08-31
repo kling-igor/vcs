@@ -233,21 +233,6 @@ export async function status(repo) {
 }
 
 /**
- * Creates tag on commit
- * @param {Repository} repo
- * @param {{String | Oid}} commit
- * @param {String} tagName
- * @param {String} tagMessage
- */
-export async function createTag(repo, commit, tagName, tagMessage) {
-  let oid
-  if (typeof commit === 'string') {
-    oid = nodegit.Oid.fromString(commit)
-  }
-  return await repo.createTag(oid || commit, tagName, tagMessage)
-}
-
-/**
  * Creates branch
  * @param {Repository} repo
  * @param {String} name
@@ -261,6 +246,22 @@ export async function createBranch(repo, name, commit) {
 export async function deleteBranch(repo, name) {
   const branchRef = await nodegit.Branch.lookup(repo, name, nodegit.Branch.BRANCH.LOCAL)
   nodegit.Branch.delete(branchRef)
+}
+
+/**
+ * Creates tag on commit
+ * @param {Repository} repo
+ * @param {{String}} target SHA-1
+ * @param {String} tagName
+ * @param {String} tagMessage
+ */
+export async function createTag(repo, target, tagName, name, email, tagMessage) {
+  const taggerSignature = nodegit.Signature.now(name, email)
+
+  const oid = nodegit.Oid.fromString(target)
+  const commit = await repo.getCommit(oid)
+
+  await nodegit.Tag.create(repo, tagName, commit, taggerSignature, tagMessage, 1)
 }
 
 /**

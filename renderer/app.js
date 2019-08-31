@@ -459,9 +459,10 @@ export default class App extends Component {
         {
           label: `Delete ${tag.name}`,
           click: () => {
-            Dialog.confirmTagDelete(name)
+            Dialog.confirmTagDelete(tag.name)
               .then(removeFromRemote => {
                 console.log(`REMOVING TAG ${name} AND FROM REMOTE: ${removeFromRemote}`)
+                vcs.deleteTag(tag.name)
               })
               .catch(noop)
           }
@@ -551,16 +552,29 @@ export default class App extends Component {
         {
           label: 'Tag...',
           click: () => {
+            let tagName = ''
+
             workspace
               .showInputUnique({
                 items: tags.map(({ name }) => ({ label: name })),
                 placeHolder: 'Tag name',
                 validateInput: input => /^[a-zA-Z0-9\-_.]+$/.test(input)
               })
-              .then(value => {
-                if (value) {
-                  console.log(`CREATING TAG ${value} ON COMMIT ${sha}`)
-                }
+              .then(name => {
+                if (!name) return Promise.reject()
+
+                tagName = name
+
+                return workspace.showInputBox({
+                  placeHolder: 'Tag message',
+                  validateInput: input => !!input.trim()
+                })
+              })
+              .then(tagMessage => {
+                if (!tagMessage) return Promise.reject()
+
+                console.log(`CREATING TAG ${tagName} ON COMMIT ${sha}`)
+                vcs.createTag(sha, tagName, tagMessage)
               })
               .catch(noop)
           }

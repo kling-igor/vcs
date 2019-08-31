@@ -26,6 +26,8 @@ import {
   checkoutToCommit,
   createBranch,
   deleteBranch,
+  createTag,
+  deleteTagByName,
   headCommit,
   pull,
   push
@@ -249,6 +251,18 @@ answerRenderer('branch:delete', async (browserWindow, name) => {
   checkRepo()
 
   return deleteBranch(repo, name)
+})
+
+answerRenderer('tag:create', async (browserWindow, target, name, message) => {
+  checkRepo()
+
+  return createTag(repo, target, name, user.name, user.email, message)
+})
+
+answerRenderer('tag:delete', async (browserWindow, name) => {
+  checkRepo()
+
+  return deleteTagByName(repo, name)
 })
 
 /* FAKE APPLICATION (from editor) */
