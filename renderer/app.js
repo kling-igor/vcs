@@ -1,3 +1,5 @@
+const { remote } = window.require('electron')
+
 import React, { Component } from 'react'
 import styled, { ThemeProvider, createGlobalStyle } from 'styled-components'
 
@@ -213,6 +215,7 @@ export default class App extends Component {
           label: `Copy Path to Clipboard`,
           click: () => {
             console.log('COPYING TO CLIPBOARD:', path)
+            remote.clipboard.writeText(path)
           }
         }
       ]
@@ -304,6 +307,7 @@ export default class App extends Component {
           label: `Copy Path to Clipboard`,
           click: () => {
             console.log('COPYING TO CLIPBOARD:', path)
+            remote.clipboard.writeText(path)
           }
         }
       ]
@@ -402,7 +406,9 @@ export default class App extends Component {
         },
         {
           label: 'Copy Branch Name to Clipboard',
-          click: () => {}
+          click: () => {
+            remote.clipboard.writeText(name)
+          }
         }
       ]
     })
@@ -465,7 +471,9 @@ export default class App extends Component {
         },
         {
           label: 'Copy Tag Name to Clipboard',
-          click: () => {}
+          click: () => {
+            remote.clipboard.writeText(tag.name)
+          }
         }
       ]
     })
@@ -624,7 +632,9 @@ export default class App extends Component {
         },
         {
           label: 'Copy SHA-1 to Clipboard',
-          click: () => {}
+          click: () => {
+            remote.clipboard.writeText(sha)
+          }
         }
       ]
     })
