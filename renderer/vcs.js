@@ -65,6 +65,8 @@ export class VCS {
   @observable.ref tags = []
   @observable.ref remotes = []
 
+  @observable headCommit = null
+
   // diff editor
   @observable originalFile = ''
   @observable modifiedFile = ''
@@ -160,6 +162,13 @@ export class VCS {
 
     // вызываем операцию удаления из индекса
     // по факту операции меняем состояние
+  }
+
+  @action.bound
+  async createBranch(name) {
+    await callMain('branch:create', name, this.headCommit)
+    await this.getLog()
+    await this.status()
   }
 
   @action.bound
@@ -296,7 +305,7 @@ export class VCS {
     const data = await callMain('repository:log')
 
     if (data) {
-      const { commits, commiters, refs } = data
+      const { commits, commiters, refs, headCommit } = data
 
       console.log('REFS:', refs)
 
@@ -321,6 +330,7 @@ export class VCS {
         this.heads = heads
         this.remoteHeads = remoteHeads
         this.tags = tags
+        this.headCommit = headCommit
       })
     }
   }

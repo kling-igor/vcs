@@ -742,6 +742,7 @@ export async function log(repo) {
     // опционально добавляем HEAD ссылку
     refs: headNotOnMaster ? [{ name: 'HEAD', sha: headCommit.sha() }, ...repoRefs] : repoRefs,
     commits,
-    commiters
+    commiters,
+    headCommit: headCommit.sha()
   }
 }

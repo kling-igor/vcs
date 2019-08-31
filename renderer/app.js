@@ -486,7 +486,7 @@ export default class App extends Component {
   onGitLogContextMenu = sha => {
     if (!sha) return
 
-    const { currentCommit, heads, tags } = vcs
+    const { currentCommit, heads, tags, headCommit } = vcs
 
     const branch = heads.find(item => item.sha === sha)
 
@@ -574,13 +574,15 @@ export default class App extends Component {
                 placeHolder: 'New branch',
                 validateInput: input => /^[a-zA-Z0-9\-_.]+$/.test(input)
               })
-              .then(value => {
-                if (value) {
-                  console.log(`CREATING BRANCH ${value} ON COMMIT ${sha}`)
+              .then(name => {
+                if (name) {
+                  console.log(`CREATING BRANCH ${name} ON COMMIT ${sha}`)
+                  vcs.createBranch(name)
                 }
               })
               .catch(noop)
-          }
+          },
+          enabled: sha === headCommit
         },
         {
           label: 'Reset branch to this commit...',

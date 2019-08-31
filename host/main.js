@@ -24,6 +24,7 @@ import {
   resetToCommit,
   checkoutBranch,
   checkoutToCommit,
+  createBranch,
   headCommit,
   pull,
   push
@@ -235,6 +236,12 @@ answerRenderer('repository:log', async browserWindow => {
   checkRepo()
 
   return log(repo)
+})
+
+answerRenderer('branch:create', async (browserWindow, name, commit) => {
+  checkRepo()
+
+  return createBranch(repo, name, commit)
 })
 
 /* FAKE APPLICATION (from editor) */
