@@ -37,7 +37,7 @@ const sort = array =>
   })
 
 export class VCS {
-  @observable mode = 'commit' // log | commit
+  @observable mode = 'log' // log | commit
 
   onModeChange = () => {}
 
@@ -165,8 +165,6 @@ export class VCS {
   @action.bound
   async status() {
     const statuses = await callMain('repository:get-status')
-
-    console.log('STATUSES:', statuses)
 
     const [stagedFiles, changedFiles] = statuses.reduce(
       (acc, item) => {
@@ -379,34 +377,24 @@ export class VCS {
   }
 
   @action.bound
-  async onCheckout(sha) {
-    // TODO: это и так предмет модели - должно постоянно обновляться по сигналам от watcher
-    const status = await callMain('repository:get-status')
-    const workdirIsClean = status.length === 0
-
-    const branch = this.refs.find(item => item.sha === sha)
-
-    // TODO: !!!!!!!!!!!!!!!!
+  async onBranchCheckout(branch, discardLocalChanges) {
     try {
-      if (!workdirIsClean || !branch) {
-        const { discardLocalChanges } = await this.confirmBranchSwitch(sha, workdirIsClean, branch && branch.name)
-
-        // Your local changes to the following files would be overwritten by checkout:
-        //   file.txt
-        // Please commit your changes or stash them before you switch branches.
-        // Aborting
-
-        if (!workdirIsClean && !discardLocalChanges) {
-          console.log('Your local changes to would be overwritten by checkout!!!')
-          throw new Error('Abort checkout in dirty working dir...')
-        }
-      }
-
-      await callMain('repository:checkout', sha)
-
+      await callMain('repository:checkout-branch', branch, discardLocalChanges)
       await this.getLog()
+      await this.status()
     } catch (e) {
-      console.log('canceled:', e)
+      console.log('CHECKOUT ERROR:', e)
+    }
+  }
+
+  @action.bound
+  async onCheckoutToCommit(sha, discardLocalChanges) {
+    try {
+      await callMain('repository:checkout-commit', sha, discardLocalChanges)
+      await this.getLog()
+      await this.status()
+    } catch (e) {
+      console.log('CHECKOUT ERROR:', e)
     }
   }
 

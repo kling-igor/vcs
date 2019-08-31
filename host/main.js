@@ -22,6 +22,7 @@ import {
   commitInfo,
   fileDiffToParent,
   resetToCommit,
+  checkoutBranch,
   checkoutToCommit,
   headCommit,
   pull,
@@ -196,15 +197,15 @@ answerRenderer('stage:remove', async (browserWindow, paths) => {
   }
 })
 
-answerRenderer('repository:checkout', async (browserWindow, sha) => {
+answerRenderer('repository:checkout-branch', async (browserWindow, branch, discardLocalChanges) => {
   checkRepo()
+  console.log('CHECKOUT TO BRANCH:', branch, discardLocalChanges)
+  return checkoutBranch(repo, branch, discardLocalChanges)
+})
 
-  if (!sha) {
-    console.error('sha not specified')
-    return null
-  }
-
-  return checkoutToCommit(repo, sha)
+answerRenderer('repository:checkout-commit', async (browserWindow, sha, discardLocalChanges) => {
+  checkRepo()
+  return checkoutToCommit(repo, sha, discardLocalChanges)
 })
 
 answerRenderer('repository:pull', async (browserWindow, username, password) => {

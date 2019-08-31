@@ -255,12 +255,7 @@ export async function createTag(repo, commit, tagName, tagMessage) {
  * @returns {Reference}
  */
 export async function createBranch(repo, name, commit) {
-  let oid
-  if (typeof commit === 'string') {
-    oid = nodegit.Oid.fromString(commit)
-  }
-
-  return await repo.createBranch(name, oid || commit, 0 /* do not overwrite if exists */)
+  return await repo.createBranch(name, commit, 0 /* do not overwrite if exists */)
 }
 
 /**
@@ -273,14 +268,36 @@ export async function deleteTagByName(repo, tagName) {
 }
 
 /**
- * Checkouts on specified branch (rejecting working directory changes)
+ * Checkouts on specified branch head (optionally rejecting working directory changes)
  * @param {Repository} repo
- * @param {String} [branch='master']
+ * @param {String} branch
+ * @param {Boolean} discardLocalChanges
+ * @see https://libgit2.org/docs/guides/101-samples/
+ * @see https://github.com/libgit2/libgit2/blob/HEAD/include/git2/checkout.h#files
  */
-export async function checkout(repo, branch = 'master') {
-  await repo.checkoutBranch(branch, {
-    checkoutStrategy: nodegit.Checkout.STRATEGY.FORCE
+export async function checkoutBranch(repo, branch, discardLocalChanges) {
+  console.log('checkoutBranch ', branch, discardLocalChanges)
+  return repo.checkoutBranch(branch, {
+    checkoutStrategy: discardLocalChanges ? nodegit.Checkout.STRATEGY.FORCE : nodegit.Checkout.STRATEGY.SAFE
   })
+}
+
+/**
+ * Checkouts on specified commit (optionally rejecting working directory changes)
+ * @param {Repository} repo
+ * @param {String} sha
+ * @param {Boolean} discardLocalChanges
+ * @see https://libgit2.org/docs/guides/101-samples/
+ * @see https://github.com/libgit2/libgit2/blob/HEAD/include/git2/checkout.h#files
+ */
+export async function checkoutToCommit(repo, sha, discardLocalChanges) {
+  console.log('checkoutToCommit:', sha, discardLocalChanges)
+  const oid = nodegit.Oid.fromString(sha)
+  const commit = await repo.getCommit(oid)
+  await nodegit.Checkout.tree(repo, commit, {
+    checkoutStrategy: discardLocalChanges ? nodegit.Checkout.STRATEGY.FORCE : nodegit.Checkout.STRATEGY.SAFE
+  })
+  return repo.setHeadDetached(commit)
 }
 
 export async function resetToCommit(repo, sha) {
@@ -293,14 +310,6 @@ export async function checkoutRemoteBranch(repo, branchName) {
   await checkout(repo, branchName)
   const commit = await repo.getReferenceCommit(`refs/remotes/origin/${branchName}`)
   await resetToCommit(repo, commit)
-}
-
-export async function checkoutToCommit(repo, sha) {
-  console.log('checkoutToCommit', sha)
-  const oid = nodegit.Oid.fromString(sha)
-  const commit = await repo.getCommit(oid)
-  await nodegit.Checkout.tree(repo, commit, { checkoutStrategy: nodegit.Checkout.STRATEGY.FORCE })
-  return await repo.setHeadDetached(commit)
 }
 
 export async function fetch(repo, username, password) {

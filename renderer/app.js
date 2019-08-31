@@ -327,7 +327,8 @@ export default class App extends Component {
           click: () => {
             Dialog.confirmBranchSwitch(name)
               .then(discardLocalChanges => {
-                console.log(`SWITCHING BRANCH TO ${name} DISCARDING LOCAL CHANGES: ${discardLocalChanges}`)
+                console.log(`SWITCHING TO BRANCH ${name} `)
+                vcs.onBranchCheckout(name, discardLocalChanges)
               })
               .catch(noop)
           }
@@ -408,7 +409,10 @@ export default class App extends Component {
   }
 
   onTagContextMenu = sha => {
-    const { name } = vcs.tags.find(item => item.sha === sha)
+    const { currentCommit, heads, tags } = vcs
+
+    const branch = heads.find(item => item.sha === sha)
+    const tag = tags.find(item => item.sha === sha)
 
     const remotesSubmenu = vcs.remotes.map(item => ({
       label: item.name,
@@ -420,13 +424,23 @@ export default class App extends Component {
     workspace.showContextMenu({
       items: [
         {
-          label: `Checkout ${name}`,
+          label: `Checkout ${tag.name}`,
           click: () => {
-            Dialog.confirmCheckoutToDetachedHead(name)
-              .then(discardLocalChanges => {
-                console.log('CHECKOUTING TO ', name, ' DISCARD LOCAL CHANGES:', discardLocalChanges)
-              })
-              .catch(noop)
+            if (branch) {
+              Dialog.confirmBranchSwitch(branch.name)
+                .then(discardLocalChanges => {
+                  console.log(`!!SWITCHING TO BRANCH ${branch.name} `)
+                  vcs.onBranchCheckout(branch.name, discardLocalChanges)
+                })
+                .catch(noop)
+            } else {
+              Dialog.confirmCheckoutToDetachedHead(tag.name)
+                .then(discardLocalChanges => {
+                  console.log(`SWITCHING TO DETACH HEAD ${tag.name} `)
+                  vcs.onCheckoutToCommit(tag.sha, discardLocalChanges)
+                })
+                .catch(noop)
+            }
           }
         },
         {
@@ -437,7 +451,7 @@ export default class App extends Component {
           submenu: remotesSubmenu
         },
         {
-          label: `Delete ${name}`,
+          label: `Delete ${tag.name}`,
           click: () => {
             Dialog.confirmTagDelete(name)
               .then(removeFromRemote => {
@@ -489,13 +503,15 @@ export default class App extends Component {
             if (detachedHead) {
               Dialog.confirmCheckoutToDetachedHead(name)
                 .then(discardLocalChanges => {
-                  console.log(`SWITCHING TO DETACH HEAD ${name} `, name)
+                  console.log(`SWITCHING TO DETACH HEAD ${name} `)
+                  vcs.onCheckoutToCommit(sha, discardLocalChanges)
                 })
                 .catch(noop)
             } else {
               Dialog.confirmBranchSwitch(name)
                 .then(discardLocalChanges => {
-                  console.log(`SWITCHING TO BRANCH ${name} `, name)
+                  console.log(`!!SWITCHING TO BRANCH ${branch.name} `)
+                  vcs.onBranchCheckout(branch.name, discardLocalChanges)
                 })
                 .catch(noop)
             }
@@ -644,6 +660,22 @@ export default class App extends Component {
       dock.removePanes('vcs')
 
       if (mode === 'commit') {
+        dock.setPageButtons('vcs', [
+          {
+            icon: './assets/ui/git/git-log.svg',
+            onClick: vcs.logMode,
+            tooltip: 'Log'
+          },
+          {
+            icon: './assets/ui/refresh.svg',
+            onClick: async () => {
+              await vcs.getLog()
+              await vcs.status()
+            },
+            tooltip: 'Refresh'
+          }
+        ])
+
         dock.addPane('vcs', {
           title: 'STAGED',
           component: <StagedFiles storage={vcs} onContextMenu={this.onStagedFileContextMenu} />,
@@ -668,6 +700,22 @@ export default class App extends Component {
           ]
         })
       } else if (mode === 'log') {
+        dock.setPageButtons('vcs', [
+          {
+            icon: './assets/ui/git/git-commit.svg',
+            onClick: vcs.commitMode,
+            tooltip: 'Commit'
+          },
+          {
+            icon: './assets/ui/refresh.svg',
+            onClick: async () => {
+              await vcs.getLog()
+              await vcs.status()
+            },
+            tooltip: 'Refresh'
+          }
+        ])
+
         dock.addPane('vcs', {
           title: 'COMMIT INFO',
           component: <CommitInfo storage={vcs} />
