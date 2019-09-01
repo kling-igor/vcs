@@ -24,6 +24,7 @@ import {
   softResetToCommit,
   mixedResetToCommit,
   hardResetToCommit,
+  revertCommit,
   checkoutBranch,
   checkoutToCommit,
   createBranch,
@@ -283,6 +284,12 @@ answerRenderer('commit:reset-hard', async (browserWindow, sha) => {
   checkRepo()
 
   return hardResetToCommit(repo, sha)
+})
+
+answerRenderer('commit:revert', async (browserWindow, sha) => {
+  checkRepo()
+
+  return revertCommit(repo, sha)
 })
 
 /* FAKE APPLICATION (from editor) */

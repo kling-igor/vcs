@@ -210,6 +210,13 @@ export class VCS {
   }
 
   @action.bound
+  async revertCommit(sha) {
+    await callMain('commit:revert', sha)
+    await this.getLog()
+    await this.status()
+  }
+
+  @action.bound
   async status() {
     const statuses = await callMain('repository:get-status')
 

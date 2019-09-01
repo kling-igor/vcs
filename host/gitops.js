@@ -326,6 +326,19 @@ export async function hardResetToCommit(repo, sha) {
   })
 }
 
+export async function revertCommit(repo, sha) {
+  const oid = nodegit.Oid.fromString(sha)
+  const commit = await repo.getCommit(oid)
+
+  const headCommit = await repo.getHeadCommit()
+
+  try {
+    const index = await nodegit.Revert.commit(repo, commit, headCommit, 0)
+  } catch (e) {
+    console.log('ERR:', e)
+  }
+}
+
 export async function checkoutRemoteBranch(repo, branchName) {
   await checkout(repo, branchName)
   const commit = await repo.getReferenceCommit(`refs/remotes/origin/${branchName}`)

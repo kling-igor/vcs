@@ -643,6 +643,7 @@ export default class App extends Component {
             Dialog.confirmBackout()
               .then(() => {
                 console.log(`BACKOUTING COMMIT...`)
+                vcs.revertCommit(sha)
               })
               .catch(noop)
           }

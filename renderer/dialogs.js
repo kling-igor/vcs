@@ -80,7 +80,7 @@ export function confirmBranchMerge() {
 
 export function confirmBranchRebase(branch) {
   const message = 'Confirm Rebase'
-  const detail = `Are you sure you want to rebase your current changes on to '${branch}'? Make sure your changes have not been pushed to anyone else.`
+  const detail = `Are you sure you want to rebase your current changes on to '${branch}' branch? Make sure your changes have not been pushed to anyone else.`
   return confirmActionMessage(message, detail)
 }
 
@@ -93,26 +93,26 @@ export function confirmBranchDelete(branch) {
 
 export function confirmTagDelete(tag) {
   const message = 'Confirm Remove Tag'
-  const detail = `Are you sure you want to remove ${tag}?`
+  const detail = `Are you sure you want to remove '${tag}' tag?`
   const option = 'Remove tag from all remotes'
   return confirmActionMessage(message, detail, option)
 }
 
 export function confirmSoftBranchPointerReset(branch) {
   const message = 'Confirm Branch Soft Reset'
-  const detail = `Are you sure you want to move ${branch} branch pointer? All local changes will be keep. Is this ok?`
+  const detail = `Are you sure you want to move '${branch}' branch pointer? All local changes will be keep. Is this ok?`
   return confirmActionMessage(message, detail)
 }
 
 export function confirmMixedBranchPointerReset(branch) {
   const message = 'Confirm Branch Mixed Reset'
-  const detail = `Are you sure you want to move ${branch} branch pointer? Working copy will be keep but staged changes will be lost. Is this ok?`
+  const detail = `Are you sure you want to move '${branch}' branch pointer? Working copy will be keep but staged changes will be lost. Is this ok?`
   return confirmActionMessage(message, detail)
 }
 
 export function confirmHardBranchPointerReset(branch) {
   const message = 'Confirm Branch Hard Reset'
-  const detail = `Are you sure you want to move ${branch} branch pointer? All working copy and staged changes will be lost. Is this ok?`
+  const detail = `Are you sure you want to move '${branch}' branch pointer? This will discard all your local changes in the working copy and the index. Are you sure this is what you want?`
   return confirmActionMessage(message, detail)
 }
 
