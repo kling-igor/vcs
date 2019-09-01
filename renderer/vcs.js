@@ -45,7 +45,7 @@ export class VCS {
     this.onModeChange = handler
   }
 
-  // commiter info
+  // committer info
   @observable name = ''
   @observable email = ''
 
@@ -59,7 +59,7 @@ export class VCS {
 
   // git tree
   @observable.ref commits = []
-  @observable.ref commiters = []
+  @observable.ref committers = []
   @observable.ref heads = []
   @observable.ref remoteHeads = []
   @observable.ref tags = []
@@ -350,7 +350,7 @@ export class VCS {
     const data = await callMain('repository:log')
 
     if (data) {
-      const { commits, commiters, refs, headCommit, currentBranch } = data
+      const { commits, committers, refs, headCommit, currentBranch } = data
 
       const [heads, remoteHeads, tags] = refs.reduce(
         (acc, { name, sha }) => {
@@ -369,7 +369,7 @@ export class VCS {
 
       transaction(() => {
         this.commits = commits
-        this.commiters = commiters
+        this.committers = committers
         this.heads = heads
         this.remoteHeads = remoteHeads
         this.tags = tags

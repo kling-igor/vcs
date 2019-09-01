@@ -596,7 +596,7 @@ export async function headCommit(repo) {
 /**
  * gitlog
  * @param {Repository} repo
- * @returns {{refs:Array, commits:Array, commiters:[]}}
+ * @returns {{refs:Array, commits:Array, committers:[]}}
  */
 export async function log(repo) {
   const I = i => i
@@ -605,7 +605,7 @@ export async function log(repo) {
   const reserve = []
   const branches = {}
 
-  const commiters = []
+  const committers = []
   const commits = []
 
   const getBranch = sha => {
@@ -737,12 +737,12 @@ export async function log(repo) {
       const authorDate = commit.time()
 
       let commiterIndex
-      const foundIndex = commiters.findIndex(({ name, email }) => name === authorName && email === authorEmail)
+      const foundIndex = committers.findIndex(({ name, email }) => name === authorName && email === authorEmail)
       if (foundIndex !== -1) {
         commiterIndex = foundIndex
       } else {
-        commiterIndex = commiters.length
-        commiters.push({ name: authorName, email: authorEmail })
+        commiterIndex = committers.length
+        committers.push({ name: authorName, email: authorEmail })
       }
 
       let message = commit.message()
@@ -771,13 +771,13 @@ export async function log(repo) {
     }
   } // while
 
-  console.log('COMMITERS:', commiters)
+  console.log('COMMITTERS:', committers)
 
   return {
     // опционально добавляем HEAD ссылку
     refs: headNotOnMaster ? [{ name: 'HEAD', sha: headCommit.sha() }, ...repoRefs] : repoRefs,
     commits,
-    commiters,
+    committers,
     headCommit: headCommit.sha(),
     currentBranch: currentBranch.shorthand()
   }
