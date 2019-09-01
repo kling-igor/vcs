@@ -246,14 +246,19 @@ export class VCS {
           workdirStatus = 'R'
         }
 
+        if (statusEx.includes('WT_NEW')) {
+          workdirStatus = 'A'
+        }
+
         if (statusEx.includes('INDEX_MODIFIED')) {
           stagedStatus = 'M'
         }
 
+        if (statusEx.includes('INDEX_NEW')) {
+          stagedStatus = 'A'
+        }
+
         // if (status.includes('I')) {
-        const foundInStaged = this.stagedFiles.find(
-          ({ path, filename }) => path === item.path && filename === item.filename
-        )
 
         //   let stagedStatus = status.replace('I', '')
 
@@ -275,22 +280,24 @@ export class VCS {
 
         //   console.log('workdirStatus:', workdirStatus)
 
-        selected = (foundInStaged && foundInStaged.selected) || false
-
-        acc[STAGED].push({ ...item, selected, status: stagedStatus })
-
-        if (!workdirStatus) {
-          return acc
+        if (stagedStatus) {
+          const foundInStaged = this.stagedFiles.find(
+            ({ path, filename }) => path === item.path && filename === item.filename
+          )
+          selected = (foundInStaged && foundInStaged.selected) || false
+          acc[STAGED].push({ ...item, selected, status: stagedStatus })
         }
+
         // }
 
-        const foundInChanged = this.changedFiles.find(
-          ({ path, filename }) => path === item.path && filename === item.filename
-        )
+        if (workdirStatus) {
+          const foundInChanged = this.changedFiles.find(
+            ({ path, filename }) => path === item.path && filename === item.filename
+          )
+          selected = (foundInChanged && foundInChanged.selected) || false
+          acc[CHANGED].push({ ...item, selected, status: workdirStatus || item.status })
+        }
 
-        selected = (foundInChanged && foundInChanged.selected) || false
-
-        acc[CHANGED].push({ ...item, selected, status: workdirStatus || item.status })
         return acc
       },
       [[], []]
@@ -332,6 +339,9 @@ export class VCS {
     )
 
     transaction(() => {
+      console.log('originalContent:', originalContent)
+      console.log('modifiedContent:', modifiedContent)
+
       this.originalFile = originalContent
       this.modifiedFile = modifiedContent
     })
