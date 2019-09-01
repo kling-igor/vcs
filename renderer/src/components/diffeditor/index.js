@@ -11,6 +11,19 @@ const DiffEditor = memo(({ originalFile = '', modifiedFile = '', width, height }
   const editorRef = useRef(null)
 
   useEffect(() => {
+    if (!originalFile || !modifiedFile) {
+      const editor = monaco.editor.create(editorRef.current, {
+        selectOnLineNumbers: true,
+        readOnly: true,
+        lineNumbers: 'on',
+        model: monaco.editor.createModel(originalFile || modifiedFile)
+      })
+
+      return () => {
+        editor.dispose()
+      }
+    }
+
     const diffEditor = monaco.editor.createDiffEditor(editorRef.current, {
       enableSplitViewResizing: true,
       // renderSideBySide: true,
