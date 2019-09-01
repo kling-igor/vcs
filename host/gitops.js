@@ -1,6 +1,6 @@
 import nodegit from 'nodegit'
 import { resolve, join, dirname, basename } from 'path'
-import { ensureDir, writeFile } from 'fs-extra'
+import { ensureDir, writeFile, readFile } from 'fs-extra'
 
 /**
  * @returns {Config}
@@ -223,12 +223,15 @@ function fileStatus(file) {
  * @returns {{filename:String, path:String, status:String}[]}
  */
 export async function status(repo) {
-  const statuses = await repo.getStatus()
+  const statuses = await repo.getStatusExt()
   return statuses.map(file => {
     const filename = basename(file.path())
     const path = dirname(file.path())
     const status = fileStatus(file)
-    return { filename, path, status }
+
+    console.log('STATUS_EX:', filename, file.status())
+
+    return { filename, path, status, statusEx: file.status() }
   })
 }
 
@@ -451,6 +454,18 @@ export async function commit(repo, message, name = 'User', email = 'no email') {
   return commitId
 }
 
+export async function merge(repo, message, ourBranch, theirBranch) {
+  // const author = nodegit.Signature.now(name, email)
+  // const committer = author
+
+  const index = nodegit.Merge.commits(repo, ourCommit, theirCommit)
+
+  // if (!index.hasConflicts()) {
+  //   const treeOid = await index.writeTreeTo(repo);
+  //   repo.createCommit(ourBranch.name(), author, committer, MESSAGE, treeOid, [ourCommit, theirCommit]);
+  // }
+}
+
 /**
  * File current and parent versions
  * @param {Repository} repo
@@ -492,6 +507,71 @@ export async function fileDiffToParent(repo, sha, filePath) {
   }
 
   return { details: 'ERROR!!!!' }
+}
+
+export async function changedFileDiffToIndex(repo, projectPath, filePath) {
+  // TODO: а если нет еще коммитов ?
+
+  console.log('fileDiffToHead:', projectPath, filePath)
+
+  try {
+    const headCommit = await repo.getHeadCommit()
+
+    let originalContent = ''
+    let modifiedContent = ''
+
+    // const originalEntry = await headCommit.getEntry(filePath)
+    // if (originalEntry && originalEntry.isFile()) {
+    //   originalContent = (await originalEntry.getBlob()).toString()
+    // }
+    const index = await repo.index()
+    const entry = index.entries().find(item => item.path === filePath)
+    if (entry) {
+      const blob = await nodegit.Blob.lookup(repo, entry.id)
+      const buffer = blob.content()
+      originalContent = buffer.toString()
+    }
+
+    modifiedContent = await readFile(resolve(projectPath, filePath), { encoding: 'utf-8' })
+
+    return {
+      originalContent,
+      modifiedContent
+    }
+  } catch (e) {
+    console.log(e)
+  }
+}
+
+export async function stagedFileDiffToHead(repo, filePath) {
+  console.log('stagedFileDiffToHead:', filePath)
+
+  try {
+    const headCommit = await repo.getHeadCommit()
+
+    let originalContent = ''
+    let modifiedContent = ''
+
+    const originalEntry = await headCommit.getEntry(filePath)
+    if (originalEntry && originalEntry.isFile()) {
+      originalContent = (await originalEntry.getBlob()).toString()
+    }
+
+    const index = await repo.index()
+    const entry = index.entries().find(item => item.path === filePath)
+    if (entry) {
+      const blob = await nodegit.Blob.lookup(repo, entry.id)
+      const buffer = blob.content()
+      modifiedContent = buffer.toString()
+    }
+
+    return {
+      originalContent,
+      modifiedContent
+    }
+  } catch (e) {
+    console.log(e)
+  }
 }
 
 /**

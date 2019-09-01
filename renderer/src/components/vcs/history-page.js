@@ -25,7 +25,7 @@ class HistoryPage extends Component {
 
     const {
       commits,
-      commiters,
+      committers,
       heads,
       remoteHeads,
       tags,
@@ -40,7 +40,7 @@ class HistoryPage extends Component {
         <Pane size={upperSize} minSize="50px" maxSize="100%">
           <History
             commits={commits}
-            commiters={commiters}
+            committers={committers}
             heads={heads}
             remoteHeads={remoteHeads}
             tags={tags}

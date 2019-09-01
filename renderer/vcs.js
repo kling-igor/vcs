@@ -219,43 +219,70 @@ export class VCS {
   @action.bound
   async status() {
     const statuses = await callMain('repository:get-status')
+    console.log('STATUSES:', statuses)
+
+    const STAGED = 0
+    const CHANGED = 1
 
     const [stagedFiles, changedFiles] = statuses.reduce(
       (acc, item) => {
-        const { status } = item
+        const { status, statusEx } = item
 
         let selected = false
 
         let workdirStatus = ''
+        let stagedStatus = ''
 
-        if (status.includes('I')) {
-          const foundInStaged = this.stagedFiles.find(
-            ({ path, filename }) => path === item.path && filename === item.filename
-          )
-
-          let stagedStatus = status.replace('I', '')
-          if (stagedStatus.includes('A')) {
-            workdirStatus = stagedStatus.replace('A', '')
-            stagedStatus = 'A'
-          } else if (stagedStatus.includes('D')) {
-            workdirStatus = stagedStatus.replace('D', '')
-            stagedStatus = 'D'
-          } else if (stagedStatus.includes('M')) {
-            workdirStatus = stagedStatus.replace('M', '')
-            stagedStatus = 'M'
-          } else if (stagedStatus.includes('R')) {
-            workdirStatus = stagedStatus.replace('R', '')
-            stagedStatus = 'R'
-          }
-
-          selected = (foundInStaged && foundInStaged.selected) || false
-
-          acc[0].push({ ...item, selected, status: stagedStatus })
-
-          if (!workdirStatus) {
-            return acc
-          }
+        if (statusEx.includes('WT_MODIFIED')) {
+          workdirStatus = 'M'
         }
+
+        if (statusEx.includes('WT_DELETED')) {
+          workdirStatus = 'D'
+        }
+
+        if (statusEx.includes('WT_RENAMED')) {
+          // должно идти после M
+          workdirStatus = 'R'
+        }
+
+        if (statusEx.includes('INDEX_MODIFIED')) {
+          stagedStatus = 'M'
+        }
+
+        // if (status.includes('I')) {
+        const foundInStaged = this.stagedFiles.find(
+          ({ path, filename }) => path === item.path && filename === item.filename
+        )
+
+        //   let stagedStatus = status.replace('I', '')
+
+        //   console.log('stagedStatus:', stagedStatus)
+
+        //   if (stagedStatus.includes('A')) {
+        //     workdirStatus = stagedStatus.replace('A', '')
+        //     stagedStatus = 'A'
+        //   } else if (stagedStatus.includes('D')) {
+        //     workdirStatus = stagedStatus.replace('D', '')
+        //     stagedStatus = 'D'
+        //   } else if (stagedStatus.includes('M')) {
+        //     workdirStatus = stagedStatus.replace('M', '')
+        //     stagedStatus = 'M'
+        //   } else if (stagedStatus.includes('R')) {
+        //     workdirStatus = stagedStatus.replace('R', '')
+        //     stagedStatus = 'R'
+        //   }
+
+        //   console.log('workdirStatus:', workdirStatus)
+
+        selected = (foundInStaged && foundInStaged.selected) || false
+
+        acc[STAGED].push({ ...item, selected, status: stagedStatus })
+
+        if (!workdirStatus) {
+          return acc
+        }
+        // }
 
         const foundInChanged = this.changedFiles.find(
           ({ path, filename }) => path === item.path && filename === item.filename
@@ -263,22 +290,57 @@ export class VCS {
 
         selected = (foundInChanged && foundInChanged.selected) || false
 
-        acc[1].push({ ...item, selected, status: workdirStatus || item.status })
+        acc[CHANGED].push({ ...item, selected, status: workdirStatus || item.status })
         return acc
       },
       [[], []]
     )
 
     transaction(() => {
-      // TODO:  предварительно в changedFiles и stagedFiles добавляем статусы соответствующих элементов
-
       this.changedFiles = changedFiles
       this.stagedFiles = stagedFiles
     })
   }
 
+  @action.bound
+  async onChangedFileSelect(filepath) {
+    console.log('CLICK ON CHANGED FILE:', filepath)
+
+    // TODO:  нужно проверить статус
+    // если M C A то есть смысл читать локальную копию
+    // если D то локальная копия отсутствует
+
+    const { originalContent = '', modifiedContent = '', details: errorDetails } = await callMain(
+      'commit:file-diff-to-index',
+      this.projectPath,
+      filepath.replace(/^(\.\/)+/, '') // remove leading slash
+    )
+
+    transaction(() => {
+      this.originalFile = originalContent
+      this.modifiedFile = modifiedContent
+    })
+  }
+
+  @action.bound
+  async onStagedFileSelect(filepath) {
+    console.log('CLICK ON STAGED FILE:', filepath)
+
+    const { originalContent = '', modifiedContent = '', details: errorDetails } = await callMain(
+      'commit:stagedfile-diff-to-head',
+      filepath.replace(/^(\.\/)+/, '') // remove leading slash
+    )
+
+    transaction(() => {
+      this.originalFile = originalContent
+      this.modifiedFile = modifiedContent
+    })
+  }
+
   @action
   async openRepo(path) {
+    this.projectPath = path
+
     const { user, remotes } = await callMain('repository:open', path)
 
     if (user) {

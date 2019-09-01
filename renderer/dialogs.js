@@ -27,6 +27,24 @@ function confirmActionMessage(message, detail, option) {
   })
 }
 
+function confirmInfoMessage(message, detail, option) {
+  return new Promise((resolve, reject) => {
+    remote.dialog.showMessageBox(
+      {
+        type: 'info',
+        message,
+        detail,
+        buttons: ['OK'],
+        defaultId: 0,
+        checkboxLabel: option
+      },
+      (_, checkboxChecked) => {
+        resolve(checkboxChecked)
+      }
+    )
+  })
+}
+
 export function confirmStageFile() {
   const message = 'Confirm Stage?'
   const detail = 'Are you sure you want to add these changes to the index?'
@@ -76,6 +94,13 @@ export function confirmBranchMerge() {
   const detail = `Are you sure you want to merge into your current branch?`
   const option = 'Commit merged changes immediately'
   return confirmActionMessage(message, detail, option)
+}
+
+export function confirmMergeConflicts() {
+  const message = 'Merge Conflicts'
+  const detail = `You now have merge conflicts in your working copy that need to be resolved before continuing. You can do this by selecting the conflicted files and using the options under the 'Resolve Conflict' menu.`
+  const option = 'Do not show this message again'
+  return confirmInfoMessage(message, detail, option)
 }
 
 export function confirmBranchRebase(branch) {

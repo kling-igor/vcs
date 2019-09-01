@@ -162,7 +162,7 @@ const TagStyle = styled.span`
 // TODO: useContext onRowClick
 
 export const History = memo(
-  ({ commits, commiters, heads, remoteHeads, tags, onCommitSelect, onContextMenu, selectedCommit }) => {
+  ({ commits, committers, heads, remoteHeads, tags, onCommitSelect, onContextMenu, selectedCommit }) => {
     const onClickHandler = useCallback(event => onCommitSelect(event.currentTarget.dataset.sha), [])
     const onContextMenuHandler = useCallback(event => onContextMenu(event.currentTarget.dataset.sha), [])
 
@@ -201,7 +201,7 @@ export const History = memo(
         )
       }
 
-      const { name, email } = commiters[commiter]
+      const { name, email } = committers[commiter]
       const commitRefs = [...heads.filter(item => item.sha === sha), ...remoteHeads.filter(item => item.sha === sha)]
       const commitTags = [...tags.filter(item => item.sha === sha)]
 

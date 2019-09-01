@@ -40,7 +40,7 @@ const RootStyle = styled.div`
 export default class App extends Component {
   state = {
     commits: [],
-    commiters: [],
+    committers: [],
     refs: [],
     sha: null,
     originalFile: '',
@@ -92,8 +92,8 @@ export default class App extends Component {
       const data = await callMain('gitlog')
 
       if (data) {
-        const { commits, commiters, refs } = data
-        this.setState({ commits, commiters, refs })
+        const { commits, committers, refs } = data
+        this.setState({ commits, committers, refs })
       }
     } catch (e) {
       console.log('GITLOG ERROR:', e)
@@ -138,8 +138,8 @@ export default class App extends Component {
               const data = await callMain('gitlog')
 
               if (data) {
-                const { commits, commiters, refs } = data
-                this.setState({ commits, commiters, refs })
+                const { commits, committers, refs } = data
+                this.setState({ commits, committers, refs })
               }
             } catch (e) {
               console.log('canceled:', e)
@@ -284,7 +284,7 @@ export default class App extends Component {
             {/* <Toolbar />
             <HistoryPage
               commits={this.state.commits}
-              commiters={this.state.commiters}
+              committers={this.state.committers}
               refs={this.state.refs}
               onCommitSelect={this.onCommitSelect}
               onHistoryContextMenu={this.onHistoryContextMenu}

@@ -96,7 +96,7 @@ const colors = {
 
   C: {
     color: 'white',
-    backgroundColor: 'orange'
+    backgroundColor: 'red'
   },
 
   U: {

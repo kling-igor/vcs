@@ -12,10 +12,13 @@ const DiffEditor = memo(({ originalFile = '', modifiedFile = '', width, height }
 
   useEffect(() => {
     const diffEditor = monaco.editor.createDiffEditor(editorRef.current, {
-      enableSplitViewResizing: false,
-      renderSideBySide: false,
+      enableSplitViewResizing: true,
+      // renderSideBySide: true,
       selectOnLineNumbers: true,
-      readOnly: true,
+      readOnly: false,
+      // originalEditable: false, // for left pane
+      // readOnly: true,         // for right pane
+
       // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditorconstructionoptions.html
       lineNumbers: 'on' // "on" | "off" | "relative" | "interval" | function
     })

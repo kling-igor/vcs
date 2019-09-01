@@ -21,6 +21,8 @@ import {
   commit,
   commitInfo,
   fileDiffToParent,
+  changedFileDiffToIndex,
+  stagedFileDiffToHead,
   softResetToCommit,
   mixedResetToCommit,
   hardResetToCommit,
@@ -236,6 +238,18 @@ answerRenderer('commit:file-diff', async (browserWindow, sha, filePath) => {
   }
 
   return fileDiffToParent(repo, sha, filePath)
+})
+
+answerRenderer('commit:file-diff-to-index', async (browserWindow, projectPath, filePath) => {
+  checkRepo()
+
+  return changedFileDiffToIndex(repo, projectPath, filePath)
+})
+
+answerRenderer('commit:stagedfile-diff-to-head', async (browserWindow, filePath) => {
+  checkRepo()
+
+  return stagedFileDiffToHead(repo, filePath)
 })
 
 answerRenderer('repository:log', async browserWindow => {
