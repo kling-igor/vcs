@@ -1,7 +1,9 @@
 const { remote } = window.require('electron')
 
 import React, { Component } from 'react'
-import styled, { ThemeProvider, createGlobalStyle } from 'styled-components'
+import styled, { ThemeProvider } from 'styled-components'
+
+import GlobalStyle from './styles'
 
 import { resolve, join } from 'path'
 
@@ -38,150 +40,19 @@ import RemotesList from './src/components/vcs/remotes-list.js'
 
 import * as Dialog from './dialogs'
 
+import {
+  onBranchContextMenu,
+  onTagContextMenu,
+  onGitLogContextMenu,
+  onChangedFileContextMenu,
+  onStagedFileContextMenu
+} from './src/components/vcs/context-menu'
+
+import { onStagedFilesHeaderMenu, onChangedFilesHeaderMenu } from './src/components/vcs/header-menu'
+
 const noop = () => {}
 
 const vcs = new VCS({ workspace, project, applicationDelegate })
-
-const GlobalStyle = createGlobalStyle`
-  @font-face {
-    font-family: "Roboto";
-    src: url("./assets/Roboto-Regular.ttf");
-  }
-
-  @font-face {
-    font-family: "Roboto";
-    src: url("./assets/Roboto-Bold.ttf");
-    font-weight: bold;
-  }
-
-  html {
-    height: 100%;
-    margin: 0;
-  }
-
-  body {
-    padding: 0;
-    margin: 0;
-    font-family: Roboto, sans-serif;
-    overflow: hidden;
-    height: 100%;
-    overflow: hidden !important;
-    background-color: ${({
-      theme: {
-        editor: { background }
-      }
-    }) => background};
-  }
-
-  #app {
-    min-height: 100%;
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    left: 0;
-    top: 0;
-  }
-
-  .List {
-    width: 100%;
-  }
-
-  .ReactVirtualized__List:focus{
-    outline: none;
-  }
-
-  .quickOpenInput {
-    margin: 4px;
-  }
-
-  .menu-item {
-    font-size: 13px;
-    /* font-weight: 500; */
-    line-height: 1em;
-  }
-
-  .bp3-control.vision {
-    margin-bottom: 4px;
-  }
-
-  ul.bp3-menu::-webkit-scrollbar {
-    width: 10px;
-  }
-  /* Track */
-  ul.bp3-menu::-webkit-scrollbar-track {
-    background: ${({ theme }) => 'darkgray'};
-  }
-  /* Handle */
-  ul.bp3-menu::-webkit-scrollbar-thumb {
-    background: ${({ theme }) => '#888'};
-  }
-  /* Handle on hover */
-  ul.bp3-menu::-webkit-scrollbar-thumb:hover {
-    background: ${({ theme }) => '#555'};
-  }
-
-  .popover {
-    background-color: transparent;/*#ebf1f5*/
-  }
-
-  .bp3-popover-content {
-    position: relative;
-    top: 4px;
-  }
-
-  .bp3-button-text {
-    user-select: none;
-  }
-
-  .bp3-button-icon {
-    user-select: none;
-  }
-
-  .bp3-dialog {
-    border-radius: 2px;
-    width: auto;
-    height: auto;
-    top: 0;
-    margin: 0;
-    padding: 0;
-    /* margin-top: 24px; */
-  }
-
-  .bp3-dialog-body {
-    margin: 0;
-  }
-
-  .dialog-input {
-    width: 100%;
-  }
-
-  div > .bp3-menu {
-    max-height: 300px;
-    overflow-y: auto;
-    min-width: 500px;
-    max-width: 500px;
-    margin-left: -4;
-  }
-
-  .bp3-dialog-container {
-    align-items: flex-start;
-    justify-content: center;
-  }
-
-  /*иначе погруженные в tooltip формы скукоживаются*/
-  span.bp3-popover-target {
-    display: block;
-  }
-
-  .bp3-input {
-    width: calc(100% - 8px);
-    padding-right: 0px;
-  }
-
-  .bp3-input-group {
-    padding-right: 8px;
-  }
-`
 
 const RootStyle = styled.div`
   height: 100%;
@@ -195,470 +66,8 @@ export default class App extends Component {
     verticalLayout: ['20000', '20000']
   }
 
-  onStagedFileContextMenu = path => {
-    workspace.showContextMenu({
-      items: [
-        {
-          label: `Unstage from index`,
-          click: () => {
-            Dialog.confirmUnstageFile()
-              .then(() => {
-                console.log('UNSTAGING ', path)
-              })
-              .catch(noop)
-          }
-        },
-        {
-          type: 'separator'
-        },
-        {
-          label: `Copy Path to Clipboard`,
-          click: () => {
-            console.log('COPYING TO CLIPBOARD:', path)
-            remote.clipboard.writeText(path)
-          }
-        }
-      ]
-    })
-  }
-
-  onChangedFileContextMenu = path => {
-    workspace.showContextMenu({
-      items: [
-        {
-          label: `Add to index`,
-          click: () => {
-            Dialog.confirmStageFile()
-              .then(() => {
-                console.log('STAGING ', path)
-              })
-              .catch(noop)
-          }
-        },
-        {
-          label: `Remove`,
-          click: () => {
-            Dialog.confirmFileRemove(path)
-              .then(() => {
-                console.log('REMOVING ', path)
-              })
-              .catch(noop)
-          }
-        },
-        {
-          label: `Stop tracking`,
-          click: () => {
-            Dialog.confirmFileStopTracking(path)
-              .then(() => {
-                console.log('STOP TRACKING ', path)
-              })
-              .catch(noop)
-          }
-        },
-        {
-          label: `Discard Changes`,
-          click: () => {
-            Dialog.confirmDiscardFileChanges(path)
-              .then(() => {
-                console.log('DISCARDING FILE CHANGES ', path)
-              })
-              .catch(noop)
-          }
-        },
-        // {
-        //   label: `Ignore...`,
-        //   click: () => {}
-        // },
-        {
-          type: 'separator'
-        },
-        {
-          label: 'Resolve Conflicts',
-          submenu: [
-            {
-              label: "Resolve Using 'Mine'",
-              click: () => {}
-            },
-            {
-              label: "Resolve Using 'Theirs'",
-              click: () => {}
-            },
-            {
-              type: 'separator'
-            },
-            {
-              label: 'Restart Merge',
-              click: () => {}
-            },
-            {
-              label: 'Mark Resolved',
-              click: () => {}
-            },
-            {
-              label: 'Mark Unresolved',
-              click: () => {}
-            }
-          ]
-        },
-        {
-          type: 'separator'
-        },
-        {
-          label: `Copy Path to Clipboard`,
-          click: () => {
-            console.log('COPYING TO CLIPBOARD:', path)
-            remote.clipboard.writeText(path)
-          }
-        }
-      ]
-    })
-  }
-
-  onBranchContextMenu = sha => {
-    const { heads, remotes, currentBranch } = vcs
-
-    const { name } = heads.find(item => item.sha === sha)
-
-    const remotesSubmenu = remotes.map(item => ({
-      label: item.name,
-      click: () => {
-        console.log('PUSH BRANCH TO:', item.url)
-      }
-    }))
-
-    workspace.showContextMenu({
-      items: [
-        {
-          label: `Checkout ${name}`,
-          click: () => {
-            Dialog.confirmBranchSwitch(name)
-              .then(discardLocalChanges => {
-                console.log(`SWITCHING TO BRANCH ${name} `)
-                vcs.onBranchCheckout(name, discardLocalChanges)
-              })
-              .catch(noop)
-          }
-        },
-        {
-          label: `Merge ${name}`,
-          click: () => {
-            Dialog.confirmBranchMerge()
-              .then(commitImmediatley => {
-                console.log(`MERGING INTO CURRENT BRANCH AND COMMITING ${commitImmediatley}`)
-              })
-              .catch(noop)
-          }
-        },
-        {
-          label: `Rebase ${name}`,
-          click: () => {
-            Dialog.confirmBranchRebase(name)
-              .then(() => {
-                console.log('REBASING CURRENT CHANGES TO ', name)
-              })
-              .catch(noop)
-          }
-        },
-        {
-          type: 'separator'
-        },
-        {
-          label: `Push to`,
-          submenu: remotesSubmenu
-        },
-        {
-          type: 'separator'
-        },
-        {
-          label: `Rename...`,
-          click: () => {
-            workspace
-              .showInputUnique({
-                items: remotes.map(({ name: label }) => ({ label })),
-                placeHolder: 'New branch name',
-                validateInput: input => /^[a-zA-Z0-9\-_]+$/.test(input)
-              })
-              .then(value => {
-                if (value) {
-                  console.log(`RENAMING BRANCH ${name} TO ${value}`)
-                }
-              })
-              .catch(noop)
-          }
-        },
-        {
-          label: `Delete ${name}`,
-          click: () => {
-            Dialog.confirmBranchDelete(name)
-              .then(deleteRemoteBranch => {
-                console.log(`DELETING BRANCH ${name} AND DELETING REMOTE ${deleteRemoteBranch}`)
-
-                vcs.deleteBranch(name).catch(e => {
-                  console.log('ERROR DELETING BRANCH:', e)
-                })
-              })
-              .catch(noop)
-          },
-          enabled: currentBranch !== name
-        },
-        {
-          type: 'separator'
-        },
-        {
-          label: 'Copy Branch Name to Clipboard',
-          click: () => {
-            remote.clipboard.writeText(name)
-          }
-        }
-      ]
-    })
-  }
-
-  onTagContextMenu = sha => {
-    const { currentCommit, heads, tags } = vcs
-
-    const branch = heads.find(item => item.sha === sha)
-    const tag = tags.find(item => item.sha === sha)
-
-    const remotesSubmenu = vcs.remotes.map(item => ({
-      label: item.name,
-      click: () => {
-        console.log('PUSH TAG TO:', item.url)
-      }
-    }))
-
-    workspace.showContextMenu({
-      items: [
-        {
-          label: `Checkout ${tag.name}`,
-          click: () => {
-            if (branch) {
-              Dialog.confirmBranchSwitch(branch.name)
-                .then(discardLocalChanges => {
-                  console.log(`!!SWITCHING TO BRANCH ${branch.name} `)
-                  vcs.onBranchCheckout(branch.name, discardLocalChanges)
-                })
-                .catch(noop)
-            } else {
-              Dialog.confirmCheckoutToDetachedHead(tag.name)
-                .then(discardLocalChanges => {
-                  console.log(`SWITCHING TO DETACH HEAD ${tag.name} `)
-                  vcs.onCheckoutToCommit(tag.sha, discardLocalChanges)
-                })
-                .catch(noop)
-            }
-          }
-        },
-        {
-          type: 'separator'
-        },
-        {
-          label: `Push to`,
-          submenu: remotesSubmenu
-        },
-        {
-          label: `Delete ${tag.name}`,
-          click: () => {
-            Dialog.confirmTagDelete(tag.name)
-              .then(removeFromRemote => {
-                console.log(`REMOVING TAG ${name} AND FROM REMOTE: ${removeFromRemote}`)
-                vcs.deleteTag(tag.name)
-              })
-              .catch(noop)
-          }
-        },
-        {
-          type: 'separator'
-        },
-        {
-          label: 'Copy Tag Name to Clipboard',
-          click: () => {
-            remote.clipboard.writeText(tag.name)
-          }
-        }
-      ]
-    })
-  }
-
   onRemoteContextMenu = name => {
     console.log('ON REMOTE CONTEXT MENU:', name)
-  }
-
-  onGitLogContextMenu = sha => {
-    if (!sha) return
-
-    const { currentCommit, heads, tags, headCommit } = vcs
-
-    const branch = heads.find(item => item.sha === sha)
-
-    const tag = tags.find(item => item.sha === sha)
-
-    // TODO: в VCS добавить знание о текущем коммите рабочего каталога
-
-    workspace.showContextMenu({
-      items: [
-        {
-          label: 'Checkout...',
-          click: () => {
-            let name = sha
-            let detachedHead = true
-            if (branch) {
-              name = branch.name
-              detachedHead = false
-            } else if (tag) {
-              name === tag.name
-            }
-
-            if (detachedHead) {
-              Dialog.confirmCheckoutToDetachedHead(name)
-                .then(discardLocalChanges => {
-                  console.log(`SWITCHING TO DETACH HEAD ${name} `)
-                  vcs.onCheckoutToCommit(sha, discardLocalChanges)
-                })
-                .catch(noop)
-            } else {
-              Dialog.confirmBranchSwitch(name)
-                .then(discardLocalChanges => {
-                  console.log(`!!SWITCHING TO BRANCH ${branch.name} `)
-                  vcs.onBranchCheckout(branch.name, discardLocalChanges)
-                })
-                .catch(noop)
-            }
-          }
-        },
-        {
-          label: 'Merge...',
-          click: () => {
-            Dialog.confirmBranchMerge()
-              .then(commitImmediatley => {
-                console.log(`MERGING INTO CURRENT BRANCH AND COMMITING ${commitImmediatley}`)
-              })
-              .catch(noop)
-          }
-        },
-        {
-          label: 'Rebase...',
-          click: () => {
-            Dialog.confirmBranchRebase(name)
-              .then(() => {
-                console.log('REBASING CURRENT CHANGES TO ', name)
-              })
-              .catch(noop)
-          }
-        },
-        {
-          type: 'separator'
-        },
-        {
-          label: 'Tag...',
-          click: () => {
-            let tagName = ''
-
-            workspace
-              .showInputUnique({
-                items: tags.map(({ name }) => ({ label: name })),
-                placeHolder: 'Tag name',
-                validateInput: input => /^[a-zA-Z0-9\-_.]+$/.test(input)
-              })
-              .then(name => {
-                if (!name) return Promise.reject()
-
-                tagName = name
-
-                return workspace.showInputBox({
-                  placeHolder: 'Tag message',
-                  validateInput: input => !!input.trim()
-                })
-              })
-              .then(tagMessage => {
-                if (!tagMessage) return Promise.reject()
-
-                console.log(`CREATING TAG ${tagName} ON COMMIT ${sha}`)
-                vcs.createTag(sha, tagName, tagMessage)
-              })
-              .catch(noop)
-          }
-        },
-        {
-          label: 'Branch...',
-          click: () => {
-            workspace
-              .showInputUnique({
-                items: heads.map(({ name }) => ({ label: name })),
-                placeHolder: 'New branch',
-                validateInput: input => /^[a-zA-Z0-9\-_.]+$/.test(input)
-              })
-              .then(name => {
-                if (name) {
-                  console.log(`CREATING BRANCH ${name} ON COMMIT ${sha}`)
-                  vcs.createBranch(name)
-                }
-              })
-              .catch(noop)
-          },
-          enabled: sha === headCommit
-        },
-        {
-          type: 'separator'
-        },
-        {
-          label: 'Soft Reset Branch...',
-          click: () => {
-            Dialog.confirmSoftBranchPointerReset('master')
-              .then(() => {
-                console.log(`SOFT BRANCH RESETTING...`)
-                vcs.softResetCommit(sha)
-              })
-              .catch(noop)
-          }
-        },
-        {
-          label: 'Mixed Reset Branch...',
-          click: () => {
-            Dialog.confirmMixedBranchPointerReset('master')
-              .then(() => {
-                console.log(`MIXED BRANCH RESETTING...`)
-                vcs.mixedResetCommit(sha)
-              })
-              .catch(noop)
-          }
-        },
-        {
-          label: 'Hard Reset Branch...',
-          click: () => {
-            Dialog.confirmHardBranchPointerReset('master')
-              .then(() => {
-                console.log(`HARD BRANCH RESETTING...`)
-                vcs.hardResetCommit(sha)
-              })
-              .catch(noop)
-          }
-        },
-        {
-          type: 'separator'
-        },
-        {
-          label: 'Reverse commit...',
-          click: () => {
-            Dialog.confirmBackout()
-              .then(() => {
-                console.log(`BACKOUTING COMMIT...`)
-                vcs.revertCommit(sha)
-              })
-              .catch(noop)
-          }
-        },
-        {
-          type: 'separator'
-        },
-        {
-          label: 'Copy SHA-1 to Clipboard',
-          click: () => {
-            remote.clipboard.writeText(sha)
-          }
-        }
-      ]
-    })
   }
 
   async componentDidMount() {
@@ -709,11 +118,11 @@ export default class App extends Component {
 
         dock.addPane('vcs', {
           title: 'STAGED',
-          component: <StagedFiles storage={vcs} onContextMenu={this.onStagedFileContextMenu} />,
+          component: <StagedFiles storage={vcs} onContextMenu={onStagedFileContextMenu({ vcs, workspace, Dialog })} />,
           paneHeaderButtons: [
             {
               icon: './assets/ui/ellipsis.svg',
-              onClick: vcs.showStagedFilesMenu,
+              onClick: onStagedFilesHeaderMenu({ vcs, workspace }),
               tooltip: ''
             }
           ]
@@ -721,11 +130,13 @@ export default class App extends Component {
 
         dock.addPane('vcs', {
           title: 'CHANGES',
-          component: <ChangedFiles storage={vcs} onContextMenu={this.onChangedFileContextMenu} />,
+          component: (
+            <ChangedFiles storage={vcs} onContextMenu={onChangedFileContextMenu({ vcs, workspace, Dialog })} />
+          ),
           paneHeaderButtons: [
             {
               icon: './assets/ui/ellipsis.svg',
-              onClick: vcs.showChangedFilesMenu,
+              onClick: onChangedFilesHeaderMenu({ vcs, workspace }),
               tooltip: ''
             }
           ]
@@ -759,7 +170,7 @@ export default class App extends Component {
 
         dock.addPane('vcs', {
           title: 'BRANCHES',
-          component: <BranchesList storage={vcs} onContextMenu={this.onBranchContextMenu} />,
+          component: <BranchesList storage={vcs} onContextMenu={onBranchContextMenu({ vcs, workspace, Dialog })} />,
           paneHeaderButtons: [
             {
               icon: './assets/ui/ellipsis.svg',
@@ -770,7 +181,7 @@ export default class App extends Component {
 
         dock.addPane('vcs', {
           title: 'TAGS',
-          component: <TagsList storage={vcs} onContextMenu={this.onTagContextMenu} />,
+          component: <TagsList storage={vcs} onContextMenu={onTagContextMenu({ vcs, workspace, Dialog })} />,
           paneHeaderButtons: [
             {
               icon: './assets/ui/ellipsis.svg',
@@ -824,7 +235,11 @@ export default class App extends Component {
                 <DockWidget />
               </Pane>
               <Pane size={rightSize} minSize="400px" maxSize="100%">
-                <VCSView storage={vcs} workspace={workspace} onGitLogContextMenu={this.onGitLogContextMenu} />
+                <VCSView
+                  storage={vcs}
+                  workspace={workspace}
+                  onGitLogContextMenu={onGitLogContextMenu({ vcs, workspace, Dialog })}
+                />
               </Pane>
             </SplitPane>
           </RootStyle>

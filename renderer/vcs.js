@@ -233,6 +233,10 @@ export class VCS {
         let workdirStatus = ''
         let stagedStatus = ''
 
+        if (statusEx.includes('WT_NEW')) {
+          workdirStatus = 'A'
+        }
+
         if (statusEx.includes('WT_MODIFIED')) {
           workdirStatus = 'M'
         }
@@ -246,16 +250,20 @@ export class VCS {
           workdirStatus = 'R'
         }
 
-        if (statusEx.includes('WT_NEW')) {
-          workdirStatus = 'A'
+        if (statusEx.includes('INDEX_NEW')) {
+          stagedStatus = 'A'
         }
 
         if (statusEx.includes('INDEX_MODIFIED')) {
           stagedStatus = 'M'
         }
 
-        if (statusEx.includes('INDEX_NEW')) {
-          stagedStatus = 'A'
+        if (statusEx.includes('INDEX_DELETED')) {
+          stagedStatus = 'D'
+        }
+
+        if (statusEx.includes('INDEX_RENAMED')) {
+          stagedStatus = 'R'
         }
 
         // if (status.includes('I')) {
@@ -555,96 +563,6 @@ export class VCS {
     if (this.mode === 'log') return
     this.mode = 'log'
     this.onModeChange(this.mode)
-  }
-
-  @action.bound
-  showStagedFilesMenu() {
-    const hasStagedFiles = this.stagedFiles.length > 0
-    const selectedStagedFilesCount = this.stagedFiles.reduce((acc, { selected }) => (acc + selected ? 1 : 0), 0)
-
-    this.workspace.showContextMenu({
-      items: [
-        {
-          label: 'Select All',
-          click: action(() => {
-            this.stagedFiles = this.selectAllFiles(this.stagedFiles)
-          }),
-          enabled: hasStagedFiles
-        },
-        {
-          label: 'Unselect All',
-          click: action(() => {
-            this.stagedFiles = this.unselectAllFiles(this.stagedFiles)
-          }),
-          enabled: hasStagedFiles
-        },
-        {
-          label: 'Inverse Selection',
-          click: action(() => {
-            this.stagedFiles = this.inverseSelection(this.stagedFiles)
-          }),
-          enabled: hasStagedFiles
-        },
-        {
-          type: 'separator'
-        },
-        {
-          label: 'Unstage Selected',
-          click: this.unstageSelectedFiles,
-          enabled: hasStagedFiles && selectedStagedFilesCount > 0
-        },
-        {
-          label: 'Unstage All',
-          click: this.unstageAllFiles,
-          enabled: hasStagedFiles
-        }
-      ]
-    })
-  }
-
-  @action.bound
-  showChangedFilesMenu() {
-    const hasChangedFiles = this.changedFiles.length > 0
-    const selectedChangesFilesCount = this.changedFiles.reduce((acc, { selected }) => (acc + selected ? 1 : 0), 0)
-
-    this.workspace.showContextMenu({
-      items: [
-        {
-          label: 'Select All',
-          click: action(() => {
-            this.changedFiles = this.selectAllFiles(this.changedFiles)
-          }),
-          enabled: hasChangedFiles
-        },
-        {
-          label: 'Unselect All',
-          click: action(() => {
-            this.changedFiles = this.unselectAllFiles(this.changedFiles)
-          }),
-          enabled: hasChangedFiles
-        },
-        {
-          label: 'Inverse Selection',
-          click: action(() => {
-            this.changedFiles = this.inverseSelection(this.changedFiles)
-          }),
-          enabled: hasChangedFiles
-        },
-        {
-          type: 'separator'
-        },
-        {
-          label: 'Stage Selected',
-          click: this.stageSelectedFiles,
-          enabled: hasChangedFiles && selectedChangesFilesCount > 0
-        },
-        {
-          label: 'Stage All',
-          click: this.stageAllFiles,
-          enabled: hasChangedFiles
-        }
-      ]
-    })
   }
 
   selectAllFiles(collection) {
