@@ -498,7 +498,7 @@ export class VCS {
       const { originalContent = '', modifiedContent = '', details: errorDetails } = await callMain(
         'commit:file-diff',
         this.commitInfo.commit,
-        path.replace(/^\/+/, '') // remove leading slash
+        path.replace(/^(\.\/)+/, '') // remove leading slash
       )
 
       transaction(() => {
@@ -602,6 +602,12 @@ export class VCS {
   }
 
   @action.bound
+  async stageFile(path) {
+    await callMain('stage:add', [path.replace(/^(\.\/)+/, '')])
+    await this.status()
+  }
+
+  @action.bound
   async unstageSelectedFiles() {
     const paths = this.stagedFiles.reduce((acc, item) => {
       if (item.selected) {
@@ -624,5 +630,11 @@ export class VCS {
 
       await this.status()
     }
+  }
+
+  @action.bound
+  async unstageFile(path) {
+    await callMain('stage:remove', [path.replace(/^(\.\/)+/, '')])
+    await this.status()
   }
 }

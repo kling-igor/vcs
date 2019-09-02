@@ -9,6 +9,7 @@ export default ({ vcs, workspace, Dialog }) => path => {
           Dialog.confirmUnstageFile()
             .then(() => {
               console.log('UNSTAGING ', path)
+              vcs.unstageFile(path)
             })
             .catch(noop)
         }
