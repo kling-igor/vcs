@@ -329,6 +329,15 @@ export async function hardResetToCommit(repo, sha) {
   })
 }
 
+export async function discardLocalChanges(repo, path) {
+  const index = await repo.index()
+
+  return nodegit.Checkout.index(repo, index, {
+    checkoutStrategy: nodegit.Checkout.STRATEGY.FORCE,
+    paths: [path]
+  })
+}
+
 export async function revertCommit(repo, sha) {
   const oid = nodegit.Oid.fromString(sha)
   const commit = await repo.getCommit(oid)

@@ -40,6 +40,7 @@ export default ({ vcs, workspace, Dialog }) => path => {
           Dialog.confirmDiscardFileChanges(path)
             .then(() => {
               console.log('DISCARDING FILE CHANGES ', path)
+              vcs.discardLocalChanges(path)
             })
             .catch(noop)
         }

@@ -637,4 +637,10 @@ export class VCS {
     await callMain('stage:remove', [path.replace(/^(\.\/)+/, '')])
     await this.status()
   }
+
+  @action.bound
+  async discardLocalChanges(path) {
+    await callMain('repository:discard-local-changes', path.replace(/^(\.\/)+/, ''))
+    await this.status()
+  }
 }

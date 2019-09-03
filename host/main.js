@@ -27,6 +27,7 @@ import {
   mixedResetToCommit,
   hardResetToCommit,
   revertCommit,
+  discardLocalChanges,
   checkoutBranch,
   checkoutToCommit,
   createBranch,
@@ -215,6 +216,11 @@ answerRenderer('repository:checkout-branch', async (browserWindow, branch, disca
 answerRenderer('repository:checkout-commit', async (browserWindow, sha, discardLocalChanges) => {
   checkRepo()
   return checkoutToCommit(repo, sha, discardLocalChanges)
+})
+
+answerRenderer('repository:discard-local-changes', async (browserWindow, path) => {
+  checkRepo()
+  return discardLocalChanges(repo, path)
 })
 
 answerRenderer('repository:pull', async (browserWindow, username, password) => {
