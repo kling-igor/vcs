@@ -37,7 +37,7 @@ const sort = array =>
   })
 
 export class VCS {
-  @observable mode = 'log' // log | commit
+  @observable mode = 'commit' // log | commit
 
   onModeChange = () => {}
 
@@ -232,6 +232,10 @@ export class VCS {
 
         let workdirStatus = ''
         let stagedStatus = ''
+
+        if (statusEx.includes('CONFLICTED')) {
+          workdirStatus = 'C'
+        }
 
         if (statusEx.includes('WT_NEW')) {
           workdirStatus = 'A'
@@ -641,6 +645,20 @@ export class VCS {
   @action.bound
   async discardLocalChanges(path) {
     await callMain('repository:discard-local-changes', path.replace(/^(\.\/)+/, ''))
+    await this.status()
+  }
+
+  @action.bound
+  async stopTracking(path) {
+    await callMain('stage:remove', [path.replace(/^(\.\/)+/, '')])
+    await this.status()
+  }
+
+  @action.bound
+  async merge(sha) {
+    const ourSha = null
+    const theirSha = null
+    await callMain('repository:merge', ourSha, theirSha)
     await this.status()
   }
 }

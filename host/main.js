@@ -36,7 +36,8 @@ import {
   deleteTagByName,
   headCommit,
   pull,
-  push
+  push,
+  merge
 } from './gitops'
 
 // FAKE FROM APPLICATION
@@ -236,6 +237,11 @@ answerRenderer('repository:push', async (browserWindow, username, password) => {
   checkRepo()
   const remote = await repo.getRemote('origin')
   return push(remote, username, password)
+})
+
+answerRenderer('repository:merge', async (browserWindow, ourSha, theirSha) => {
+  checkRepo()
+  return merge(repo, ourSha, theirSha)
 })
 
 answerRenderer('commit:file-diff', async (browserWindow, sha, filePath) => {

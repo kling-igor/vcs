@@ -165,6 +165,7 @@ export default class App extends Component {
 
         dock.addPane('vcs', {
           title: 'BRANCHES',
+          elapsed: false,
           component: <BranchesList storage={vcs} onContextMenu={onBranchContextMenu({ vcs, workspace, Dialog })} />,
           paneHeaderButtons: [
             {
@@ -176,6 +177,7 @@ export default class App extends Component {
 
         dock.addPane('vcs', {
           title: 'TAGS',
+          elapsed: false,
           component: <TagsList storage={vcs} onContextMenu={onTagContextMenu({ vcs, workspace, Dialog })} />,
           paneHeaderButtons: [
             {
@@ -187,6 +189,7 @@ export default class App extends Component {
 
         dock.addPane('vcs', {
           title: 'REMOTES',
+          elapsed: false,
           component: <RemotesList storage={vcs} onContextMenu={this.onRemoteContextMenu} />,
           paneHeaderButtons: [
             {

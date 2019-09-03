@@ -42,8 +42,9 @@ export default ({ vcs, workspace, project, Dialog }) => path => {
         label: `Stop tracking`,
         click: () => {
           Dialog.confirmFileStopTracking(path)
-            .then(() => {
+            .then(async () => {
               console.log('STOP TRACKING ', path)
+              await vcs.stopTracking(path)
             })
             .catch(noop)
         }
@@ -68,6 +69,7 @@ export default ({ vcs, workspace, project, Dialog }) => path => {
       },
       {
         label: 'Resolve Conflicts',
+        enabled: status === 'C',
         submenu: [
           {
             label: "Resolve Using 'Mine'",

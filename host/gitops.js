@@ -463,11 +463,11 @@ export async function commit(repo, message, name = 'User', email = 'no email') {
   return commitId
 }
 
-export async function merge(repo, message, ourBranch, theirBranch) {
-  // const author = nodegit.Signature.now(name, email)
-  // const committer = author
+export async function merge(repo, ourCommitSha, theirCommitSha) {
+  const ourCommit = await repo.getCommit(nodegit.Oid.fromString(ourCommitSha))
+  const theirCommit = await repo.getCommit(nodegit.Oid.fromString(theirCommitSha))
 
-  const index = nodegit.Merge.commits(repo, ourCommit, theirCommit)
+  nodegit.Merge.commits(repo, ourCommit, theirCommit)
 
   // if (!index.hasConflicts()) {
   //   const treeOid = await index.writeTreeTo(repo);
