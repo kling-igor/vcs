@@ -1,10 +1,15 @@
 const { ipcRenderer } = window.require('electron')
 import { callMain } from './ipc'
+import { Disposable } from 'event-kit'
 
-import { Emitter, Disposable } from 'event-kit'
 export class ApplicationDelegate {
   async openProject(projectPath) {
     return callMain('open-project', projectPath)
+  }
+
+  async removeFile(path) {
+    console.log('APP DELEGATE REMOVE:', path)
+    return callMain('remove-file', path)
   }
 
   closeProject() {

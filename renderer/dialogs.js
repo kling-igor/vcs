@@ -63,6 +63,12 @@ export function confirmFileRemove(filepath) {
   return confirmActionMessage(message, detail)
 }
 
+export function confirmFileRemoveUntracked(filepath) {
+  const message = 'Confirm Remove Modified or Untracked File?'
+  const detail = `The following file contains changes or information which in not in source control, and will be irretrievably lost if you remove them: ${filepath}`
+  return confirmActionMessage(message, detail)
+}
+
 export function confirmFileStopTracking(filepath) {
   const message = 'Stop Tracking File?'
   const detail = `The following file will be removed from the version control but will remain on your disk: ${filepath}`

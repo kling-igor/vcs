@@ -39,6 +39,9 @@ import {
   push
 } from './gitops'
 
+// FAKE FROM APPLICATION
+const fileOperations = new FileSystemOperations()
+
 let repo
 let emptyRepo = false
 let user
@@ -314,7 +317,10 @@ answerRenderer('commit:revert', async (browserWindow, sha) => {
 
 /* FAKE APPLICATION (from editor) */
 
-const fileOperations = new FileSystemOperations()
+answerRenderer('remove-file', (browserWindow, path) => {
+  console.log('MAIN: remove-file ', path)
+  return fileOperations.removeFile(path)
+})
 
 answerRenderer('open-project', (browserWindow, projectPath) => {
   return new Promise((resolve, reject) => {

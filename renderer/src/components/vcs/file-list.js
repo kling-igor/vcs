@@ -91,7 +91,7 @@ const colors = {
 
   R: {
     color: 'white',
-    backgroundColor: 'navyblue'
+    backgroundColor: 'blue'
   },
 
   C: {

@@ -19,14 +19,7 @@ import { ApplicationDelegate } from './application-delegate'
 import { Workspace } from './workspace'
 import { VCS } from './vcs'
 
-const workspace = new Workspace()
-
-const applicationDelegate = new ApplicationDelegate()
-
-const project = new Project({ applicationDelegate })
-
 import { Dock } from './src/components/dock'
-const dock = new Dock()
 
 import VCSView from './src/components/vcs'
 import ChangesFileList from './src/components/vcs/changedfiles-list'
@@ -50,9 +43,11 @@ import {
 
 import { onStagedFilesHeaderMenu, onChangedFilesHeaderMenu } from './src/components/vcs/header-menu'
 
-const noop = () => {}
-
+const workspace = new Workspace()
+const applicationDelegate = new ApplicationDelegate()
+const project = new Project({ applicationDelegate })
 const vcs = new VCS({ workspace, project, applicationDelegate })
+const dock = new Dock()
 
 const RootStyle = styled.div`
   height: 100%;
@@ -131,7 +126,7 @@ export default class App extends Component {
         dock.addPane('vcs', {
           title: 'CHANGES',
           component: (
-            <ChangedFiles storage={vcs} onContextMenu={onChangedFileContextMenu({ vcs, workspace, Dialog })} />
+            <ChangedFiles storage={vcs} onContextMenu={onChangedFileContextMenu({ vcs, workspace, project, Dialog })} />
           ),
           paneHeaderButtons: [
             {

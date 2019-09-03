@@ -1,6 +1,8 @@
 const { remote } = window.require('electron')
 const noop = () => {}
-export default ({ vcs, workspace, Dialog }) => path => {
+export default ({ vcs, workspace, project, Dialog }) => path => {
+  const { status } = vcs.changedFiles.find(item => `${item.path}/${item.filename}` === path)
+
   workspace.showContextMenu({
     items: [
       {
@@ -17,11 +19,23 @@ export default ({ vcs, workspace, Dialog }) => path => {
       {
         label: `Remove`,
         click: () => {
-          Dialog.confirmFileRemove(path)
-            .then(() => {
-              console.log('REMOVING ', path)
-            })
-            .catch(noop)
+          if (status === 'A') {
+            Dialog.confirmFileRemoveUntracked(path)
+              .then(async () => {
+                console.log('REMOVING ', path)
+                await project.removeFile(path.replace(/^(\.\/)+/, ''))
+                await vcs.status()
+              })
+              .catch(noop)
+          } else {
+            Dialog.confirmFileRemove(path)
+              .then(async () => {
+                console.log('REMOVING ', path)
+                await project.removeFile(path.replace(/^(\.\/)+/, ''))
+                await vcs.status()
+              })
+              .catch(noop)
+          }
         }
       },
       {
