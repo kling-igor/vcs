@@ -49,6 +49,12 @@ export default ({ vcs, workspace, Dialog }) => sha => {
             .then(async commitImmediatley => {
               console.log(`MERGING INTO CURRENT BRANCH ${commitImmediatley}`)
               await vcs.merge(sha)
+
+              if (vcs.isMerging) {
+                Dialog.confirmMergeConflicts()
+                  .then(noop)
+                  .catch(noop)
+              }
             })
             .catch(noop)
         },

@@ -592,6 +592,59 @@ export async function stagedFileDiffToHead(repo, filePath) {
   }
 }
 
+export async function getOursFileContent(repo, filePath) {
+  const headCommit = await repo.getHeadCommit()
+  const oursEntry = await headCommit.getEntry(filePath)
+  if (oursEntry && oursEntry.isFile()) {
+    return (await oursEntry.getBlob()).toString()
+  }
+}
+
+export async function getTheirsFileContent(repo, filePath) {
+  if (!repo.isMerging()) return
+
+  const theirsCommit = await repo.getBranchCommit('MERGE_HEAD')
+  const theirsEntry = await theirsCommit.getEntry(filePath)
+  if (theirsEntry && theirsEntry.isFile()) {
+    return (await theirsEntry.getBlob()).toString()
+  }
+}
+
+export async function removeConflict(repo, filePath) {
+  const index = await repo.index()
+  await index.conflictRemove(filePath)
+}
+
+// export async function conflictedFileDiff(repo, filePath) {
+//   let oursContent = ''
+//   let theirsContent = ''
+
+//   try {
+//     try {
+//       const headCommit = await repo.getHeadCommit()
+//       const oursEntry = await headCommit.getEntry(filePath)
+//       if (oursEntry && oursEntry.isFile()) {
+//         oursContent = (await oursEntry.getBlob()).toString()
+//       }
+
+//       const theirsCommit = await repo.getBranchCommit('MERGE_HEAD')
+//       const theirsEntry = await theirsCommit.getEntry(filePath)
+//       if (theirsEntry && theirsEntry.isFile()) {
+//         theirsContent = (await theirsEntry.getBlob()).toString()
+//       }
+//     } catch (e) {
+//       console.error('!!!!:', e)
+//     }
+
+//     return {
+//       oursContent,
+//       theirsContent
+//     }
+//   } catch (e) {
+//     console.log(e)
+//   }
+// }
+
 /**
  * Commit info
  * @param {Repository} repo

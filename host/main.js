@@ -23,6 +23,8 @@ import {
   fileDiffToParent,
   changedFileDiffToIndex,
   stagedFileDiffToHead,
+  getOursFileContent,
+  getTheirsFileContent,
   softResetToCommit,
   mixedResetToCommit,
   hardResetToCommit,
@@ -37,7 +39,8 @@ import {
   headCommit,
   pull,
   push,
-  merge
+  merge,
+  removeConflict
 } from './gitops'
 
 // FAKE FROM APPLICATION
@@ -273,6 +276,19 @@ answerRenderer('commit:stagedfile-diff-to-head', async (browserWindow, filePath)
   return stagedFileDiffToHead(repo, filePath)
 })
 
+answerRenderer('commit:conflictedfile-diff', async (browserWindow, filePath) => {
+  checkRepo()
+
+  const oursContent = await getOursFileContent(repo, filePath)
+
+  const theirsContent = await getTheirsFileContent(repo, filePath)
+
+  return {
+    oursContent,
+    theirsContent
+  }
+})
+
 answerRenderer('repository:log', async browserWindow => {
   checkRepo()
 
@@ -325,6 +341,28 @@ answerRenderer('commit:revert', async (browserWindow, sha) => {
   checkRepo()
 
   return revertCommit(repo, sha)
+})
+
+answerRenderer('merge:resolve-using-ours', async (browserWindow, projectPath, filePath) => {
+  checkRepo()
+  try {
+    const fileContent = await getOursFileContent(repo, filePath)
+    await fileOperations.saveFile(join(projectPath, filePath), fileContent)
+    await removeConflict(repo, filePath)
+  } catch (e) {
+    console.log(e)
+  }
+})
+
+answerRenderer('merge:resolve-using-theirs', async (browserWindow, projectPath, filePath) => {
+  checkRepo()
+  try {
+    const fileContent = await getTheirsFileContent(repo, filePath)
+    await fileOperations.saveFile(join(projectPath, filePath), fileContent)
+    await removeConflict(repo, filePath)
+  } catch (e) {
+    console.log(e)
+  }
 })
 
 /* FAKE APPLICATION (from editor) */

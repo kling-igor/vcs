@@ -69,6 +69,8 @@ export class VCS {
 
   @observable currentBranch = null
 
+  @observable isMerging = false
+
   // diff editor
   @observable originalFile = ''
   @observable modifiedFile = ''
@@ -329,16 +331,32 @@ export class VCS {
     // если M C A то есть смысл читать локальную копию
     // если D то локальная копия отсутствует
 
-    const { originalContent = '', modifiedContent = '', details: errorDetails } = await callMain(
-      'commit:file-diff-to-index',
-      this.projectPath,
-      filepath.replace(/^(\.\/)+/, '') // remove leading slash
-    )
+    // TODO: проверять статус и на базе статуса вызывать соответствующий diff
 
-    transaction(() => {
-      this.originalFile = originalContent
-      this.modifiedFile = modifiedContent
-    })
+    const { status } = this.changedFiles.find(item => `${item.path}/${item.filename}` === filepath)
+
+    if (status === 'C') {
+      const { oursContent = '', theirsContent = '' } = await callMain(
+        'commit:conflictedfile-diff',
+        filepath.replace(/^(\.\/)+/, '')
+      ) // remove leading slash)
+
+      transaction(() => {
+        this.originalFile = oursContent
+        this.modifiedFile = theirsContent
+      })
+    } else {
+      const { originalContent = '', modifiedContent = '', details: errorDetails } = await callMain(
+        'commit:file-diff-to-index',
+        this.projectPath,
+        filepath.replace(/^(\.\/)+/, '') // remove leading slash
+      )
+
+      transaction(() => {
+        this.originalFile = originalContent
+        this.modifiedFile = modifiedContent
+      })
+    }
   }
 
   @action.bound
@@ -434,7 +452,7 @@ export class VCS {
     const data = await callMain('repository:log')
 
     if (data) {
-      const { commits, committers, refs, headCommit, currentBranch } = data
+      const { commits, committers, refs, headCommit, currentBranch, isMerging } = data
 
       const [heads, remoteHeads, tags] = refs.reduce(
         (acc, { name, sha }) => {
@@ -459,6 +477,7 @@ export class VCS {
         this.tags = tags
         this.headCommit = headCommit
         this.currentBranch = currentBranch
+        this.isMerging = isMerging
       })
     }
   }
@@ -657,6 +676,19 @@ export class VCS {
   @action.bound
   async merge(sha) {
     await callMain('repository:merge', sha)
+    await this.status()
+    await this.getLog()
+  }
+
+  @action.bound
+  async resolveUsingOurs(filePath) {
+    await callMain('merge:resolve-using-ours', this.project.projectPath, filePath.replace(/^(\.\/)+/, ''))
+    await this.status()
+  }
+
+  @action.bound
+  async resolveUsingTheirs(filePath) {
+    await callMain('merge:resolve-using-theirs', this.project.projectPath, filePath.replace(/^(\.\/)+/, ''))
     await this.status()
   }
 }

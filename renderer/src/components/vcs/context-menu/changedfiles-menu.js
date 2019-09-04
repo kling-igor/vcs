@@ -14,7 +14,8 @@ export default ({ vcs, workspace, project, Dialog }) => path => {
               vcs.stageFile(path)
             })
             .catch(noop)
-        }
+        },
+        enabled: status !== 'C'
       },
       {
         label: `Remove`,
@@ -73,11 +74,15 @@ export default ({ vcs, workspace, project, Dialog }) => path => {
         submenu: [
           {
             label: "Resolve Using 'Mine'",
-            click: () => {}
+            click: async () => {
+              await vcs.resolveUsingOurs(path)
+            }
           },
           {
             label: "Resolve Using 'Theirs'",
-            click: () => {}
+            click: async () => {
+              await vcs.resolveUsingTheirs(path)
+            }
           },
           {
             type: 'separator'
