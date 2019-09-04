@@ -46,11 +46,13 @@ export default ({ vcs, workspace, Dialog }) => sha => {
         label: 'Merge...',
         click: () => {
           Dialog.confirmBranchMerge()
-            .then(commitImmediatley => {
-              console.log(`MERGING INTO CURRENT BRANCH AND COMMITING ${commitImmediatley}`)
+            .then(async commitImmediatley => {
+              console.log(`MERGING INTO CURRENT BRANCH ${commitImmediatley}`)
+              await vcs.merge(sha)
             })
             .catch(noop)
-        }
+        },
+        enabled: headCommit !== sha
       },
       {
         label: 'Rebase...',
@@ -60,7 +62,8 @@ export default ({ vcs, workspace, Dialog }) => sha => {
               console.log('REBASING CURRENT CHANGES TO ', name)
             })
             .catch(noop)
-        }
+        },
+        enabled: headCommit !== sha
       },
       {
         type: 'separator'

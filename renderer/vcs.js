@@ -656,9 +656,7 @@ export class VCS {
 
   @action.bound
   async merge(sha) {
-    const ourSha = null
-    const theirSha = null
-    await callMain('repository:merge', ourSha, theirSha)
+    await callMain('repository:merge', sha)
     await this.status()
   }
 }

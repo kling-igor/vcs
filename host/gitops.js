@@ -463,15 +463,28 @@ export async function commit(repo, message, name = 'User', email = 'no email') {
   return commitId
 }
 
-export async function merge(repo, ourCommitSha, theirCommitSha) {
-  const ourCommit = await repo.getCommit(nodegit.Oid.fromString(ourCommitSha))
-  const theirCommit = await repo.getCommit(nodegit.Oid.fromString(theirCommitSha))
+export async function merge(repo, theirCommitSha) {
+  const theirAnnotatedCommit = await nodegit.AnnotatedCommit.lookup(repo, theirCommitSha)
+  await nodegit.Merge(repo, theirAnnotatedCommit)
 
-  nodegit.Merge.commits(repo, ourCommit, theirCommit)
+  // const ourCommit = await repo.getHeadCommit()
+  // const theirCommit = await repo.getCommit(nodegit.Oid.fromString(theirCommitSha))
 
-  // if (!index.hasConflicts()) {
-  //   const treeOid = await index.writeTreeTo(repo);
-  //   repo.createCommit(ourBranch.name(), author, committer, MESSAGE, treeOid, [ourCommit, theirCommit]);
+  // let index
+  // try {
+  //   index = await nodegit.Merge.commits(repo, ourCommit, theirCommit, null)
+
+  //   console.log('MERGE INDEX:', index)
+  // } catch (e) {
+  //   console.log('!!! MERGE ERROR:', e)
+  // }
+
+  // if (index.hasConflicts()) {
+  //   //   //   const treeOid = await index.writeTreeTo(repo);
+  //   //   //   repo.createCommit(ourBranch.name(), author, committer, MESSAGE, treeOid, [ourCommit, theirCommit]);
+  //   console.log('INDEX HAS CONFLICTS!!!')
+  // } else {
+  //   await index.writeTreeTo(repo)
   // }
 }
 
@@ -707,19 +720,29 @@ export async function log(repo) {
 
   const repoRefs = await getReferences(repo)
 
-  const workDirStatus = await status(repo)
+  const heads = repoRefs.filter(ref => ref.name.includes('refs/heads/'))
 
-  const headCommit = await repo.getHeadCommit()
+  let recentCommits = []
+
+  for (const { name } of heads) {
+    try {
+      const commit = await repo.getBranchCommit(name)
+      recentCommits.push({ sha: commit.sha(), date: commit.date() })
+    } catch (e) {
+      console.log('E:', e)
+    }
+  }
+
+  let headCommit
+  try {
+    headCommit = await repo.getHeadCommit()
+  } catch (e) {
+    console.log('UNABLE TO GET HEAD:', e)
+  }
 
   const currentBranch = await repo.getCurrentBranch()
 
-  let masterCommit
-
-  try {
-    masterCommit = await repo.getMasterCommit()
-  } catch (e) {
-    console.log('UNABLE TO GET MASTER:', e)
-  }
+  const workDirStatus = await status(repo)
 
   if (workDirStatus.length > 0) {
     const branch = getBranch(headCommit.sha()) // TODO: если еще не было коммитов и это изменения в новом репозитарии ?
@@ -738,32 +761,35 @@ export async function log(repo) {
     branchIndex += 1 // пропускаем серую ветку
   }
 
-  // если HEAD не на master
-  const headNotOnMaster = !!masterCommit && masterCommit.sha() !== headCommit.sha()
+  // если HEAD не на вершине ветки
+  const headOnBranchTop = recentCommits.find(({ sha }) => sha === headCommit.sha())
 
-  // если head сдвинут, то историю будем обходить с master коммитов (а если они не самые свежие или если их нет вообще ???)
-  const commit = !!masterCommit ? masterCommit : headCommit
+  console.log('headOnBranchTop:', !!headOnBranchTop)
 
   let revWalk
   let oid
 
   try {
     revWalk = repo.createRevWalk()
-    revWalk.sorting(nodegit.Revwalk.SORT.TOPOLOGICAL)
-    revWalk.push(commit.sha())
+    revWalk.sorting(nodegit.Revwalk.SORT.TIME)
+    revWalk.pushGlob('refs/heads/*')
     oid = await revWalk.next()
   } catch (e) {
     console.log('revWalk.next() ERROR', e)
   }
 
   while (oid) {
+    // console.log('----------------')
     try {
       const commit = await repo.getCommit(oid)
 
       const sha = commit.toString()
+      // console.log('*** LOG COMMIT:', sha)
 
       const parents = commit.parents().map(parent => parent.toString())
       const [parent, otherParent] = parents
+
+      // console.log('*** LOG COMMIT PARENTS:', parent, otherParent)
 
       const branch = getBranch(sha)
       const offset = reserve.indexOf(branch)
@@ -799,7 +825,7 @@ export async function log(repo) {
             routes = [...routes, [offset, parentOffset, branch]]
             reserve.splice(offset, 1)
 
-            // значение offset далее невалидно, т.к. соответсвующее значение удалено из списка
+            // значение offset далее невалидно, т.к. соответствующее значение удалено из списка
             for (const i of Object.keys(branches)) {
               if (branches[i] >= offset) {
                 branches[i] -= 1
@@ -852,18 +878,17 @@ export async function log(repo) {
 
       oid = await revWalk.next()
     } catch (e) {
-      console.log('WHILE: ERROR:', e)
+      console.log('GITLOG ERROR:', e)
     }
   } // while
 
-  console.log('COMMITTERS:', committers)
-
   return {
     // опционально добавляем HEAD ссылку
-    refs: headNotOnMaster ? [{ name: 'HEAD', sha: headCommit.sha() }, ...repoRefs] : repoRefs,
+    refs: !headOnBranchTop ? [{ name: 'HEAD', sha: headCommit.sha() }, ...repoRefs] : repoRefs,
     commits,
     committers,
     headCommit: headCommit.sha(),
-    currentBranch: currentBranch.shorthand()
+    currentBranch: currentBranch.shorthand(),
+    isMerging: repo.isMerging()
   }
 }

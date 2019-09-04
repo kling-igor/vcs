@@ -239,9 +239,15 @@ answerRenderer('repository:push', async (browserWindow, username, password) => {
   return push(remote, username, password)
 })
 
-answerRenderer('repository:merge', async (browserWindow, ourSha, theirSha) => {
+answerRenderer('repository:merge', async (browserWindow, theirSha) => {
+  console.log('MERGE WITH:', theirSha)
   checkRepo()
-  return merge(repo, ourSha, theirSha)
+  try {
+    await merge(repo, theirSha)
+    const index = await refreshIndex(repo)
+  } catch (e) {
+    console.log('MERGE ERROR:', e)
+  }
 })
 
 answerRenderer('commit:file-diff', async (browserWindow, sha, filePath) => {
