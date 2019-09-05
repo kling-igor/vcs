@@ -1,3 +1,4 @@
+/**@description Компонент для отображения в dock списков веток, тегов и т.п. */
 import React, { memo, useCallback, useMemo, useState, useEffect, useRef } from 'react'
 import styled from 'styled-components'
 import { Scrollbars } from 'react-custom-scrollbars'
@@ -81,8 +82,14 @@ const ListRootStyle = styled.div`
 const scrollBarsStyle = { width: '100%', height: '100%' }
 
 const ItemList = ({ items, onItemSelect, selectedCommit, onContextMenu }) => {
-  const onClickHandler = useCallback(event => onItemSelect(event.currentTarget.dataset.sha), [])
-  const onContextMenuHandler = useCallback(event => onContextMenu(event.currentTarget.dataset.sha), [])
+  const onClickHandler = useCallback(
+    event => onItemSelect(event.currentTarget.dataset.sha, event.currentTarget.dataset.name),
+    []
+  )
+  const onContextMenuHandler = useCallback(
+    event => onContextMenu(event.currentTarget.dataset.sha, event.currentTarget.dataset.name),
+    []
+  )
 
   return (
     <ListRootStyle>
@@ -93,6 +100,7 @@ const ItemList = ({ items, onItemSelect, selectedCommit, onContextMenu }) => {
               <ListItemContainerStyle
                 key={name}
                 data-sha={sha}
+                data-name={name}
                 onClick={onClickHandler}
                 onContextMenu={onContextMenuHandler}
                 selected={sha === selectedCommit}

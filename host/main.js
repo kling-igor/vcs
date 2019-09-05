@@ -247,7 +247,7 @@ answerRenderer('repository:merge', async (browserWindow, theirSha) => {
   checkRepo()
   try {
     await merge(repo, theirSha)
-    const index = await refreshIndex(repo)
+    await refreshIndex(repo)
   } catch (e) {
     console.log('MERGE ERROR:', e)
   }

@@ -1,6 +1,6 @@
 const { remote } = window.require('electron')
 
-function confirmActionMessage(message, detail, option) {
+function confirmActionMessage(message, detail, option, checked = false) {
   return new Promise((resolve, reject) => {
     remote.dialog.showMessageBox(
       {
@@ -10,7 +10,8 @@ function confirmActionMessage(message, detail, option) {
         buttons: ['OK', 'Cancel'],
         defaultId: 0,
         cancelId: 1,
-        checkboxLabel: option
+        checkboxLabel: option,
+        checkboxChecked: checked
       },
       (index, checkboxChecked) => {
         if (index === 0) {
@@ -27,7 +28,7 @@ function confirmActionMessage(message, detail, option) {
   })
 }
 
-function confirmInfoMessage(message, detail, option) {
+function confirmInfoMessage(message, detail, option, checked = false) {
   return new Promise((resolve, reject) => {
     remote.dialog.showMessageBox(
       {
@@ -36,7 +37,8 @@ function confirmInfoMessage(message, detail, option) {
         detail,
         buttons: ['OK'],
         defaultId: 0,
-        checkboxLabel: option
+        checkboxLabel: option,
+        checkboxChecked: checked
       },
       (_, checkboxChecked) => {
         resolve(checkboxChecked)
@@ -99,7 +101,7 @@ export function confirmBranchMerge() {
   const message = 'Confirm Merge'
   const detail = `Are you sure you want to merge into your current branch?`
   const option = 'Commit merged changes immediately'
-  return confirmActionMessage(message, detail, option)
+  return confirmActionMessage(message, detail, option, true)
 }
 
 export function confirmMergeConflicts() {

@@ -1,10 +1,9 @@
 const { remote } = window.require('electron')
 const noop = () => {}
-export default ({ vcs, workspace, Dialog }) => sha => {
-  const { currentCommit, heads, tags } = vcs
+export default ({ vcs, workspace, Dialog }) => (sha, tag) => {
+  const { heads } = vcs
 
   const branch = heads.find(item => item.sha === sha)
-  const tag = tags.find(item => item.sha === sha)
 
   const remotesSubmenu = vcs.remotes.map(item => ({
     label: item.name,

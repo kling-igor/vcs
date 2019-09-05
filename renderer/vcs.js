@@ -469,19 +469,6 @@ export class VCS {
     if (this.commitInfo && this.commitInfo.commit === sha) return
 
     const commitInfo = await callMain('commit:get-info', sha)
-    // получаем информацию о выделенном коммите
-    // const {
-    //   commit,
-    //   author: {
-    //     name,
-    //     email,
-    //   },
-    //   date,
-    //   message,
-    //   parents,
-    //   paths,
-    //   labels
-    // }
 
     transaction(() => {
       this.originalFile = ''
@@ -541,9 +528,9 @@ export class VCS {
     await this.status()
 
     transaction(() => {
-      const stippedMessage = this.commitMessage.slice(0, 80)
-      if (this.previousCommits[0] !== stippedMessage) {
-        this.previousCommits = [stippedMessage, ...this.previousCommits]
+      const strippedMessage = this.commitMessage.slice(0, 80)
+      if (this.previousCommits[0] !== strippedMessage) {
+        this.previousCommits = [strippedMessage, ...this.previousCommits]
       }
 
       this.stagedFiles = []
@@ -658,12 +645,25 @@ export class VCS {
   }
 
   @action.bound
-  async merge(sha) {
+  async merge(sha, commitOnSuccess) {
     this.mergingSha = sha
 
     await callMain('repository:merge', sha)
     await this.status()
     await this.getLog()
+
+    if (!this.isMerging && commitOnSuccess) {
+      await callMain('commit:create', 'Merge', sha)
+
+      this.mergingSha = null
+
+      await this.getLog()
+      await this.status()
+
+      this.logMode()
+
+      return
+    }
 
     // this.commitMessage = `Merge branch '${}' into branch ${}`
     this.commitMessage = `Merge`

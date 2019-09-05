@@ -46,9 +46,9 @@ export default ({ vcs, workspace, Dialog }) => sha => {
         label: 'Merge...',
         click: () => {
           Dialog.confirmBranchMerge()
-            .then(async commitImmediatley => {
-              console.log(`MERGING INTO CURRENT BRANCH ${commitImmediatley}`)
-              await vcs.merge(sha)
+            .then(async commitOnSuccess => {
+              console.log(`MERGING INTO CURRENT BRANCH ${commitOnSuccess}`)
+              await vcs.merge(sha, commitOnSuccess)
 
               if (vcs.isMerging) {
                 Dialog.confirmMergeConflicts()
