@@ -74,14 +74,22 @@ export default ({ vcs, workspace, project, Dialog }) => path => {
         submenu: [
           {
             label: "Resolve Using 'Mine'",
-            click: async () => {
-              await vcs.resolveUsingOurs(path)
+            click: () => {
+              Dialog.confirmResolveConflictsUsingMine(path)
+                .then(async () => {
+                  await vcs.resolveUsingMine(path)
+                })
+                .catch(noop)
             }
           },
           {
             label: "Resolve Using 'Theirs'",
-            click: async () => {
-              await vcs.resolveUsingTheirs(path)
+            click: () => {
+              Dialog.confirmResolveConflictsUsingTheirs(path)
+                .then(async () => {
+                  await vcs.resolveUsingTheirs(path)
+                })
+                .catch(noop)
             }
           },
           {
@@ -93,11 +101,19 @@ export default ({ vcs, workspace, project, Dialog }) => path => {
           },
           {
             label: 'Mark Resolved',
-            click: () => {}
+            click: () => {
+              Dialog.confirmMarkResolved(path)
+                .then(async () => {})
+                .catch(noop)
+            }
           },
           {
             label: 'Mark Unresolved',
-            click: () => {}
+            click: () => {
+              Dialog.confirmMarkUnresolved(path)
+                .then(async () => {})
+                .catch(noop)
+            }
           }
         ]
       },

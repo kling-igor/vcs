@@ -336,13 +336,13 @@ export class VCS {
     const { status } = this.changedFiles.find(item => `${item.path}/${item.filename}` === filepath)
 
     if (status === 'C') {
-      const { oursContent = '', theirsContent = '' } = await callMain(
+      const { mineContent = '', theirsContent = '' } = await callMain(
         'commit:conflictedfile-diff',
         filepath.replace(/^(\.\/)+/, '')
       ) // remove leading slash)
 
       transaction(() => {
-        this.originalFile = oursContent
+        this.originalFile = mineContent
         this.modifiedFile = theirsContent
       })
     } else {
@@ -549,7 +549,7 @@ export class VCS {
 
   @action.bound
   async onCommit() {
-    if (this.stagedFiles.length === 0) return
+    if (this.stagedFiles.length === 0 && !this.isMerging) return
 
     await callMain('commit:create', this.commitMessage)
 
@@ -681,8 +681,8 @@ export class VCS {
   }
 
   @action.bound
-  async resolveUsingOurs(filePath) {
-    await callMain('merge:resolve-using-ours', this.project.projectPath, filePath.replace(/^(\.\/)+/, ''))
+  async resolveUsingMine(filePath) {
+    await callMain('merge:resolve-using-mine', this.project.projectPath, filePath.replace(/^(\.\/)+/, ''))
     await this.status()
   }
 

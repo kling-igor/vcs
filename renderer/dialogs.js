@@ -109,6 +109,30 @@ export function confirmMergeConflicts() {
   return confirmInfoMessage(message, detail, option)
 }
 
+export function confirmResolveConflictsUsingMine(filepath) {
+  const message = `Confirm Resolve Using 'Mine'`
+  const detail = `Are you sure you want to resolve the following files using your own version? ${filepath}`
+  return confirmInfoMessage(message, detail)
+}
+
+export function confirmResolveConflictsUsingTheirs(filepath) {
+  const message = `Confirm Resolve Using 'Theirs'`
+  const detail = `Are you sure you want to resolve the following files using the version from the other side of the merge? ${filepath}`
+  return confirmInfoMessage(message, detail)
+}
+
+export function confirmMarkResolved(filepath) {
+  const message = `Confirm Mark Resolved`
+  const detail = `Are you sure you wish to mark the following file as resolved? ${filepath}`
+  return confirmInfoMessage(message, detail)
+}
+
+export function confirmMarkUnresolved(filepath) {
+  const message = `Confirm Mark Unresolved`
+  const detail = `Are you sure you wish to mark the following file as unresolved? ${filepath}`
+  return confirmInfoMessage(message, detail)
+}
+
 export function confirmBranchRebase(branch) {
   const message = 'Confirm Rebase'
   const detail = `Are you sure you want to rebase your current changes on to '${branch}' branch? Make sure your changes have not been pushed to anyone else.`

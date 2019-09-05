@@ -23,7 +23,7 @@ import {
   fileDiffToParent,
   changedFileDiffToIndex,
   stagedFileDiffToHead,
-  getOursFileContent,
+  getMineFileContent,
   getTheirsFileContent,
   softResetToCommit,
   mixedResetToCommit,
@@ -279,12 +279,12 @@ answerRenderer('commit:stagedfile-diff-to-head', async (browserWindow, filePath)
 answerRenderer('commit:conflictedfile-diff', async (browserWindow, filePath) => {
   checkRepo()
 
-  const oursContent = await getOursFileContent(repo, filePath)
+  const mineContent = await getMineFileContent(repo, filePath)
 
   const theirsContent = await getTheirsFileContent(repo, filePath)
 
   return {
-    oursContent,
+    mineContent,
     theirsContent
   }
 })
@@ -343,12 +343,16 @@ answerRenderer('commit:revert', async (browserWindow, sha) => {
   return revertCommit(repo, sha)
 })
 
-answerRenderer('merge:resolve-using-ours', async (browserWindow, projectPath, filePath) => {
+answerRenderer('merge:resolve-using-mine', async (browserWindow, projectPath, filePath) => {
   checkRepo()
   try {
-    const fileContent = await getOursFileContent(repo, filePath)
+    const fileContent = await getMineFileContent(repo, filePath)
     await fileOperations.saveFile(join(projectPath, filePath), fileContent)
     await removeConflict(repo, filePath)
+
+    const index = await refreshIndex(repo)
+    await addToIndex(index, filePath)
+    await writeIndex(index)
   } catch (e) {
     console.log(e)
   }

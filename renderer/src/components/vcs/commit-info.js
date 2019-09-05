@@ -86,7 +86,7 @@ const CommitInfo = observer(({ storage: { commitInfo } }) => {
   const hash = MD5(email).toString()
 
   const parentsString = parents.length > 0 ? parents.join(', ') : null
-  const labelsString = labels.length > 0 ? labels.join(', ') : null
+  const labelsString = labels.length > 0 ? labels.replace('refs/heads/', '').join(', ') : null
 
   // const LETTERS = name
   //   .split(' ')

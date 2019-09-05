@@ -224,6 +224,7 @@ function fileStatus(file) {
  */
 export async function status(repo) {
   const statuses = await repo.getStatusExt()
+
   return statuses.map(file => {
     const filename = basename(file.path())
     const path = dirname(file.path())
@@ -592,11 +593,11 @@ export async function stagedFileDiffToHead(repo, filePath) {
   }
 }
 
-export async function getOursFileContent(repo, filePath) {
+export async function getMineFileContent(repo, filePath) {
   const headCommit = await repo.getHeadCommit()
-  const oursEntry = await headCommit.getEntry(filePath)
-  if (oursEntry && oursEntry.isFile()) {
-    return (await oursEntry.getBlob()).toString()
+  const mineEntry = await headCommit.getEntry(filePath)
+  if (mineEntry && mineEntry.isFile()) {
+    return (await mineEntry.getBlob()).toString()
   }
 }
 
