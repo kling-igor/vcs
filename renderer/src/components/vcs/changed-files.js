@@ -1,3 +1,4 @@
+/** @description Компонент для отображения списка измененных файлов в рабочем каталоге */
 import React from 'react'
 import { observer } from 'mobx-react'
 import FileList from './file-list'

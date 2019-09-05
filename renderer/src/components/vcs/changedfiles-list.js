@@ -1,8 +1,11 @@
+/** @description Компонент для отображения списка файлов коммита */
+
 import React, { memo, useCallback, useMemo } from 'react'
 import styled from 'styled-components'
-import { toJS } from 'mobx'
 import { observer } from 'mobx-react'
 import { Scrollbars } from 'react-custom-scrollbars'
+
+import StatusBadge from './status-badge'
 
 const ListRootStyle = styled.div`
   display: flex;
@@ -94,69 +97,6 @@ const ListItemPathStyle = styled.span`
   margin-left: 1em;
   opacity: 0.8;
 `
-
-const colors = {
-  M: {
-    color: 'yellow',
-    backgroundColor: 'darkgreen'
-  },
-
-  A: {
-    color: 'white',
-    backgroundColor: 'darkgreen'
-  },
-
-  D: {
-    color: 'white',
-    backgroundColor: 'black'
-  },
-
-  R: {
-    color: 'white',
-    backgroundColor: 'blue'
-  },
-
-  C: {
-    color: 'white',
-    backgroundColor: 'red'
-  },
-
-  U: {
-    color: 'yellow',
-    backgroundColor: 'brown'
-  }
-}
-
-const BadgeStyle = styled.div`
-  color: ${({ color }) => color};
-  background-color: ${({ backgroundColor }) => backgroundColor};
-  width: 1.3em;
-  min-width: 1.3em;
-  max-width: 1.3em;
-  height: 1.3em;
-  text-align: center;
-  vertical-align: middle;
-  border-radius: 50%;
-`
-
-const StatusBadge = memo(({ value }) => {
-  const letter = useMemo(() => {
-    let letter = value.replace('I', '')
-    if (letter.length > 1 && letter.includes('D')) {
-      letter = value.replace('D', '')
-    }
-    return letter
-  }, [value])
-
-  const color = (colors[letter] && colors[letter].color) || 'white'
-  const backgroundColor = (colors[letter] && colors[letter].backgroundColor) || 'blue'
-
-  return (
-    <BadgeStyle color={color} backgroundColor={backgroundColor}>
-      {letter}
-    </BadgeStyle>
-  )
-})
 
 const scrollbarsStyle = {
   width: '100%',
