@@ -431,7 +431,7 @@ export class VCS {
     const data = await callMain('repository:log')
 
     if (data) {
-      const { commits, committers, refs, headCommit, currentBranch, isMerging, isRebasing } = data
+      const { commits, committers, refs, headCommit, currentBranch, isMerging, isRebasing, hasConflicts } = data
 
       console.log('isMerging:', isMerging)
 
@@ -460,6 +460,7 @@ export class VCS {
         this.currentBranch = currentBranch
         this.isMerging = isMerging
         this.isRebasing = isRebasing
+        this.hasConflicts = hasConflicts
       })
     }
   }
@@ -652,7 +653,7 @@ export class VCS {
     await this.status()
     await this.getLog()
 
-    if (!this.isMerging && commitOnSuccess) {
+    if (this.isMerging && commitOnSuccess) {
       await callMain('commit:create', 'Merge', sha)
 
       this.mergingSha = null

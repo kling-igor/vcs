@@ -190,33 +190,6 @@ export async function writeIndex(index) {
   await index.write()
 }
 
-// function fileStatus(file) {
-//   let result = ''
-//   if (file.isNew()) {
-//     result += 'A'
-//   }
-//   if (file.isModified()) {
-//     result += 'M'
-//   }
-//   // if (file.isTypechange()) { result += ''};
-//   if (file.isRenamed()) {
-//     result += 'R'
-//   }
-//   if (file.isIgnored()) {
-//     result += '?'
-//   }
-//   if (file.isDeleted()) {
-//     result += 'D'
-//   }
-//   if (file.isConflicted()) {
-//     result += 'C'
-//   }
-//   if (file.inIndex()) {
-//     result += 'I'
-//   }
-//   return result
-// }
-
 /**
  * Gets file statuses
  * @param {Repository} repo
@@ -457,6 +430,7 @@ export async function commit(repo, message, name = 'User', email = 'no email', m
   let other
   if (mergingCommitSha) {
     repo.stateCleanup()
+    await index.conflictCleanup()
     other = await repo.getCommit(mergingCommitSha)
   }
 
@@ -473,27 +447,7 @@ export async function commit(repo, message, name = 'User', email = 'no email', m
 
 export async function merge(repo, theirCommitSha) {
   const theirAnnotatedCommit = await nodegit.AnnotatedCommit.lookup(repo, theirCommitSha)
-  await nodegit.Merge(repo, theirAnnotatedCommit)
-
-  // const ourCommit = await repo.getHeadCommit()
-  // const theirCommit = await repo.getCommit(nodegit.Oid.fromString(theirCommitSha))
-
-  // let index
-  // try {
-  //   index = await nodegit.Merge.commits(repo, ourCommit, theirCommit, null)
-
-  //   console.log('MERGE INDEX:', index)
-  // } catch (e) {
-  //   console.log('!!! MERGE ERROR:', e)
-  // }
-
-  // if (index.hasConflicts()) {
-  //   //   //   const treeOid = await index.writeTreeTo(repo);
-  //   //   //   repo.createCommit(ourBranch.name(), author, committer, MESSAGE, treeOid, [ourCommit, theirCommit]);
-  //   console.log('INDEX HAS CONFLICTS!!!')
-  // } else {
-  //   await index.writeTreeTo(repo)
-  // }
+  nodegit.Merge.merge(repo, theirAnnotatedCommit)
 }
 
 /**
@@ -872,7 +826,7 @@ export async function log(repo) {
     console.log('revWalk.next() ERROR', e)
   }
 
-  // // делаем искусственную запись
+  // делаем искусственную запись
   if (repo.isMerging()) {
     try {
       const mineCommit = headCommit.sha()
@@ -1007,6 +961,9 @@ export async function log(repo) {
     }
   } // while
 
+  const index = await repo.index()
+  const hasConflicts = index.hasConflicts()
+
   return {
     // опционально добавляем HEAD ссылку
     refs: !headOnBranchTop ? [{ name: 'HEAD', sha: headCommit.sha() }, ...repoRefs] : repoRefs,
@@ -1015,6 +972,7 @@ export async function log(repo) {
     headCommit: headCommit.sha(),
     currentBranch: currentBranch.shorthand(),
     isMerging: repo.isMerging(),
-    isRebasing: repo.isRebasing()
+    isRebasing: repo.isRebasing(),
+    hasConflicts
   }
 }

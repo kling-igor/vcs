@@ -50,7 +50,7 @@ export default ({ vcs, workspace, Dialog }) => sha => {
               console.log(`MERGING INTO CURRENT BRANCH ${commitOnSuccess}`)
               await vcs.merge(sha, commitOnSuccess)
 
-              if (vcs.isMerging) {
+              if (vcs.isMerging && vcs.hasConflicts) {
                 Dialog.confirmMergeConflicts()
                   .then(noop)
                   .catch(noop)
