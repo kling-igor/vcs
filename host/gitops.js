@@ -190,32 +190,32 @@ export async function writeIndex(index) {
   await index.write()
 }
 
-function fileStatus(file) {
-  let result = ''
-  if (file.isNew()) {
-    result += 'A'
-  }
-  if (file.isModified()) {
-    result += 'M'
-  }
-  // if (file.isTypechange()) { result += ''};
-  if (file.isRenamed()) {
-    result += 'R'
-  }
-  if (file.isIgnored()) {
-    result += '?'
-  }
-  if (file.isDeleted()) {
-    result += 'D'
-  }
-  if (file.isConflicted()) {
-    result += 'C'
-  }
-  if (file.inIndex()) {
-    result += 'I'
-  }
-  return result
-}
+// function fileStatus(file) {
+//   let result = ''
+//   if (file.isNew()) {
+//     result += 'A'
+//   }
+//   if (file.isModified()) {
+//     result += 'M'
+//   }
+//   // if (file.isTypechange()) { result += ''};
+//   if (file.isRenamed()) {
+//     result += 'R'
+//   }
+//   if (file.isIgnored()) {
+//     result += '?'
+//   }
+//   if (file.isDeleted()) {
+//     result += 'D'
+//   }
+//   if (file.isConflicted()) {
+//     result += 'C'
+//   }
+//   if (file.inIndex()) {
+//     result += 'I'
+//   }
+//   return result
+// }
 
 /**
  * Gets file statuses
@@ -228,11 +228,10 @@ export async function status(repo) {
   return statuses.map(file => {
     const filename = basename(file.path())
     const path = dirname(file.path())
-    const status = fileStatus(file)
 
     console.log('STATUS_EX:', filename, file.status())
 
-    return { filename, path, status, statusEx: file.status() }
+    return { filename, path, status: file.status() }
   })
 }
 
@@ -443,7 +442,7 @@ export async function push(remote, username, password = '') {
   }
 }
 
-export async function commit(repo, message, name = 'User', email = 'no email') {
+export async function commit(repo, message, name = 'User', email = 'no email', mergingCommitSha) {
   const index = await repo.index()
   const treeOid = await index.writeTree()
 
@@ -455,9 +454,17 @@ export async function commit(repo, message, name = 'User', email = 'no email') {
   const branchOid = await nodegit.Reference.nameToId(repo, branchName)
   const parent = await repo.getCommit(branchOid)
 
+  let other
+  if (mergingCommitSha) {
+    repo.stateCleanup()
+    other = await repo.getCommit(mergingCommitSha)
+  }
+
+  const parents = [parent, other].filter(item => !!item)
+
   let commitId
   try {
-    commitId = await repo.createCommit(branchName, author, committer, message, treeOid, [parent])
+    commitId = await repo.createCommit(branchName, author, committer, message, treeOid, parents)
   } catch (e) {
     console.log('COMMIT:CREATE_COMMIT ERROR:', e)
   }
@@ -594,27 +601,57 @@ export async function stagedFileDiffToHead(repo, filePath) {
 }
 
 export async function getMineFileContent(repo, filePath) {
-  const headCommit = await repo.getHeadCommit()
-  const mineEntry = await headCommit.getEntry(filePath)
-  if (mineEntry && mineEntry.isFile()) {
-    return (await mineEntry.getBlob()).toString()
-  }
+  // const headCommit = await repo.getHeadCommit()
+  // const mineEntry = await headCommit.getEntry(filePath)
+  // if (mineEntry && mineEntry.isFile()) {
+  //   return (await mineEntry.getBlob()).toString()
+  // }
+
+  const index = await repo.index()
+  const conflict = await index.conflictGet(filePath)
+  const mineBlob = await repo.getBlob(conflict.our_out.id)
+  return mineBlob.toString()
 }
 
 export async function getTheirsFileContent(repo, filePath) {
   if (!repo.isMerging()) return
 
-  const theirsCommit = await repo.getBranchCommit('MERGE_HEAD')
-  const theirsEntry = await theirsCommit.getEntry(filePath)
-  if (theirsEntry && theirsEntry.isFile()) {
-    return (await theirsEntry.getBlob()).toString()
-  }
+  // const theirsCommit = await repo.getBranchCommit('MERGE_HEAD')
+  // const theirsEntry = await theirsCommit.getEntry(filePath)
+  // if (theirsEntry && theirsEntry.isFile()) {
+  //   return (await theirsEntry.getBlob()).toString()
+  // }
+
+  const index = await repo.index()
+  const conflict = await index.conflictGet(filePath)
+  const theirsBlob = await repo.getBlob(conflict.their_out.id)
+  return theirsBlob.toString()
 }
 
 export async function removeConflict(repo, filePath) {
   const index = await repo.index()
   await index.conflictRemove(filePath)
 }
+
+// export async function removeConflictUsingMine(repo, filePath) {
+//   const index = await repo.index()
+//   const conflict = await index.conflictGet(filePath)
+
+//   const ancestorBlob = await repo.getBlob(conflict.ancestor_out.id)
+//   const ancestorContent = ancestorBlob.toString()
+
+//   console.log('ANCESTOR:', ancestorContent)
+
+//   const mineBlob = await repo.getBlob(conflict.our_out.id)
+//   const mineContent = mineBlob.toString()
+
+//   console.log('MINE:', mineContent)
+
+//   const theirsBlob = await repo.getBlob(conflict.their_out.id)
+//   const theirsContent = theirsBlob.toString()
+
+//   console.log('THEIR:', theirsContent)
+// }
 
 // export async function conflictedFileDiff(repo, filePath) {
 //   let oursContent = ''
@@ -799,18 +836,21 @@ export async function log(repo) {
   const workDirStatus = await status(repo)
 
   if (workDirStatus.length > 0) {
-    const branch = getBranch(headCommit.sha()) // TODO: если еще не было коммитов и это изменения в новом репозитарии ?
-    const offset = reserve.indexOf(branch)
-
-    commits.push({
-      sha: null,
-      message: 'Uncommited changes',
-      commiter: null,
-      date: Date.now(),
-      offset,
-      branch,
-      routes: [...fillRoutes(I, I, reserve)]
-    })
+    try {
+      const branch = getBranch(headCommit.sha()) // TODO: если еще не было коммитов и это изменения в новом репозитарии ?
+      const offset = reserve.indexOf(branch)
+      commits.push({
+        sha: null,
+        message: 'Uncommited changes',
+        committer: null,
+        date: Date.now(),
+        offset,
+        branch,
+        routes: [...fillRoutes(I, I, reserve)]
+      })
+    } catch (e) {
+      console.log('ERROR:', e)
+    }
   } else {
     branchIndex += 1 // пропускаем серую ветку
   }
@@ -830,6 +870,37 @@ export async function log(repo) {
     oid = await revWalk.next()
   } catch (e) {
     console.log('revWalk.next() ERROR', e)
+  }
+
+  // // делаем искусственную запись
+  if (repo.isMerging()) {
+    try {
+      const mineCommit = headCommit.sha()
+      const theirsCommit = (await repo.getBranchCommit('MERGE_HEAD')).sha()
+
+      const branch = getBranch(mineCommit)
+      const offset = reserve.indexOf(branch)
+
+      let routes = fillRoutes(I, I, reserve)
+
+      branches[mineCommit] = branch
+
+      const theirsBranch = getBranch(theirsCommit)
+      routes = [...routes, [offset, reserve.indexOf(theirsBranch), theirsBranch]]
+
+      commits.push({
+        sha: null,
+        isHead: false,
+        message: 'Merging...',
+        committer: null,
+        date: Date.now(),
+        offset: 0,
+        branch,
+        routes
+      })
+    } catch (e) {
+      console.log('ERROR:', e)
+    }
   }
 
   while (oid) {
@@ -899,14 +970,14 @@ export async function log(repo) {
 
       const authorName = commit.author().name()
       const authorEmail = commit.author().email()
-      const authorDate = commit.time()
+      const authorDate = commit.timeMs()
 
-      let commiterIndex
+      let committerIndex
       const foundIndex = committers.findIndex(({ name, email }) => name === authorName && email === authorEmail)
       if (foundIndex !== -1) {
-        commiterIndex = foundIndex
+        committerIndex = foundIndex
       } else {
-        commiterIndex = committers.length
+        committerIndex = committers.length
         committers.push({ name: authorName, email: authorEmail })
       }
 
@@ -919,7 +990,7 @@ export async function log(repo) {
         sha,
         isHead: sha === headCommit.sha() && workDirStatus.length === 0,
         message: message.slice(0, 80),
-        commiter: commiterIndex,
+        committer: committerIndex,
         date: authorDate,
         offset,
         branch,
@@ -943,6 +1014,7 @@ export async function log(repo) {
     committers,
     headCommit: headCommit.sha(),
     currentBranch: currentBranch.shorthand(),
-    isMerging: repo.isMerging()
+    isMerging: repo.isMerging(),
+    isRebasing: repo.isRebasing()
   }
 }

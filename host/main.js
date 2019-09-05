@@ -172,13 +172,13 @@ answerRenderer('commit:get-info', async (browserWindow, sha) => {
   return commitInfo(repo, sha)
 })
 
-answerRenderer('commit:create', async (browserWindow, message) => {
+answerRenderer('commit:create', async (browserWindow, message, mergingCommitSha) => {
   checkRepo()
 
   try {
     const index = await repo.index()
     await writeIndex(index)
-    await commit(repo, message, user.name, user.email)
+    await commit(repo, message, user.name, user.email, mergingCommitSha)
   } catch (e) {
     console.log('COMMIT ERROR:', e)
   }
@@ -364,6 +364,10 @@ answerRenderer('merge:resolve-using-theirs', async (browserWindow, projectPath, 
     const fileContent = await getTheirsFileContent(repo, filePath)
     await fileOperations.saveFile(join(projectPath, filePath), fileContent)
     await removeConflict(repo, filePath)
+
+    const index = await refreshIndex(repo)
+    await addToIndex(index, filePath)
+    await writeIndex(index)
   } catch (e) {
     console.log(e)
   }

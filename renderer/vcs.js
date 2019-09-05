@@ -70,6 +70,7 @@ export class VCS {
   @observable currentBranch = null
 
   @observable isMerging = false
+  @observable isRebasing = false
 
   // diff editor
   @observable originalFile = ''
@@ -228,71 +229,49 @@ export class VCS {
 
     const [stagedFiles, changedFiles] = statuses.reduce(
       (acc, item) => {
-        const { status, statusEx } = item
+        const { status } = item
 
         let selected = false
 
         let workdirStatus = ''
         let stagedStatus = ''
 
-        if (statusEx.includes('CONFLICTED')) {
+        if (status.includes('CONFLICTED')) {
           workdirStatus = 'C'
         }
 
-        if (statusEx.includes('WT_NEW')) {
+        if (status.includes('WT_NEW')) {
           workdirStatus = 'A'
         }
 
-        if (statusEx.includes('WT_MODIFIED')) {
+        if (status.includes('WT_MODIFIED')) {
           workdirStatus = 'M'
         }
 
-        if (statusEx.includes('WT_DELETED')) {
+        if (status.includes('WT_DELETED')) {
           workdirStatus = 'D'
         }
 
-        if (statusEx.includes('WT_RENAMED')) {
+        if (status.includes('WT_RENAMED')) {
           // должно идти после M
           workdirStatus = 'R'
         }
 
-        if (statusEx.includes('INDEX_NEW')) {
+        if (status.includes('INDEX_NEW')) {
           stagedStatus = 'A'
         }
 
-        if (statusEx.includes('INDEX_MODIFIED')) {
+        if (status.includes('INDEX_MODIFIED')) {
           stagedStatus = 'M'
         }
 
-        if (statusEx.includes('INDEX_DELETED')) {
+        if (status.includes('INDEX_DELETED')) {
           stagedStatus = 'D'
         }
 
-        if (statusEx.includes('INDEX_RENAMED')) {
+        if (status.includes('INDEX_RENAMED')) {
           stagedStatus = 'R'
         }
-
-        // if (status.includes('I')) {
-
-        //   let stagedStatus = status.replace('I', '')
-
-        //   console.log('stagedStatus:', stagedStatus)
-
-        //   if (stagedStatus.includes('A')) {
-        //     workdirStatus = stagedStatus.replace('A', '')
-        //     stagedStatus = 'A'
-        //   } else if (stagedStatus.includes('D')) {
-        //     workdirStatus = stagedStatus.replace('D', '')
-        //     stagedStatus = 'D'
-        //   } else if (stagedStatus.includes('M')) {
-        //     workdirStatus = stagedStatus.replace('M', '')
-        //     stagedStatus = 'M'
-        //   } else if (stagedStatus.includes('R')) {
-        //     workdirStatus = stagedStatus.replace('R', '')
-        //     stagedStatus = 'R'
-        //   }
-
-        //   console.log('workdirStatus:', workdirStatus)
 
         if (stagedStatus) {
           const foundInStaged = this.stagedFiles.find(
@@ -309,7 +288,7 @@ export class VCS {
             ({ path, filename }) => path === item.path && filename === item.filename
           )
           selected = (foundInChanged && foundInChanged.selected) || false
-          acc[CHANGED].push({ ...item, selected, status: workdirStatus || item.status })
+          acc[CHANGED].push({ ...item, selected, status: workdirStatus })
         }
 
         return acc
@@ -452,7 +431,9 @@ export class VCS {
     const data = await callMain('repository:log')
 
     if (data) {
-      const { commits, committers, refs, headCommit, currentBranch, isMerging } = data
+      const { commits, committers, refs, headCommit, currentBranch, isMerging, isRebasing } = data
+
+      console.log('isMerging:', isMerging)
 
       const [heads, remoteHeads, tags] = refs.reduce(
         (acc, { name, sha }) => {
@@ -478,6 +459,7 @@ export class VCS {
         this.headCommit = headCommit
         this.currentBranch = currentBranch
         this.isMerging = isMerging
+        this.isRebasing = isRebasing
       })
     }
   }
@@ -551,7 +533,9 @@ export class VCS {
   async onCommit() {
     if (this.stagedFiles.length === 0 && !this.isMerging) return
 
-    await callMain('commit:create', this.commitMessage)
+    await callMain('commit:create', this.commitMessage, this.mergingSha)
+
+    this.mergingSha = null
 
     await this.getLog()
     await this.status()
@@ -675,9 +659,14 @@ export class VCS {
 
   @action.bound
   async merge(sha) {
+    this.mergingSha = sha
+
     await callMain('repository:merge', sha)
     await this.status()
     await this.getLog()
+
+    // this.commitMessage = `Merge branch '${}' into branch ${}`
+    this.commitMessage = `Merge`
   }
 
   @action.bound

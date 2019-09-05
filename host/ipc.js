@@ -15,11 +15,11 @@ module.exports = (ipc, BrowserWindow) => ({
     return new Promise((resolve, reject) => {
       const uuid = uuidv4()
       ipc.once(uuid, (event, ...resultArgs) => {
-        ipc.removeAllListeners(`error-${uuid}`)
+        ipc.removeAllListeners(`${channel}-error-${uuid}`)
         resolve(...resultArgs)
       })
 
-      ipc.once(`error-${uuid}`, (event, error) => {
+      ipc.once(`${channel}-error-${uuid}`, (event, error) => {
         ipc.removeAllListeners(uuid)
         reject(error)
       })
@@ -41,7 +41,7 @@ module.exports = (ipc, BrowserWindow) => ({
         try {
           event.sender.send(uuid, await callback(window, ...args))
         } catch (error) {
-          event.sender.send(`error-${uuid}`, error)
+          event.sender.send(`${channel}-error-${uuid}`, error)
         }
       }
     }

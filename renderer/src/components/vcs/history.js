@@ -6,6 +6,13 @@ import moment from 'moment'
 import { Tree } from './tree'
 import { ROW_HEIGHT, X_STEP } from './constants'
 
+moment.locale('en', {
+  calendar: {
+    lastDay: '[Yesterday at] H:mm',
+    sameDay: '[Today at] H:mm'
+  }
+})
+
 const RowStyle = styled.div`
   padding-left: 20px;
   height: ${() => `${ROW_HEIGHT}px`};
@@ -93,7 +100,7 @@ const TextStyle = styled.span`
 `
 
 const TimeStampStyle = styled.span`
-  padding-right: 32px;
+  padding-right: 16px;
   font-size: 12px;
   line-height: ${() => `${ROW_HEIGHT}px`};
   white-space: nowrap;
@@ -159,6 +166,12 @@ const TagStyle = styled.span`
   margin-right: 4px;
 `
 
+const RightContainerStyle = styled.div`
+  margin: 0px;
+  padding: 0px;
+  white-space: nowrap;
+`
+
 // TODO: useContext onRowClick
 
 export const History = memo(
@@ -167,7 +180,7 @@ export const History = memo(
     const onContextMenuHandler = useCallback(event => onContextMenu(event.currentTarget.dataset.sha), [])
 
     const rowRenderer = ({ index, isScrolling, key, style }) => {
-      const { sha, message, routes, commiter, date } = commits[index]
+      const { sha, message, routes, committer, date } = commits[index]
       const offset = routes.length > 0 ? routes.length : 1
 
       // // подсчет кол-ва параллельных роутов
@@ -182,7 +195,13 @@ export const History = memo(
       //   offset = 1
       // }
 
-      const datetime = moment.unix(date).format('MMMM Do YYYY, H:mm:ss')
+      let datetime
+
+      if (moment(date).isSame(moment(), 'day')) {
+        datetime = moment().calendar(date)
+      } else {
+        datetime = moment(date).format('MMMM Do YYYY, H:mm')
+      }
 
       if (!sha) {
         return (
@@ -201,7 +220,7 @@ export const History = memo(
         )
       }
 
-      const { name, email } = committers[commiter]
+      const { name, email } = committers[committer]
       const commitRefs = [...heads.filter(item => item.sha === sha), ...remoteHeads.filter(item => item.sha === sha)]
       const commitTags = [...tags.filter(item => item.sha === sha)]
 
@@ -217,9 +236,9 @@ export const History = memo(
         >
           <TextStyle offset={offset * X_STEP}>
             <b className="bp3-monospace-text">{sha.slice(0, 8)}</b>{' '}
-            <em>
+            {/* <em>
               {name} {email}
-            </em>{' '}
+            </em>{' '} */}
             {!!commitTags.length > 0 &&
               commitTags.map(item => (
                 <TagStyle key={item.name}>
@@ -236,7 +255,14 @@ export const History = memo(
               ))}
             <b>{message}</b>
           </TextStyle>
-          <TimeStampStyle>{datetime}</TimeStampStyle>
+          <RightContainerStyle>
+            <TextStyle>
+              <em>
+                {name} {email}
+              </em>
+            </TextStyle>{' '}
+            <TimeStampStyle>{datetime}</TimeStampStyle>
+          </RightContainerStyle>
         </RowStyle>
       )
     }

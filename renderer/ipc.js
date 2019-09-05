@@ -9,8 +9,9 @@ import { Disposable } from 'event-kit'
  */
 export const callMain = (channel, ...args) => {
   const uuid = uuidv4()
+
   return new Promise((resolve, reject) => {
-    const errorChannel = `error-${uuid}`
+    const errorChannel = `${channel}-error-${uuid}`
     ipcRenderer.once(uuid, (event, ...resultArgs) => {
       ipcRenderer.removeAllListeners(errorChannel)
       resolve(...resultArgs)
@@ -35,7 +36,7 @@ export const answerMain = (channel, callback) => {
     try {
       ipcRenderer.send(uuid, await callback(...args))
     } catch (error) {
-      ipcRenderer.send(`error-${uuid}`, error)
+      ipcRenderer.send(`${channel}-error-${uuid}`, error)
     }
   }
 
@@ -48,7 +49,7 @@ export const answerMain = (channel, callback) => {
 //   callMain: (channel, ...args) => {
 //     const uuid = uuidv4()
 //     return new Promise((resolve, reject) => {
-//       const errorChannel = `error-${uuid}`
+//       const errorChannel = `${channel}-error-${uuid}`
 //       ipc.once(uuid, (event, ...resultArgs) => {
 //         ipc.removeAllListeners(errorChannel)
 //         resolve(...resultArgs)
@@ -68,7 +69,7 @@ export const answerMain = (channel, callback) => {
 //       try {
 //         ipc.send(uuid, await callback(...args))
 //       } catch (error) {
-//         ipc.send(`error-${uuid}`, error)
+//         ipc.send(`${channel}-error-${uuid}`, error)
 //       }
 //     }
 
