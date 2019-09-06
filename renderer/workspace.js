@@ -47,11 +47,16 @@ export class Workspace {
    * @param {Function} [validateInput] - a validation function (String) => Boolean (true if valid)
    * @returns {Promise} promise resolved with input value or undefined if canceled
    */
-  showInputBox({ placeHolder, validateInput, onInputChange }) {
+  showInputBox({ placeHolder, defaultValue, validateInput, onInputChange }) {
     return new Promise(resolve => {
       const onSelect = value => {
         this.hideModalView()
-        resolve(value)
+
+        if (!value && defaultValue) {
+          resolve(defaultValue)
+        } else {
+          resolve(value)
+        }
       }
 
       this.showModalView(

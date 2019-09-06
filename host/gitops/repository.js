@@ -26,7 +26,7 @@ export async function createRepository(path) {
  * @param {String} [username] - optional username
  * @param {String} [password] - optional password
  */
-export async function cloneRepo(url, path, username, password) {
+export async function cloneRepository(url, path, username, password) {
   return await nodegit.Clone(url, path, {
     fetchOpts: {
       callbacks: {
@@ -72,6 +72,14 @@ export async function getRemotes(repo) {
     console.log(e)
   }
   return null
+}
+
+export async function addRemote(repo, name, url) {
+  return nodegit.Remote.create(repo, name, url)
+}
+
+export async function deleteRemote(repo, name) {
+  return nodegit.Remote.delete(repo, name)
 }
 
 export async function getReferences(repo) {

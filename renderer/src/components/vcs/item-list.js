@@ -115,4 +115,30 @@ const ItemList = ({ items, onItemSelect, selectedCommit, onContextMenu }) => {
   )
 }
 
+export const RemoteItemList = ({ items, onItemSelect, onContextMenu }) => {
+  const onClickHandler = useCallback(event => onItemSelect(event.currentTarget.dataset.name), [])
+  const onContextMenuHandler = useCallback(event => onContextMenu(event.currentTarget.dataset.name), [])
+
+  return (
+    <ListRootStyle>
+      <Scrollbars style={scrollBarsStyle} thumbMinSize={30} autoHide autoHideTimeout={1000} autoHideDuration={200}>
+        <ListStyle>
+          {items.map(({ name, sha }) => {
+            return (
+              <ListItemContainerStyle
+                key={name}
+                data-name={name}
+                onClick={onClickHandler}
+                onContextMenu={onContextMenuHandler}
+              >
+                <ListItemNameStyle>{name}</ListItemNameStyle>
+              </ListItemContainerStyle>
+            )
+          })}
+        </ListStyle>
+      </Scrollbars>
+    </ListRootStyle>
+  )
+}
+
 export default ItemList

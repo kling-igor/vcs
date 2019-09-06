@@ -40,7 +40,9 @@ import {
   pull,
   push,
   merge,
-  removeConflict
+  removeConflict,
+  addRemote,
+  deleteRemote
 } from './gitops'
 
 // FAKE FROM APPLICATION
@@ -371,6 +373,22 @@ answerRenderer('merge:resolve-using-theirs', async (browserWindow, projectPath, 
   } catch (e) {
     console.log(e)
   }
+})
+
+answerRenderer('repository:add-remote', async (browserWindow, name, url) => {
+  checkRepo()
+  try {
+    await addRemote(repo, name, url)
+    return await getRemotes(repo)
+  } catch (e) {}
+})
+
+answerRenderer('repository:delete-remote', async (browserWindow, name) => {
+  checkRepo()
+  try {
+    await deleteRemote(repo, name)
+    return await getRemotes(repo)
+  } catch (e) {}
 })
 
 /* FAKE APPLICATION (from editor) */

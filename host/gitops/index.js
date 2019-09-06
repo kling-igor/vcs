@@ -1,4 +1,13 @@
-export { openRepository, createRepository, cloneRepo, status, getRemotes, getReferences } from './repository'
+export {
+  openRepository,
+  createRepository,
+  cloneRepository,
+  status,
+  getRemotes,
+  getReferences,
+  addRemote,
+  deleteRemote
+} from './repository'
 
 export { findConfig, openRepoConfig, getUserNameEmail } from './config'
 export { merge } from './merge'

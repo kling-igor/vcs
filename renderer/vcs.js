@@ -681,4 +681,14 @@ export class VCS {
     await callMain('merge:resolve-using-theirs', this.project.projectPath, filePath.replace(/^(\.\/)+/, ''))
     await this.status()
   }
+
+  @action.bound
+  async addRemote(name, url) {
+    this.remotes = await callMain('repository:add-remote', name, url)
+  }
+
+  @action.bound
+  async deleteRemote(name) {
+    this.remotes = await callMain('repository:delete-remote', name)
+  }
 }

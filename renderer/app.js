@@ -38,10 +38,15 @@ import {
   onTagContextMenu,
   onGitLogContextMenu,
   onChangedFileContextMenu,
-  onStagedFileContextMenu
+  onStagedFileContextMenu,
+  onRemoteContextMenu
 } from './src/components/vcs/context-menu'
 
-import { onStagedFilesHeaderMenu, onChangedFilesHeaderMenu } from './src/components/vcs/header-menu'
+import {
+  onStagedFilesHeaderMenu,
+  onChangedFilesHeaderMenu,
+  onRemotesHeaderMenu
+} from './src/components/vcs/header-menu'
 
 const workspace = new Workspace()
 const applicationDelegate = new ApplicationDelegate()
@@ -59,10 +64,6 @@ const RootStyle = styled.div`
 export default class App extends Component {
   state = {
     verticalLayout: ['20000', '20000']
-  }
-
-  onRemoteContextMenu = name => {
-    console.log('ON REMOTE CONTEXT MENU:', name)
   }
 
   async componentDidMount() {
@@ -190,10 +191,11 @@ export default class App extends Component {
         dock.addPane('vcs', {
           title: 'REMOTES',
           elapsed: false,
-          component: <RemotesList storage={vcs} onContextMenu={this.onRemoteContextMenu} />,
+          component: <RemotesList storage={vcs} onContextMenu={onRemoteContextMenu({ vcs, workspace, Dialog })} />,
           paneHeaderButtons: [
             {
               icon: './assets/ui/ellipsis.svg',
+              onClick: onRemotesHeaderMenu({ vcs, workspace }),
               tooltip: ''
             }
           ]

@@ -175,6 +175,12 @@ export function confirmHardBranchPointerReset(branch) {
 
 export function confirmBackout() {
   const message = 'Confirm Backout'
-  const detail = `Are you sure you want reverse the selected changes?`
+  const detail = `Are you sure you want to reverse the selected changes?`
+  return confirmActionMessage(message, detail)
+}
+
+export function confirmRemoveRemote() {
+  const message = 'Confirm Remove Remote'
+  const detail = `Are you sure you want to remove the selected remote from the configuration for this repository?`
   return confirmActionMessage(message, detail)
 }
