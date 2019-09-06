@@ -1,7 +1,7 @@
-import HTMLWebpackPlugin from 'html-webpack-plugin'
-import MonacoWebpackPlugin from 'monaco-editor-webpack-plugin'
-import MomentLocalesPlugin from 'moment-locales-webpack-plugin'
-import { resolve, join } from 'path'
+const HTMLWebpackPlugin = require('html-webpack-plugin')
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin')
+const MomentLocalesPlugin = require('moment-locales-webpack-plugin')
+const { resolve, join } = require('path')
 
 const MONACO_DIR = resolve(__dirname, './node_modules/monaco-editor')
 const BLUEPRINT_DIR = resolve(__dirname, './node_modules/@blueprintjs')
