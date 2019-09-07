@@ -11,6 +11,8 @@ export async function log(repo) {
   try {
     const I = i => i
 
+    let repoRefs
+
     let branchIndex = 0
     const reserve = []
     const branches = {}
@@ -33,7 +35,7 @@ export async function log(repo) {
     let recentCommits = []
 
     try {
-      const repoRefs = await getReferences(repo)
+      repoRefs = await getReferences(repo)
       const heads = repoRefs.filter(ref => ref.name.includes('refs/heads/'))
       for (const { name } of heads) {
         try {

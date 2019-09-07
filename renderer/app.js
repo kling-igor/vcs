@@ -1,5 +1,3 @@
-const { remote } = window.require('electron')
-
 import React, { Component } from 'react'
 import styled, { ThemeProvider } from 'styled-components'
 
@@ -39,7 +37,8 @@ import {
   onGitLogContextMenu,
   onChangedFileContextMenu,
   onStagedFileContextMenu,
-  onRemoteContextMenu
+  onRemoteContextMenu,
+  onVcsContextMenu
 } from './src/components/vcs/context-menu'
 
 import {
@@ -68,28 +67,7 @@ export default class App extends Component {
 
   async componentDidMount() {
     dock.addPage('vcs', {
-      pageTitle: 'GIT',
-      panes: [],
-      pageHeaderButtons: [
-        {
-          icon: './assets/ui/git/git-commit.svg',
-          onClick: vcs.commitMode,
-          tooltip: 'Commit'
-        },
-        {
-          icon: './assets/ui/git/git-log.svg',
-          onClick: vcs.logMode,
-          tooltip: 'Log'
-        },
-        {
-          icon: './assets/ui/refresh.svg',
-          onClick: async () => {
-            await vcs.getLog()
-            await vcs.status()
-          },
-          tooltip: 'Refresh'
-        }
-      ]
+      pageTitle: 'GIT'
     })
 
     const replacePanes = mode => {
@@ -109,6 +87,11 @@ export default class App extends Component {
               await vcs.status()
             },
             tooltip: 'Refresh'
+          },
+          {
+            icon: './assets/ui/ellipsis.svg',
+            onClick: onVcsContextMenu({ vcs, workspace }),
+            tooltip: ''
           }
         ])
 
@@ -151,6 +134,11 @@ export default class App extends Component {
               await vcs.status()
             },
             tooltip: 'Refresh'
+          },
+          {
+            icon: './assets/ui/ellipsis.svg',
+            onClick: onVcsContextMenu({ vcs, workspace }),
+            tooltip: ''
           }
         ])
 

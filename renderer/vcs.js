@@ -691,4 +691,9 @@ export class VCS {
   async deleteRemote(name) {
     this.remotes = await callMain('repository:delete-remote', name)
   }
+
+  @action.bound
+  async push(remoteName) {
+    await callMain('repository:push', remoteName)
+  }
 }

@@ -4,6 +4,7 @@
   "description": "VCS for Vision",
   "main": "app/main.js",
   "scripts": {
+    "postinstall": "electron-rebuild",
     "start": "electron .",
     "build:main": "babel -w host -d app --copy-files",
     "build:renderer": "webpack --mode development --env.dev --config renderer/webpack.config.babel.js --watch --hot",
@@ -55,7 +56,9 @@
     "@blueprintjs/select": "^3.10.0",
     "chokidar": "^3.0.2",
     "crypto-js": "^3.1.9-1",
+    "dotenv": "^8.1.0",
     "event-kit": "^2.5.3",
+    "keytar": "^5.0.0-beta.0",
     "lodash": "^4.17.15",
     "moment": "^2.24.0",
     "nodegit": "^0.24.3",

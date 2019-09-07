@@ -5,6 +5,11 @@ import { EventEmitter } from 'events'
 import { CompositeDisposable } from 'event-kit'
 import { FileSystemOperations } from './file-operations'
 import * as URL from 'url'
+import keytar from 'keytar'
+
+import dotenv from 'dotenv'
+dotenv.config()
+
 import {
   findConfig,
   openRepoConfig,
@@ -52,6 +57,21 @@ let repo
 let emptyRepo = false
 let user
 let remotes = []
+
+// https://github.com/atom/node-keytar
+// keytar
+//   .setPassword('Vision', 'kling-igor', 'password')
+//   .then(() => {})
+//   .catch(e => {
+//     console.log('KEYTAR ERROR:', e)
+//   })
+
+// keytar
+//   .getPassword('Vision', 'kling-igor')
+//   .then(password => {
+//     console.log('PASS:', password)
+//   })
+//   .catch(e => console.log('PASS ERR:', error))
 
 app.on('ready', async () => {
   const window = new BrowserWindow({
@@ -238,10 +258,22 @@ answerRenderer('repository:pull', async (browserWindow, username, password) => {
   return pull(repo, username, password)
 })
 
-answerRenderer('repository:push', async (browserWindow, username, password) => {
+answerRenderer('repository:push', async (browserWindow, remoteName) => {
   checkRepo()
-  const remote = await repo.getRemote('origin')
-  return push(remote, username, password)
+
+  const currentBranch = await repo.getCurrentBranch()
+  const branchName = currentBranch.shorthand()
+
+  const { USERNAME, PASSWORD } = process.env
+
+  // использовать keytar или как-то поместить в конфигурацию
+
+  try {
+    const remote = await repo.getRemote(remoteName)
+    await push(remote, branchName, USERNAME, PASSWORD)
+  } catch (e) {
+    console.log('PUSH ERROR:', e)
+  }
 })
 
 answerRenderer('repository:merge', async (browserWindow, theirSha) => {

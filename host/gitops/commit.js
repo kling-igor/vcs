@@ -7,8 +7,25 @@ export async function commit(repo, message, name = 'User', email = 'no email', m
   const author = nodegit.Signature.now(name, email)
   const committer = author
 
-  const branchRef = await repo.head()
-  const branchName = branchRef.name()
+  let commitId
+  let branchName
+  try {
+    const branchRef = await repo.head()
+    console.log('branchRef:', branchRef)
+    branchName = branchRef.name()
+  } catch (e) {
+    console.log('E:', e)
+  }
+
+  // first commit
+  try {
+    commitId = await repo.createCommit('HEAD', author, committer, message, treeOid, [])
+
+    return commitId
+  } catch (e) {
+    console.log('COMMIT:CREATE_COMMIT ERROR:', e)
+  }
+
   const branchOid = await nodegit.Reference.nameToId(repo, branchName)
   const parent = await repo.getCommit(branchOid)
 
@@ -21,7 +38,6 @@ export async function commit(repo, message, name = 'User', email = 'no email', m
 
   const parents = [parent, other].filter(item => !!item)
 
-  let commitId
   try {
     commitId = await repo.createCommit(branchName, author, committer, message, treeOid, parents)
   } catch (e) {
