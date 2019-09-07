@@ -1,9 +1,15 @@
 import nodegit from 'nodegit'
 
-export async function pull(repo, username, password) {
+// TODO: нужно предоставлять выбор ветки которую нужно тянуть
+// делать это через контекстное меню веток
+
+export async function pull(repo, remoteName, username, password) {
   console.log('FETCHING...')
   try {
-    await repo.fetch('origin', {
+    await repo.fetch(remoteName, {
+      downloadTags: 1,
+      prune: 1,
+      updateFetchhead: 1,
       fetchOpts: {
         callbacks: {
           // github will fail cert check on some OSX machines, this overrides that check

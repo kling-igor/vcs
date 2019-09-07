@@ -696,4 +696,14 @@ export class VCS {
   async push(remoteName) {
     await callMain('repository:push', remoteName)
   }
+
+  @action.bound
+  async pull(remoteName) {
+    await callMain('repository:pull', remoteName)
+  }
+
+  @action.bound
+  async fetch(remoteName) {
+    await callMain('repository:fetch', remoteName)
+  }
 }

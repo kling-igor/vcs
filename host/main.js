@@ -252,10 +252,20 @@ answerRenderer('repository:discard-local-changes', async (browserWindow, path) =
   return discardLocalChanges(repo, path)
 })
 
-answerRenderer('repository:pull', async (browserWindow, username, password) => {
+answerRenderer('repository:fetch', async (browserWindow, remoteName) => {
   checkRepo()
 
-  return pull(repo, username, password)
+  const { USERNAME, PASSWORD } = process.env
+
+  return fetch(repo, remoteName, USERNAME, PASSWORD)
+})
+
+answerRenderer('repository:pull', async (browserWindow, remoteName) => {
+  checkRepo()
+
+  const { USERNAME, PASSWORD } = process.env
+
+  return pull(repo, remoteName, USERNAME, PASSWORD)
 })
 
 answerRenderer('repository:push', async (browserWindow, remoteName) => {

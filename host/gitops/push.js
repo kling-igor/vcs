@@ -1,5 +1,8 @@
 import nodegit from 'nodegit'
 
+// TODO: нужно предоставлять выбор ветки которую нужно проталкивать
+// делать это через контекстное меню веток
+
 export async function push(remote, branch, username, password) {
   var sshPublicKeyPath = '/Users/user/.ssh/id_rsa.pub'
   var sshPrivateKeyPath = '/Users/user/.ssh/id_rsa'
@@ -11,12 +14,8 @@ export async function push(remote, branch, username, password) {
       callbacks: {
         // github will fail cert check on some OSX machines, this overrides that check
         certificateCheck: () => 0,
-        credentials: (url, userName) => {
-          // return nodegit.Cred.sshKeyFromAgent(userName)
-          return nodegit.Cred.userpassPlaintextNew(username, password)
-        },
+        credentials: username && password ? () => nodegit.Cred.userpassPlaintextNew(username, password) : null,
         certificateCheck: () => 0
-        // credentials: /*username ? (url, userName) => nodegit.Cred.userpassPlaintextNew(username, password) : null,*/
         // credentials: (url, userName) => {
         //   console.log('REMOTE URL:', url)
         //   return nodegit.Cred.sshKeyFromAgent(userName)
