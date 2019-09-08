@@ -44,6 +44,7 @@ import {
   headCommit,
   pull,
   push,
+  fetch,
   merge,
   removeConflict,
   addRemote,

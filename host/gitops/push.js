@@ -7,15 +7,24 @@ export async function push(remote, branch, username, password) {
   var sshPublicKeyPath = '/Users/user/.ssh/id_rsa.pub'
   var sshPrivateKeyPath = '/Users/user/.ssh/id_rsa'
 
-  let debug = 0
-
   try {
     await remote.push([`refs/heads/${branch}:refs/heads/${branch}`], {
       callbacks: {
         // github will fail cert check on some OSX machines, this overrides that check
         certificateCheck: () => 0,
-        credentials: username && password ? () => nodegit.Cred.userpassPlaintextNew(username, password) : null,
-        certificateCheck: () => 0
+        credentials: (url, userName) => {
+          console.log('CRED URL:', url)
+          console.log('CRED USERNAME:', userName)
+
+          console.log('CRED URL:', url)
+          console.log('CRED USERNAME:', userName)
+
+          return username && password
+            ? nodegit.Cred.userpassPlaintextNew(username, password)
+            : nodegit.Cred.defaultNew()
+        }
+
+        // credentials: username && password ? () => nodegit.Cred.userpassPlaintextNew(username, password) : null,
         // credentials: (url, userName) => {
         //   console.log('REMOTE URL:', url)
         //   return nodegit.Cred.sshKeyFromAgent(userName)
