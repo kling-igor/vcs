@@ -1,5 +1,7 @@
 import nodegit from 'nodegit'
 
+import { getReferences } from './repository'
+
 export async function commit(repo, message, name = 'User', email = 'no email', mergingCommitSha) {
   const index = await repo.index()
   const treeOid = await index.writeTree()
@@ -11,19 +13,13 @@ export async function commit(repo, message, name = 'User', email = 'no email', m
   let branchName
   try {
     const branchRef = await repo.head()
-    console.log('branchRef:', branchRef)
     branchName = branchRef.name()
   } catch (e) {
-    console.log('E:', e)
-  }
-
-  // first commit
-  try {
-    commitId = await repo.createCommit('HEAD', author, committer, message, treeOid, [])
-
+    console.log('COMMIT ERROR - UNABLE TO GET HEAD:', e)
+    branchName = 'HEAD'
+    // first commit
+    commitId = await repo.createCommit(branchName, author, committer, message, treeOid, [])
     return commitId
-  } catch (e) {
-    console.log('COMMIT:CREATE_COMMIT ERROR:', e)
   }
 
   const branchOid = await nodegit.Reference.nameToId(repo, branchName)
@@ -37,6 +33,8 @@ export async function commit(repo, message, name = 'User', email = 'no email', m
   }
 
   const parents = [parent, other].filter(item => !!item)
+
+  console.log('COMMIT PARENTS:', parents.map(item => item.sha()))
 
   try {
     commitId = await repo.createCommit(branchName, author, committer, message, treeOid, parents)

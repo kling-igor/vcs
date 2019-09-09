@@ -399,7 +399,7 @@ answerRenderer('merge:resolve-using-mine', async (browserWindow, projectPath, fi
     await addToIndex(index, filePath)
     await writeIndex(index)
   } catch (e) {
-    console.log(e)
+    console.log('RESOLVE USING MINE ERROR:', e)
   }
 })
 
@@ -414,7 +414,7 @@ answerRenderer('merge:resolve-using-theirs', async (browserWindow, projectPath, 
     await addToIndex(index, filePath)
     await writeIndex(index)
   } catch (e) {
-    console.log(e)
+    console.log('RESOLVE USING THEIRS ERROR:', e)
   }
 })
 
