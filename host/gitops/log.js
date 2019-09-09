@@ -60,43 +60,6 @@ export async function log(repo) {
 
     const workDirStatus = await status(repo)
 
-    if (workDirStatus.length > 0) {
-      try {
-        const branch = getBranch(headCommit.sha()) // TODO: если еще не было коммитов и это изменения в новом репозитарии ?
-        const offset = reserve.indexOf(branch)
-        commits.push({
-          sha: null,
-          message: 'Uncommited changes',
-          committer: null,
-          date: Date.now(),
-          offset,
-          branch,
-          routes: [...fillRoutes(I, I, reserve)]
-        })
-      } catch (e) {
-        console.log('ERROR:', e)
-      }
-    } else {
-      branchIndex += 1 // пропускаем серую ветку
-    }
-
-    // если HEAD не на вершине ветки
-    const headOnBranchTop = recentCommits.find(({ sha }) => sha === headCommit.sha())
-
-    console.log('headOnBranchTop:', !!headOnBranchTop)
-
-    let revWalk
-    let oid
-
-    try {
-      revWalk = repo.createRevWalk()
-      revWalk.sorting(nodegit.Revwalk.SORT.TIME)
-      revWalk.pushGlob('refs/heads/*')
-      oid = await revWalk.next()
-    } catch (e) {
-      console.log('revWalk.next() ERROR', e)
-    }
-
     // делаем искусственную запись
     if (repo.isMerging()) {
       try {
@@ -126,10 +89,39 @@ export async function log(repo) {
       } catch (e) {
         console.log('ERROR:', e)
       }
+    } else if (workDirStatus.length > 0) {
+      try {
+        const branch = (headCommit && getBranch(headCommit.sha())) || getBranch(null) // TODO: если еще не было коммитов и это изменения в новом репозитарии ?
+        const offset = reserve.indexOf(branch)
+        commits.push({
+          sha: null,
+          message: 'Uncommited changes',
+          committer: null,
+          date: Date.now(),
+          offset,
+          branch,
+          routes: [...fillRoutes(I, I, reserve)]
+        })
+      } catch (e) {
+        console.log('ERROR:', e)
+      }
+    } else {
+      branchIndex += 1 // пропускаем серую ветку
+    }
+
+    let revWalk
+    let oid
+
+    try {
+      revWalk = repo.createRevWalk()
+      revWalk.sorting(nodegit.Revwalk.SORT.TIME)
+      revWalk.pushGlob('refs/heads/*')
+      oid = await revWalk.next()
+    } catch (e) {
+      console.log('revWalk.next() ERROR', e)
     }
 
     while (oid) {
-      // console.log('----------------')
       try {
         const commit = await repo.getCommit(oid)
 
@@ -234,6 +226,11 @@ export async function log(repo) {
 
     const index = await repo.index()
     const hasConflicts = index.hasConflicts()
+
+    // если HEAD не на вершине ветки
+    const headOnBranchTop = recentCommits.find(({ sha }) => sha === headCommit.sha())
+
+    console.log('headOnBranchTop:', !!headOnBranchTop)
 
     return {
       // опционально добавляем HEAD ссылку
