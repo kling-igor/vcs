@@ -15,7 +15,7 @@ export default ({ vcs, workspace, Dialog }) => (sha, tag) => {
   workspace.showContextMenu({
     items: [
       {
-        label: `Checkout ${tag.name}`,
+        label: `Checkout '${tag}'`,
         click: () => {
           if (branch) {
             Dialog.confirmBranchSwitch(branch.name)
@@ -25,10 +25,10 @@ export default ({ vcs, workspace, Dialog }) => (sha, tag) => {
               })
               .catch(noop)
           } else {
-            Dialog.confirmCheckoutToDetachedHead(tag.name)
+            Dialog.confirmCheckoutToDetachedHead(tag)
               .then(discardLocalChanges => {
-                console.log(`SWITCHING TO DETACH HEAD ${tag.name} `)
-                vcs.onCheckoutToCommit(tag.sha, discardLocalChanges)
+                console.log(`SWITCHING TO DETACH HEAD ${tag} `)
+                vcs.onCheckoutToCommit(sha, discardLocalChanges)
               })
               .catch(noop)
           }
