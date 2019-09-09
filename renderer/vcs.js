@@ -7,6 +7,8 @@ import { callMain } from './ipc'
 
 import { observable, action, transaction, computed } from 'mobx'
 
+const cleanLeadingSlashes = path => path.replace(/^[\.\/]*/, '')
+
 /**
  * Convenient function
  * @param {EventEmitter} emitter
@@ -317,7 +319,7 @@ export class VCS {
     if (status === 'C') {
       const { mineContent = '', theirsContent = '' } = await callMain(
         'commit:conflictedfile-diff',
-        filepath.replace(/^(\.\/)+/, '')
+        cleanLeadingSlashes(filepath)
       ) // remove leading slash)
 
       transaction(() => {
@@ -328,7 +330,7 @@ export class VCS {
       const { originalContent = '', modifiedContent = '', details: errorDetails } = await callMain(
         'commit:file-diff-to-index',
         this.projectPath,
-        filepath.replace(/^(\.\/)+/, '') // remove leading slash
+        cleanLeadingSlashes(filepath)
       )
 
       transaction(() => {
@@ -344,7 +346,7 @@ export class VCS {
 
     const { originalContent = '', modifiedContent = '', details: errorDetails } = await callMain(
       'commit:stagedfile-diff-to-head',
-      filepath.replace(/^(\.\/)+/, '') // remove leading slash
+      cleanLeadingSlashes(filepath)
     )
 
     transaction(() => {
@@ -428,40 +430,44 @@ export class VCS {
 
   @action.bound
   async getLog() {
-    const data = await callMain('repository:log')
+    try {
+      const data = await callMain('repository:log')
 
-    if (data) {
-      const { commits, committers, refs, headCommit, currentBranch, isMerging, isRebasing, hasConflicts } = data
+      if (data) {
+        const { commits, committers, refs, headCommit, currentBranch, isMerging, isRebasing, hasConflicts } = data
 
-      console.log('isMerging:', isMerging)
+        console.log('isMerging:', isMerging)
 
-      const [heads, remoteHeads, tags] = refs.reduce(
-        (acc, { name, sha }) => {
-          if (name.includes('refs/heads/')) {
-            acc[0].push({ name: name.replace('refs/heads/', ''), sha })
-          } else if (name.includes('refs/remotes/')) {
-            acc[1].push({ name: name.replace('refs/remotes/', ''), sha })
-          } else if (name.includes('refs/tags/')) {
-            acc[2].push({ name: name.replace('refs/tags/', ''), sha })
-          }
+        const [heads, remoteHeads, tags] = refs.reduce(
+          (acc, { name, sha }) => {
+            if (name.includes('refs/heads/')) {
+              acc[0].push({ name: name.replace('refs/heads/', ''), sha })
+            } else if (name.includes('refs/remotes/')) {
+              acc[1].push({ name: name.replace('refs/remotes/', ''), sha })
+            } else if (name.includes('refs/tags/')) {
+              acc[2].push({ name: name.replace('refs/tags/', ''), sha })
+            }
 
-          return acc
-        },
-        [[], [], []]
-      )
+            return acc
+          },
+          [[], [], []]
+        )
 
-      transaction(() => {
-        this.commits = commits
-        this.committers = committers
-        this.heads = heads
-        this.remoteHeads = remoteHeads
-        this.tags = tags
-        this.headCommit = headCommit
-        this.currentBranch = currentBranch
-        this.isMerging = isMerging
-        this.isRebasing = isRebasing
-        this.hasConflicts = hasConflicts
-      })
+        transaction(() => {
+          this.commits = commits
+          this.committers = committers
+          this.heads = heads
+          this.remoteHeads = remoteHeads
+          this.tags = tags
+          this.headCommit = headCommit
+          this.currentBranch = currentBranch
+          this.isMerging = isMerging
+          this.isRebasing = isRebasing
+          this.hasConflicts = hasConflicts
+        })
+      }
+    } catch (e) {
+      console.log('GITLOG ERROR:', e)
     }
   }
 
@@ -491,7 +497,7 @@ export class VCS {
       const { originalContent = '', modifiedContent = '', details: errorDetails } = await callMain(
         'commit:file-diff',
         this.commitInfo.commit,
-        path.replace(/^(\.\/)+/, '') // remove leading slash
+        cleanLeadingSlashes(path)
       )
 
       transaction(() => {
@@ -549,15 +555,26 @@ export class VCS {
   @action.bound
   commitMode() {
     if (this.mode === 'commit') return
-    this.mode = 'commit'
-    this.onModeChange(this.mode)
+
+    transaction(() => {
+      this.mode = 'commit'
+      this.originalFile = ''
+      this.modifiedFile = ''
+
+      this.onModeChange(this.mode)
+    })
   }
 
   @action.bound
   logMode() {
     if (this.mode === 'log') return
-    this.mode = 'log'
-    this.onModeChange(this.mode)
+    transaction(() => {
+      this.mode = 'log'
+      this.originalFile = ''
+      this.modifiedFile = ''
+
+      this.onModeChange(this.mode)
+    })
   }
 
   selectAllFiles(collection) {
@@ -598,7 +615,7 @@ export class VCS {
 
   @action.bound
   async stageFile(path) {
-    await callMain('stage:add', [path.replace(/^(\.\/)+/, '')])
+    await callMain('stage:add', [cleanLeadingSlashes(path)])
     await this.status()
   }
 
@@ -629,19 +646,19 @@ export class VCS {
 
   @action.bound
   async unstageFile(path) {
-    await callMain('stage:remove', [path.replace(/^(\.\/)+/, '')])
+    await callMain('stage:remove', [cleanLeadingSlashes(path)])
     await this.status()
   }
 
   @action.bound
   async discardLocalChanges(path) {
-    await callMain('repository:discard-local-changes', path.replace(/^(\.\/)+/, ''))
+    await callMain('repository:discard-local-changes', cleanLeadingSlashes(path))
     await this.status()
   }
 
   @action.bound
   async stopTracking(path) {
-    await callMain('stage:remove', [path.replace(/^(\.\/)+/, '')])
+    await callMain('stage:remove', [cleanLeadingSlashes(path)])
     await this.status()
   }
 
@@ -672,13 +689,16 @@ export class VCS {
 
   @action.bound
   async resolveUsingMine(filePath) {
-    await callMain('merge:resolve-using-mine', this.project.projectPath, filePath.replace(/^(\.\/)+/, ''))
+    console.log('this.mergingSha:', this.mergingSha)
+    await callMain('merge:resolve-using-mine', this.project.projectPath, cleanLeadingSlashes(filePath))
     await this.status()
   }
 
   @action.bound
   async resolveUsingTheirs(filePath) {
-    await callMain('merge:resolve-using-theirs', this.project.projectPath, filePath.replace(/^(\.\/)+/, ''))
+    console.log('this.mergingSha:', this.mergingSha)
+
+    await callMain('merge:resolve-using-theirs', this.project.projectPath, cleanLeadingSlashes(filePath))
     await this.status()
   }
 
