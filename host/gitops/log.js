@@ -20,6 +20,7 @@ export async function log(repo) {
     const committers = []
     const commits = []
 
+    // отслеживание коммитов веток на предмет ahead-behind
     const trackedBranches = {}
 
     const getBranch = sha => {
@@ -53,6 +54,7 @@ export async function log(repo) {
         const branch = await repo.getBranch(head.name)
         try {
           const upstream = await nodegit.Branch.upstream(branch)
+          // upstream.shorthand()
           console.log(`${name} --> ${upstream}`)
           trackedBranches[name] = {
             upstream,
