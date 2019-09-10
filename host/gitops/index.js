@@ -6,7 +6,8 @@ export {
   getRemotes,
   getReferences,
   addRemote,
-  deleteRemote
+  deleteRemote,
+  getRemote
 } from './repository'
 
 export { findConfig, openRepoConfig, getUserNameEmail } from './config'

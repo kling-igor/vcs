@@ -48,7 +48,8 @@ import {
   merge,
   removeConflict,
   addRemote,
-  deleteRemote
+  deleteRemote,
+  getRemote
 } from './gitops'
 
 // FAKE FROM APPLICATION
@@ -256,11 +257,18 @@ answerRenderer('repository:discard-local-changes', async (browserWindow, path) =
 answerRenderer('repository:fetch', async (browserWindow, remoteName, userName, password) => {
   checkRepo()
 
+  const remote = await getRemote(repo, remoteName)
+
   // todo если предоставлены userName, password то сохранить их keytar
-
-  const { USERNAME, PASSWORD } = process.env
-
-  return fetch(repo, remoteName, userName, password)
+  if (userName && password) {
+    console.log('STORE CREDENTIALS FOR:', remote.url())
+    await keytar.setPassword(remote.url(), userName, password)
+    return fetch(repo, remoteName, userName, password)
+  } else {
+    console.log('REQUEST CREDENTIALS FOR:', remote.url())
+    const [record = {}] = await keytar.findCredentials(remote.url())
+    return fetch(repo, remoteName, record.account, record.password)
+  }
 })
 
 answerRenderer('repository:pull', async (browserWindow, remoteName) => {

@@ -82,6 +82,10 @@ export async function deleteRemote(repo, name) {
   return nodegit.Remote.delete(repo, name)
 }
 
+export async function getRemote(repo, name) {
+  return nodegit.Remote.lookup(repo, name)
+}
+
 export async function getReferences(repo) {
   const repoRefs = []
 
