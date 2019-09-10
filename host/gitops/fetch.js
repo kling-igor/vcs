@@ -8,58 +8,59 @@ export async function fetch(repo, remoteName, username, password) {
 
   let attepmpt = 0
 
+  const remoteCallbacks = {
+    certificateCheck: () => 0,
+    credentials: (url, userName) => {
+      // console.log('CRED URL:', url)
+      // console.log('CRED USERNAME:', userName)
+
+      if (attepmpt++ < 5) {
+        return username && password ? nodegit.Cred.userpassPlaintextNew(username, password) : nodegit.Cred.defaultNew()
+      }
+
+      throw new Error('auth failed')
+    }
+  }
+
+  const remote = await repo.getRemote(remoteName)
+
   try {
-    const remoteCallbacks = {
-      certificateCheck: () => 0,
-      credentials: (url, userName) => {
-        // console.log('CRED URL:', url)
-        // console.log('CRED USERNAME:', userName)
+    await remote.connect(nodegit.Enums.DIRECTION.FETCH, remoteCallbacks)
 
-        if (attepmpt++ < 5) {
-          return username && password
-            ? nodegit.Cred.userpassPlaintextNew(username, password)
-            : nodegit.Cred.defaultNew()
-        }
+    const connected = remote.connected()
+    console.log('CONNECTED:', connected)
 
-        throw new Error('auth failed')
-      }
+    const remoteRefs = await remote.referenceList()
+    console.log('REMOTE BRANCHES:', remoteRefs.map(item => item.name()))
+
+    await remote.download(null)
+
+    const defaultBranch = await remote.defaultBranch()
+    console.log('defaultBranch:', defaultBranch)
+
+    await remote.disconnect()
+  } catch (e) {
+    console.log('CONNECTION ERROR:', e.message)
+
+    if (e.message.includes('unexpected HTTP status code:')) {
+      console.log('CHECK CONNECTION...')
+      throw new Error('Connection error')
     }
 
-    const remote = await repo.getRemote(remoteName)
-
-    try {
-      await remote.connect(nodegit.Enums.DIRECTION.FETCH, remoteCallbacks)
-
-      const connected = remote.connected()
-      console.log('CONNECTED:', connected)
-
-      const remoteRefs = await remote.referenceList()
-      console.log('REMOTE BRANCHES:', remoteRefs.map(item => item.name()))
-
-      await remote.download(null)
-
-      const defaultBranch = await remote.defaultBranch()
-      console.log('defaultBranch:', defaultBranch)
-
-      await remote.disconnect()
-    } catch (e) {
-      console.log('CONNECTION ERROR:', e.message)
-
-      if (e.message.includes('unexpected HTTP status code:')) {
-        console.log('CHECK CONNECTION...')
-      }
-
-      if (e.message.includes('credentials callback returned an invalid cred type')) {
-        console.log('AUTH REQUIRED')
-      }
-
-      if (e.message.includes('Method connect has thrown an error.')) {
-        console.log('AUTH FAILED')
-      }
+    if (e.message.includes('credentials callback returned an invalid cred type')) {
+      console.log('AUTH REQUIRED')
+      throw new Error('Auth required')
     }
 
-    return
+    if (e.message.includes('Method connect has thrown an error.')) {
+      console.log('AUTH FAILED')
+      throw new Error('Auth failed')
+    }
+  }
 
+  return
+
+  try {
     await repo.fetch(remoteName, {
       downloadTags: 1,
       prune: 1,

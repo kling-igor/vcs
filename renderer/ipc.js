@@ -10,6 +10,8 @@ import { Disposable } from 'event-kit'
 export const callMain = (channel, ...args) => {
   const uuid = uuidv4()
 
+  // console.log('CALL:', channel)
+
   return new Promise((resolve, reject) => {
     const errorChannel = `${channel}-error-${uuid}`
     ipcRenderer.once(uuid, (event, ...resultArgs) => {
@@ -17,9 +19,10 @@ export const callMain = (channel, ...args) => {
       resolve(...resultArgs)
     })
 
-    ipcRenderer.once(errorChannel, (event, error) => {
+    ipcRenderer.once(errorChannel, (event, errorMessage) => {
       ipcRenderer.removeAllListeners(uuid)
-      reject(error)
+      // console.log('ERROR:', channel, errorMessage)
+      reject(new Error(errorMessage))
     })
 
     ipcRenderer.send(channel, uuid, ...args)

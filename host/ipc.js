@@ -41,7 +41,7 @@ module.exports = (ipc, BrowserWindow) => ({
         try {
           event.sender.send(uuid, await callback(window, ...args))
         } catch (error) {
-          event.sender.send(`${channel}-error-${uuid}`, error)
+          event.sender.send(`${channel}-error-${uuid}`, error.message)
         }
       }
     }

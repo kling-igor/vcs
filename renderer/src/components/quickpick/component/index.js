@@ -160,6 +160,7 @@ export class QuickSelect extends React.Component {
       items,
       placeHolder,
       hint,
+      password,
       shouldCreateNewItems = false,
       shouldRenderCreateNewItem = false,
       noResultsText = null,
@@ -222,7 +223,8 @@ export class QuickSelect extends React.Component {
               fill: true,
               intent: this.state.isInvalid ? Intent.DANGER : Intent.PRIMARY,
               className: 'quickOpenInput',
-              placeholder: placeHolder
+              placeholder: placeHolder,
+              type: password ? 'password' : 'text'
             }}
           />
         </SuggestContainerStyle>

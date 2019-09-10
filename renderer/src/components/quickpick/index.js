@@ -7,6 +7,7 @@ const noop = () => {}
 export const Input = ({
   placeHolder = '',
   validateInput = () => true,
+  password = false,
   onInputChange = noop,
   onSelect = noop,
   darkTheme = false
@@ -16,6 +17,7 @@ export const Input = ({
       shouldCreateNewItems={true}
       shouldRenderCreateNewItem={false}
       inputValidator={validateInput}
+      password={password}
       items={[]}
       darkTheme={darkTheme}
       onInputChange={onInputChange}

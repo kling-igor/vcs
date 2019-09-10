@@ -90,7 +90,7 @@ export default class App extends Component {
           },
           {
             icon: './assets/ui/ellipsis.svg',
-            onClick: onVcsContextMenu({ vcs, workspace }),
+            onClick: onVcsContextMenu({ vcs, workspace, Dialog }),
             tooltip: ''
           }
         ])
@@ -137,7 +137,7 @@ export default class App extends Component {
           },
           {
             icon: './assets/ui/ellipsis.svg',
-            onClick: onVcsContextMenu({ vcs, workspace }),
+            onClick: onVcsContextMenu({ vcs, workspace, Dialog }),
             tooltip: ''
           }
         ])

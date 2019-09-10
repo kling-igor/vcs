@@ -253,12 +253,14 @@ answerRenderer('repository:discard-local-changes', async (browserWindow, path) =
   return discardLocalChanges(repo, path)
 })
 
-answerRenderer('repository:fetch', async (browserWindow, remoteName) => {
+answerRenderer('repository:fetch', async (browserWindow, remoteName, userName, password) => {
   checkRepo()
+
+  // todo если предоставлены userName, password то сохранить их keytar
 
   const { USERNAME, PASSWORD } = process.env
 
-  return fetch(repo, remoteName, USERNAME, PASSWORD)
+  return fetch(repo, remoteName, userName, password)
 })
 
 answerRenderer('repository:pull', async (browserWindow, remoteName) => {

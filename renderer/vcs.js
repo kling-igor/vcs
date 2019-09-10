@@ -723,7 +723,8 @@ export class VCS {
   }
 
   @action.bound
-  async fetch(remoteName) {
-    await callMain('repository:fetch', remoteName)
+  async fetch(remoteName, userName, password) {
+    // нужно как-то указывать что для операции требуется авторизация и пароль нужно будет взять из keytar
+    await callMain('repository:fetch', remoteName, userName, password)
   }
 }
