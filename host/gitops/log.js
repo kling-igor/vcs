@@ -115,7 +115,8 @@ export async function log(repo) {
     try {
       revWalk = repo.createRevWalk()
       revWalk.sorting(nodegit.Revwalk.SORT.TIME)
-      revWalk.pushGlob('refs/heads/*')
+      // revWalk.pushGlob('refs/heads/*')
+      revWalk.pushGlob('refs/*') // чтобы захватить remote ветки
       oid = await revWalk.next()
     } catch (e) {
       console.log('revWalk.next() ERROR', e)
