@@ -18,6 +18,11 @@ export async function deleteBranch(repo, name) {
   nodegit.Branch.delete(branchRef)
 }
 
+export async function renameBranch(repo, name, newName) {
+  const branchRef = await nodegit.Branch.lookup(repo, name, nodegit.Branch.BRANCH.LOCAL)
+  nodegit.Branch.move(branchRef, newName, 0)
+}
+
 /**
  * Checkouts on specified branch head (optionally rejecting working directory changes)
  * @param {Repository} repo
@@ -32,8 +37,8 @@ export async function checkoutBranch(repo, branch, discardLocalChanges) {
   })
 }
 
-export async function checkoutRemoteBranch(repo, branchName) {
+export async function checkoutRemoteBranch(repo, branchName, remoteName = 'origin') {
   await checkout(repo, branchName)
-  const commit = await repo.getReferenceCommit(`refs/remotes/origin/${branchName}`)
+  const commit = await repo.getReferenceCommit(`refs/remotes/${remoteName}/${branchName}`)
   await resetToCommit(repo, commit)
 }

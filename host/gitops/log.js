@@ -20,6 +20,8 @@ export async function log(repo) {
     const committers = []
     const commits = []
 
+    const trackedBranches = {}
+
     const getBranch = sha => {
       if (branches[sha] == null) {
         branches[sha] = branchIndex
@@ -44,6 +46,30 @@ export async function log(repo) {
         } catch (e) {
           console.log('E:', e)
         }
+      }
+
+      for (const head of heads) {
+        console.log('NAME:', head.name)
+        const branch = await repo.getBranch(head.name)
+        try {
+          const upstream = await nodegit.Branch.upstream(branch)
+          console.log(`${name} --> ${upstream}`)
+          trackedBranches[name] = {
+            upstream,
+            sha: head.sha
+          }
+        } catch (e) {}
+      }
+
+      // TODO: пока нет отслеживаемых веток - нет смысла вести подсчет ahead и behind
+
+      const remoteHeads = repoRefs.filter(ref => ref.name.includes('refs/remotes/'))
+      const remoteBranches = remoteHeads.map(({ name }) => name)
+      console.log('REMOTE HEADS:', remoteHeads)
+
+      for (const fullUpstreamName of remoteBranches) {
+        const remote = await nodegit.Branch.remoteName(repo, fullUpstreamName)
+        console.log('REMOTE NAME:', remote)
       }
     } catch (e) {
       console.log('GET REFS ERROR:', e)
