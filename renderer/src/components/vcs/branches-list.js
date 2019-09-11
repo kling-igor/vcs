@@ -6,11 +6,11 @@ import ItemList from './item-list'
 const BranchesList = observer(({ storage: { heads, selectedCommit, onCommitSelect }, onContextMenu }) => {
   const items = heads.map(({ name, sha, ahead, behind }) => {
     let decoratedName = name
-    if (ahead) {
-      decoratedName = `${decoratedName} \u2191${ahead}` // ^
-    }
     if (behind) {
-      decoratedName = `${decoratedName} \u2193${behind}` // v
+      decoratedName = `${decoratedName} ↓${behind}` // v
+    }
+    if (ahead) {
+      decoratedName = `${decoratedName} ↑${ahead}` // ^
     }
     return {
       name,

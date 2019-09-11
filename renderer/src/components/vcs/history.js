@@ -250,11 +250,11 @@ export const History = memo(
             {!!commitRefs.length > 0 &&
               commitRefs.map(item => {
                 let title = item.name
-                if (item.ahead) {
-                  title = `${title} \u2191${item.ahead}` // ^
-                }
                 if (item.behind) {
-                  title = `${title} \u2193${item.behind}` // v
+                  title = `${title} ↓${item.behind}` // v   \u2193
+                }
+                if (item.ahead) {
+                  title = `${title} ↑${item.ahead}` // ^ \u2191
                 }
                 return (
                   <BranchStyle key={item.name}>
