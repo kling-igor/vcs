@@ -42,12 +42,12 @@ export default ({ vcs, workspace, Dialog }) => (sha, tag) => {
         submenu: remotesSubmenu
       },
       {
-        label: `Delete ${tag.name}`,
+        label: `Delete '${tag}'`,
         click: () => {
-          Dialog.confirmTagDelete(tag.name)
+          Dialog.confirmTagDelete(tag)
             .then(removeFromRemote => {
-              console.log(`REMOVING TAG ${name} AND FROM REMOTE: ${removeFromRemote}`)
-              vcs.deleteTag(tag.name)
+              console.log(`REMOVING TAG ${tag} AND FROM REMOTE: ${removeFromRemote}`)
+              vcs.deleteTag(tag)
             })
             .catch(noop)
         }
@@ -58,7 +58,7 @@ export default ({ vcs, workspace, Dialog }) => (sha, tag) => {
       {
         label: 'Copy Tag Name to Clipboard',
         click: () => {
-          remote.clipboard.writeText(tag.name)
+          remote.clipboard.writeText(tag)
         }
       }
     ]

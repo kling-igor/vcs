@@ -105,7 +105,6 @@ export async function getReferences(repo) {
               sha: commit.toString()
             })
           } else {
-            // const name = refName.replace('refs/heads/', '').replace('refs/remotes/', '')
             repoRefs.push({
               name: refName,
               sha: reference.target().toString()
