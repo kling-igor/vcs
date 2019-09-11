@@ -54,3 +54,5 @@ https://ohshitgit.com/
 
 Manipulating git repositories with Node.js
 https://radek.io/2015/10/27/nodegit/
+
+https://stackoverflow.com/questions/50122789/how-to-get-thr-branch-of-a-commit-with-nodegit

@@ -434,7 +434,16 @@ export class VCS {
       const data = await callMain('repository:log')
 
       if (data) {
-        const { commits, committers, refs, headCommit, currentBranch, isMerging, isRebasing, hasConflicts } = data
+        const {
+          commits = [],
+          committers = [],
+          refs = [],
+          headCommit,
+          currentBranch,
+          isMerging = false,
+          isRebasing = false,
+          hasConflicts = false
+        } = data
 
         console.log('isMerging:', isMerging)
 

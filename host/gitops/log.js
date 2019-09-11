@@ -50,7 +50,12 @@ export async function log(repo) {
     console.log('UNABLE TO GET HEAD, POSSIBLE REPO IS EMPTY:', e)
   }
 
-  const currentBranch = await repo.getCurrentBranch()
+  let currentBranch
+  try {
+    currentBranch = (await repo.getCurrentBranch()).shorthand()
+  } catch (e) {
+    console.log('NO HEAD BRANCH - POSSIBLE REPO IS EMPTY')
+  }
 
   const workDirStatus = await status(repo)
 
@@ -110,7 +115,15 @@ export async function log(repo) {
   const revWalk = repo.createRevWalk()
   revWalk.sorting(nodegit.Revwalk.SORT.TIME)
   revWalk.pushGlob('refs/*') // чтобы захватить все рефернесы (иначе не все попадет)
-  let oid = await revWalk.next()
+
+  let oid
+
+  try {
+    oid = await revWalk.next()
+  } catch (e) {
+    console.log('REVWALK ERROR - POSSIBLE REPO IS EMPTY')
+    return // nothing to return
+  }
 
   while (oid) {
     let commit
@@ -210,15 +223,16 @@ export async function log(repo) {
   const hasConflicts = index.hasConflicts()
 
   // если HEAD не на вершине ветки
-  const headOnBranchTop = repoRefs.find(({ sha, name }) => sha === headCommit.sha() && !name.includes('refs/tags/'))
+  const headOnBranchTop =
+    headCommit && repoRefs.find(({ sha, name }) => sha === headCommit.sha() && !name.includes('refs/tags/'))
 
   return {
     // опционально добавляем HEAD ссылку
     refs: !headOnBranchTop ? [{ name: 'HEAD', sha: headCommit.sha() }, ...repoRefs] : repoRefs,
     commits,
     committers,
-    headCommit: headCommit.sha(),
-    currentBranch: currentBranch.shorthand(),
+    headCommit: (headCommit && headCommit.sha()) || undefined,
+    currentBranch,
     isMerging: repo.isMerging(),
     isRebasing: repo.isRebasing(),
     hasConflicts
