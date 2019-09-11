@@ -95,7 +95,7 @@ const ItemList = ({ items, onItemSelect, selectedCommit, onContextMenu }) => {
     <ListRootStyle>
       <Scrollbars style={scrollBarsStyle} thumbMinSize={30} autoHide autoHideTimeout={1000} autoHideDuration={200}>
         <ListStyle>
-          {items.map(({ name, sha }) => {
+          {items.map(({ name, sha, decoratedName }) => {
             return (
               <ListItemContainerStyle
                 key={name}
@@ -105,7 +105,7 @@ const ItemList = ({ items, onItemSelect, selectedCommit, onContextMenu }) => {
                 onContextMenu={onContextMenuHandler}
                 selected={sha === selectedCommit}
               >
-                <ListItemNameStyle>{name}</ListItemNameStyle>
+                <ListItemNameStyle>{decoratedName || name}</ListItemNameStyle>
               </ListItemContainerStyle>
             )
           })}

@@ -38,10 +38,23 @@ export async function log(repo) {
     }
   }
 
-  // отслеживание коммитов веток на предмет ahead-behind
-  const trackedBranches = {}
-
   const repoRefs = await getReferences(repo)
+
+  // собираем информацию о том как локальные ветки отстают или опережают удаленные
+  for (const item of repoRefs) {
+    if (item.name.includes('refs/heads')) {
+      const branch = await nodegit.Branch.lookup(repo, item.name.replace('refs/heads', ''), nodegit.Branch.BRANCH.LOCAL)
+      const remoteBranchRef = await nodegit.Branch.upstream(branch)
+      const remoteBranchName = remoteBranchRef.name()
+
+      const localCommit = await repo.getReferenceCommit(item.name)
+      const remoteCommit = await repo.getReferenceCommit(remoteBranchName)
+
+      const { ahead, behind } = await nodegit.Graph.aheadBehind(repo, localCommit.id(), remoteCommit.id())
+      item.ahead = ahead
+      item.behind = behind
+    }
+  }
 
   let headCommit
   try {

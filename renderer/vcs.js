@@ -447,14 +447,18 @@ export class VCS {
 
         console.log('isMerging:', isMerging)
 
+        const LOCAL_HEADS = 0
+        const REMOTE_HEADS = 1
+        const TAGS = 2
+
         const [heads, remoteHeads, tags] = refs.reduce(
-          (acc, { name, sha }) => {
+          (acc, { name, sha, ahead, behind }) => {
             if (name.includes('refs/heads/')) {
-              acc[0].push({ name: name.replace('refs/heads/', ''), sha })
+              acc[LOCAL_HEADS].push({ name: name.replace('refs/heads/', ''), sha, ahead, behind })
             } else if (name.includes('refs/remotes/')) {
-              acc[1].push({ name: name.replace('refs/remotes/', ''), sha })
+              acc[REMOTE_HEADS].push({ name: name.replace('refs/remotes/', ''), sha })
             } else if (name.includes('refs/tags/')) {
-              acc[2].push({ name: name.replace('refs/tags/', ''), sha })
+              acc[TAGS].push({ name: name.replace('refs/tags/', ''), sha })
             }
 
             return acc

@@ -248,12 +248,21 @@ export const History = memo(
                 </TagStyle>
               ))}
             {!!commitRefs.length > 0 &&
-              commitRefs.map(item => (
-                <BranchStyle key={item.name}>
-                  <BranchIcon color="#000" />
-                  {item.name}
-                </BranchStyle>
-              ))}
+              commitRefs.map(item => {
+                let title = item.name
+                if (item.ahead) {
+                  title = `${title} \u2191${item.ahead}` // ^
+                }
+                if (item.behind) {
+                  title = `${title} \u2193${item.behind}` // v
+                }
+                return (
+                  <BranchStyle key={item.name}>
+                    <BranchIcon color="#000" />
+                    {title}
+                  </BranchStyle>
+                )
+              })}
             <b>{message}</b>
           </TextStyle>
           <RightContainerStyle>
