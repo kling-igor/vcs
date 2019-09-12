@@ -318,12 +318,12 @@ answerRenderer('repository:merge', async (browserWindow, theirSha) => {
   }
 })
 
-answerRenderer('repository:merge-branches', async (browserWindow, local, remote) => {
-  console.log(`MERGE ${local} WITH ${remote}:`)
+answerRenderer('repository:merge-branches', async (browserWindow, ourBranchName, theirBranchName) => {
+  console.log(`MERGE ${ourBranchName} WITH ${theirBranchName}:`)
   checkRepo()
   try {
-    await mergeBranches(repo, local, remote)
-    // await refreshIndex(repo)
+    const indexOrCommit = await mergeBranches(repo, ourBranchName, theirBranchName)
+    await refreshIndex(repo)
   } catch (e) {
     console.log('MERGE ERROR:', e)
   }

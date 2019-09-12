@@ -5,6 +5,6 @@ export async function merge(repo, theirCommitSha) {
   nodegit.Merge.merge(repo, theirAnnotatedCommit)
 }
 
-export async function mergeBranches(repo, local, remote) {
-  repo.mergeBranches(local, remote)
+export async function mergeBranches(repo, ourBranchName, theirBranchName) {
+  await repo.mergeBranches(ourBranchName, theirBranchName)
 }

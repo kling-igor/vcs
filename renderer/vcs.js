@@ -749,14 +749,16 @@ export class VCS {
       const { name, upstream, ahead, behind } = item
 
       if (upstream && (ahead || behind)) {
-        return [...acc, [name, upstream]]
+        return [...acc, [name, upstream.replace('refs/remotes/', '')]]
       }
 
       return acc
     }, [])
 
-    for (const [local, remote] of mergingBranches) {
-      await callMain('repository:merge-branches', local, remote)
+    console.log('MERGINS PAIRS:', mergingBranches)
+
+    for (const [ourBranchName, theirBranchName] of mergingBranches) {
+      await callMain('repository:merge-branches', ourBranchName, theirBranchName)
     }
 
     await this.status()
