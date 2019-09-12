@@ -46,6 +46,7 @@ import {
   push,
   fetch,
   merge,
+  mergeBranches,
   removeConflict,
   addRemote,
   deleteRemote,
@@ -271,12 +272,21 @@ answerRenderer('repository:fetch', async (browserWindow, remoteName, userName, p
   }
 })
 
-answerRenderer('repository:pull', async (browserWindow, remoteName) => {
+answerRenderer('repository:pull', async (browserWindow, remoteName, userName, password) => {
   checkRepo()
 
-  const { USERNAME, PASSWORD } = process.env
+  const remote = await getRemote(repo, remoteName)
 
-  return pull(repo, remoteName, USERNAME, PASSWORD)
+  // todo если предоставлены userName, password то сохранить их keytar
+  if (userName && password) {
+    console.log('STORE CREDENTIALS FOR:', remote.url())
+    await keytar.setPassword(remote.url(), userName, password)
+    return pull(repo, remoteName, userName, password)
+  } else {
+    console.log('REQUEST CREDENTIALS FOR:', remote.url())
+    const [record = {}] = await keytar.findCredentials(remote.url())
+    return pull(repo, remoteName, record.account, record.password)
+  }
 })
 
 answerRenderer('repository:push', async (browserWindow, remoteName) => {
@@ -303,6 +313,17 @@ answerRenderer('repository:merge', async (browserWindow, theirSha) => {
   try {
     await merge(repo, theirSha)
     await refreshIndex(repo)
+  } catch (e) {
+    console.log('MERGE ERROR:', e)
+  }
+})
+
+answerRenderer('repository:merge-branches', async (browserWindow, local, remote) => {
+  console.log(`MERGE ${local} WITH ${remote}:`)
+  checkRepo()
+  try {
+    await mergeBranches(repo, local, remote)
+    // await refreshIndex(repo)
   } catch (e) {
     console.log('MERGE ERROR:', e)
   }

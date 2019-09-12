@@ -114,8 +114,27 @@ export default ({ vcs, workspace, Dialog }) => () => {
         }
       },
       {
-        label: `Pull`
+        label: `Pull`,
         // click: getPersistentRemote('pull')
+        click: async () => {
+          console.log('PULL!!!')
+
+          const remoteName = await getPersistentRemote()
+          if (!remoteName) return
+
+          if (vcs.hasLocalChanges) {
+            try {
+              await Dialog.confirmPull()
+            } catch (e) {
+              return
+            }
+          }
+
+          await handler(async ({ userName, password } = {}) => {
+            console.log('PULL OPERATION WITH CREDENTIALS', userName, password)
+            await vcs.pull(remoteName, userName, password)
+          })
+        }
       },
       {
         label: `Pull from...`

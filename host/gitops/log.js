@@ -53,6 +53,7 @@ export async function log(repo) {
       const { ahead, behind } = await nodegit.Graph.aheadBehind(repo, localCommit.id(), remoteCommit.id())
       item.ahead = ahead
       item.behind = behind
+      item.upstream = remoteBranchName
     }
   }
 

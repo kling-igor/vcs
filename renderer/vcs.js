@@ -57,6 +57,10 @@ export class VCS {
   @observable.ref changedFiles = []
   @observable.ref stagedFiles = []
 
+  @computed get hasLocalChanges() {
+    return this.changedFiles.length > 0
+  }
+
   @observable.ref previousCommits = []
 
   // git tree
@@ -452,13 +456,15 @@ export class VCS {
         const TAGS = 2
 
         const [heads, remoteHeads, tags] = refs.reduce(
-          (acc, { name, sha, ahead, behind }) => {
+          (acc, item) => {
+            const { name } = item
+
             if (name.includes('refs/heads/')) {
-              acc[LOCAL_HEADS].push({ name: name.replace('refs/heads/', ''), sha, ahead, behind })
+              acc[LOCAL_HEADS].push({ ...item, name: name.replace('refs/heads/', '') })
             } else if (name.includes('refs/remotes/')) {
-              acc[REMOTE_HEADS].push({ name: name.replace('refs/remotes/', ''), sha })
+              acc[REMOTE_HEADS].push({ ...item, name: name.replace('refs/remotes/', '') })
             } else if (name.includes('refs/tags/')) {
-              acc[TAGS].push({ name: name.replace('refs/tags/', ''), sha })
+              acc[TAGS].push({ ...item, name: name.replace('refs/tags/', '') })
             }
 
             return acc
@@ -731,13 +737,29 @@ export class VCS {
   }
 
   @action.bound
-  async pull(remoteName) {
-    await callMain('repository:pull', remoteName)
+  async fetch(remoteName, userName, password) {
+    await callMain('repository:fetch', remoteName, userName, password)
   }
 
   @action.bound
-  async fetch(remoteName, userName, password) {
-    // нужно как-то указывать что для операции требуется авторизация и пароль нужно будет взять из keytar
-    await callMain('repository:fetch', remoteName, userName, password)
+  async pull(remoteName, userName, password) {
+    await this.fetch(remoteName, userName, password)
+
+    const mergingBranches = this.heads.reduce((acc, item) => {
+      const { name, upstream, ahead, behind } = item
+
+      if (upstream && (ahead || behind)) {
+        return [...acc, [name, upstream]]
+      }
+
+      return acc
+    }, [])
+
+    for (const [local, remote] of mergingBranches) {
+      await callMain('repository:merge-branches', local, remote)
+    }
+
+    await this.status()
+    await this.getLog()
   }
 }

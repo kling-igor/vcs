@@ -190,3 +190,11 @@ export function confirmAuthRequired() {
   const detail = `You have to specify remote credentials to proceed. Do you wish to continue?`
   return confirmActionMessage({ message, detail })
 }
+
+export function confirmPull() {
+  const message = 'Confirm Pull'
+  const detail = `Working directory contains uncommitted changes. Please commit your changes or stash them before pull otherwise they will be deleted. Do you wish to continue?`
+  return confirmActionMessage({ message, detail })
+}
+
+// Please commit your changes or stash them before

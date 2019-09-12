@@ -11,7 +11,7 @@ export {
 } from './repository'
 
 export { findConfig, openRepoConfig, getUserNameEmail } from './config'
-export { merge } from './merge'
+export { merge, mergeBranches } from './merge'
 export { fetch } from './fetch'
 export { log } from './log'
 export { createBranch, deleteBranch, checkoutBranch, checkoutRemoteBranch } from './branch'
