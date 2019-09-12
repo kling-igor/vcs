@@ -9,7 +9,8 @@
     "build:main": "babel -w host -d app --copy-files",
     "build:renderer": "webpack --mode development --env.dev --config renderer/webpack.config.babel.js --watch --hot",
     "rebuild": "electron-rebuild -f -w nodegit",
-    "treetest": "node -r @babel/register host/maketree.js"
+    "treetest": "node -r @babel/register host/maketree.js",
+    "test": "mocha --require @babel/register --recursive test/*.spec.js"
   },
   "keywords": [],
   "author": "'Igor Kling' <\"klingiv@altarix.ru\">",
@@ -50,7 +51,11 @@
     "styled-components": "^4.1.3",
     "webpack": "^4.29.3",
     "webpack-cli": "^3.2.3",
-    "webpack-dev-server": "^3.8.0"
+    "webpack-dev-server": "^3.8.0",
+    "chai": "^4.2.0",
+    "deep-eql": "^4.0.0",
+    "mocha": "^5.2.0",
+    "sinon": "^7.3.1"
   },
   "dependencies": {
     "@blueprintjs/select": "^3.10.0",
@@ -58,6 +63,7 @@
     "crypto-js": "^3.1.9-1",
     "dotenv": "^8.1.0",
     "event-kit": "^2.5.3",
+    "fs-extra": "^8.1.0",
     "keytar": "^5.0.0-beta.0",
     "lodash": "^4.17.15",
     "moment": "^2.24.0",
