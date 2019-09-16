@@ -272,38 +272,17 @@ answerRenderer('repository:fetch', async (browserWindow, remoteName, userName, p
   }
 })
 
-answerRenderer('repository:pull', async (browserWindow, remoteName, userName, password) => {
+answerRenderer('repository:push', async (browserWindow, remoteName, branch, userName, password) => {
   checkRepo()
 
   const remote = await getRemote(repo, remoteName)
 
-  // todo если предоставлены userName, password то сохранить их keytar
   if (userName && password) {
-    console.log('STORE CREDENTIALS FOR:', remote.url())
     await keytar.setPassword(remote.url(), userName, password)
-    return pull(repo, remoteName, userName, password)
+    return push(repo, remoteName, branch, userName, password)
   } else {
-    console.log('REQUEST CREDENTIALS FOR:', remote.url())
     const [record = {}] = await keytar.findCredentials(remote.url())
-    return pull(repo, remoteName, record.account, record.password)
-  }
-})
-
-answerRenderer('repository:push', async (browserWindow, remoteName) => {
-  checkRepo()
-
-  const currentBranch = await repo.getCurrentBranch()
-  const branchName = currentBranch.shorthand()
-
-  const { USERNAME, PASSWORD } = process.env
-
-  // использовать keytar или как-то поместить в конфигурацию
-
-  try {
-    const remote = await repo.getRemote(remoteName)
-    await push(remote, branchName, USERNAME, PASSWORD)
-  } catch (e) {
-    console.log('PUSH ERROR:', e)
+    return push(repo, remoteName, branch, record.account, record.password)
   }
 })
 

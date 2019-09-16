@@ -732,13 +732,19 @@ export class VCS {
   }
 
   @action.bound
-  async push(remoteName) {
-    await callMain('repository:push', remoteName)
+  async push(remoteName, branch, userName, password) {
+    await callMain('repository:push', remoteName, branch, userName, password)
+
+    await this.status()
+    await this.getLog()
   }
 
   @action.bound
   async fetch(remoteName, userName, password) {
     await callMain('repository:fetch', remoteName, userName, password)
+
+    await this.status()
+    await this.getLog()
   }
 
   @action.bound
@@ -755,7 +761,7 @@ export class VCS {
       return acc
     }, [])
 
-    console.log('MERGINS PAIRS:', mergingBranches)
+    console.log('MERGING PAIRS:', mergingBranches)
 
     for (const [ourBranchName, theirBranchName] of mergingBranches) {
       await callMain('repository:merge-branches', ourBranchName, theirBranchName)

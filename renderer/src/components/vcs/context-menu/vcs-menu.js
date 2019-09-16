@@ -1,7 +1,14 @@
 const GIT_ADDR_REGEX = /((git|ssh|file|http(s)?)|(git@[\w\.]+))(:(\/\/)?)([\w\.@\:\/\-~]+)(\.git)(\/)?/
 
 export default ({ vcs, workspace, Dialog }) => () => {
-  const remotes = vcs.remotes
+  const { remotes, heads } = vcs
+
+  const getPushingBranch = async () => {
+    return await workspace.showQuickPick({
+      items: heads.map(item => ({ label: item.name, detail: item.url })),
+      placeHolder: 'Branch to push'
+    })
+  }
 
   const getPersistentRemote = async () => {
     console.log('getPersistentRemote')
@@ -53,6 +60,8 @@ export default ({ vcs, workspace, Dialog }) => () => {
         await operation({ userName, password })
         return
       } catch (e) {
+        console.log('OP ERROR:', e)
+
         if (e.message === 'Auth required') {
           console.log('AUTH REQUIRED!!!!!')
 
@@ -99,9 +108,10 @@ export default ({ vcs, workspace, Dialog }) => () => {
           if (!remoteName) return
 
           await handler(async ({ userName, password } = {}) => {
-            console.log('FETCH OPERATION WITH CREDENTIALS', userName, password)
             await vcs.fetch(remoteName, userName, password)
           })
+
+          console.log('DONE')
         }
       },
       {
@@ -131,9 +141,10 @@ export default ({ vcs, workspace, Dialog }) => () => {
           }
 
           await handler(async ({ userName, password } = {}) => {
-            console.log('PULL OPERATION WITH CREDENTIALS', userName, password)
             await vcs.pull(remoteName, userName, password)
           })
+
+          console.log('DONE')
         }
       },
       {
@@ -141,8 +152,26 @@ export default ({ vcs, workspace, Dialog }) => () => {
         // click: getRemote('pull')
       },
       {
-        label: `Push`
-        // click: getPersistentRemote('push')
+        label: `Push`,
+        click: async () => {
+          console.log('PUSH!!!')
+
+          if (heads.length === 0) return
+
+          const branch = await getPushingBranch()
+          if (!branch) return
+
+          const remoteName = await getPersistentRemote()
+          if (!remoteName) return
+
+          console.log('remoteName:', remoteName)
+
+          await handler(async ({ userName, password } = {}) => {
+            await vcs.push(remoteName, branch, userName, password)
+          })
+
+          console.log('DONE')
+        }
       },
       {
         label: `Push to...`

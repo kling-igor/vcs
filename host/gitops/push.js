@@ -1,47 +1,44 @@
 import nodegit from 'nodegit'
 
-// TODO: нужно предоставлять выбор ветки которую нужно проталкивать
-// делать это через контекстное меню веток
+export async function push(repo, remoteName, branchName, username, password) {
+  let attepmpt = 0
 
-export async function push(remote, branch, username, password) {
-  var sshPublicKeyPath = '/Users/user/.ssh/id_rsa.pub'
-  var sshPrivateKeyPath = '/Users/user/.ssh/id_rsa'
+  const remoteCallbacks = {
+    certificateCheck: () => 0,
+    credentials: (url, userName) => {
+      if (attepmpt++ < 5) {
+        return username && password ? nodegit.Cred.userpassPlaintextNew(username, password) : nodegit.Cred.defaultNew()
+      }
+
+      throw new Error('auth failed')
+    }
+  }
+
+  const remote = await repo.getRemote(remoteName)
 
   try {
-    await remote.push([`refs/heads/${branch}:refs/heads/${branch}`], {
-      callbacks: {
-        // github will fail cert check on some OSX machines, this overrides that check
-        certificateCheck: () => 0,
-        credentials: (url, userName) => {
-          console.log('CRED URL:', url)
-          console.log('CRED USERNAME:', userName)
-
-          console.log('CRED URL:', url)
-          console.log('CRED USERNAME:', userName)
-
-          return username && password
-            ? nodegit.Cred.userpassPlaintextNew(username, password)
-            : nodegit.Cred.defaultNew()
-        }
-
-        // credentials: username && password ? () => nodegit.Cred.userpassPlaintextNew(username, password) : null,
-        // credentials: (url, userName) => {
-        //   console.log('REMOTE URL:', url)
-        //   return nodegit.Cred.sshKeyFromAgent(userName)
-
-        //   console.log(`getting creds for url:${url} username:${userName}`)
-        //   // avoid infinite loop when authentication agent is not loaded
-        //   if (debug++ > 10) {
-        //     console.log('Failed too often, bailing.')
-        //     throw 'Authentication agent not loaded.'
-        //   }
-        //   // return nodegit.Cred.sshKeyNew(userName, sshPublicKeyPath, sshPrivateKeyPath, '')
-        //   return nodegit.Cred.sshKeyFromAgent(userName)
-        // },
-        // transferProgress: progress => console.log('push progress:', progress)
-      }
+    await remote.push([`refs/heads/${branchName}:refs/heads/${branchName}`], {
+      callbacks: remoteCallbacks
     })
+
+    const branchRef = await nodegit.Branch.lookup(repo, branchName, nodegit.Branch.BRANCH.LOCAL)
+    await nodegit.Branch.setUpstream(branchRef, `${remoteName}/${branchName}`)
   } catch (e) {
-    console.log('PUSH ERROR:', e)
+    if (e.message.includes('unexpected HTTP status code:')) {
+      console.log('CHECK CONNECTION...')
+      throw new Error('Connection error')
+    }
+
+    if (e.message.includes('credentials callback returned an invalid cred type')) {
+      console.log('AUTH REQUIRED')
+      throw new Error('Auth required')
+    }
+
+    if (e.message.includes('Method connect has thrown an error.')) {
+      console.log('AUTH FAILED')
+      throw new Error('Auth failed')
+    }
+
+    console.log('UNKNOWN PUSH ERROR:', e.message)
   }
 }

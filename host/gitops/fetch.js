@@ -61,7 +61,7 @@ export async function fetch(repo, remoteName, username, password) {
   attepmpt = 0
 
   try {
-    console.log('FTECHING!!!!')
+    console.log('FETCHING!!!!')
     await repo.fetch(remoteName, {
       downloadTags: 1,
       prune: 1,
