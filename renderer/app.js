@@ -67,7 +67,8 @@ export default class App extends Component {
 
   async componentDidMount() {
     dock.addPage('vcs', {
-      pageTitle: 'GIT'
+      pageTitle: 'GIT',
+      pageIcon: './assets/ui/git/git.svg'
     })
 
     const replacePanes = mode => {
@@ -97,6 +98,7 @@ export default class App extends Component {
 
         dock.addPane('vcs', {
           title: 'STAGED',
+          elapsed: true,
           component: <StagedFiles storage={vcs} onContextMenu={onStagedFileContextMenu({ vcs, workspace, Dialog })} />,
           paneHeaderButtons: [
             {
@@ -109,6 +111,7 @@ export default class App extends Component {
 
         dock.addPane('vcs', {
           title: 'CHANGES',
+          elapsed: true,
           component: (
             <ChangedFiles storage={vcs} onContextMenu={onChangedFileContextMenu({ vcs, workspace, project, Dialog })} />
           ),
@@ -144,11 +147,13 @@ export default class App extends Component {
 
         dock.addPane('vcs', {
           title: 'COMMIT INFO',
+          elapsed: true,
           component: <CommitInfo storage={vcs} />
         })
 
         dock.addPane('vcs', {
           title: 'CHANGES',
+          elapsed: true,
           component: <ChangesFileList storage={vcs} />
         })
 

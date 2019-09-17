@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import styled, { withTheme } from 'styled-components'
 import { Scrollbars } from 'react-custom-scrollbars'
 import { observer } from 'mobx-react'
@@ -64,7 +64,7 @@ const DockHeaderStyle = styled.div`
   min-height: 35px;
   width: 100%;
 
-  padding-left: 20px;
+  padding-left: 10px;
 
   display: flex;
   justify-content: space-between;
@@ -83,6 +83,10 @@ const DockHeaderStyle = styled.div`
       sideBarTitle: { foreground }
     }
   }) => foreground || '#ffff00'};
+`
+
+const DockPageTitleStyle = styled.div`
+  margin-left: 5px;
 `
 
 /**
@@ -334,12 +338,15 @@ const renderDockPane = (
   )
 }
 
-const renderPageHeader = ({ theme, pageTitle, pageHeaderButtons = [] }) => {
+const renderPageHeader = ({ theme, pageTitle, pageIcon, pageHeaderButtons = [] }) => {
   if (!pageTitle) return null
   return (
     <DockHeaderStyle>
       <LeftAlignedBlock>
-        <UnselectableStyle>{pageTitle}</UnselectableStyle>
+        {!!pageIcon && <DockHeaderButtonStyle src={pageIcon} width={16} height={16}></DockHeaderButtonStyle>}
+        <UnselectableStyle>
+          <DockPageTitleStyle>{pageTitle}</DockPageTitleStyle>
+        </UnselectableStyle>
       </LeftAlignedBlock>
       <RightAlignedBlock>
         {pageHeaderButtons.map(({ icon, onClick, tooltip, disabled }) => {
@@ -360,6 +367,10 @@ const renderPageHeader = ({ theme, pageTitle, pageHeaderButtons = [] }) => {
 
 export const DockView = withTheme(
   observer(({ pages, currentPage, onPaneHeaderClick, onResizeEnd, paneSizes, theme }) => {
+    const handleResizeEnd = data => {
+      onResizeEnd(currentPage, data.map(item => parseFloat(item) / 100))
+    }
+
     if (currentPage == null) return null
 
     const page = pages[currentPage]
@@ -370,19 +381,15 @@ export const DockView = withTheme(
 
     const { pageTitle, panes, pageHeaderButtons = [] } = page
 
-    const hasPageTitle = !!pageTitle
-
     const panesCount = panes.length
+
+    if (panesCount < 1) return null
 
     const makePaneHeaderClickHandler = index => () => {
       onPaneHeaderClick(currentPage, index)
     }
 
-    const handleResizeEnd = data => {
-      onResizeEnd(currentPage, data.map(item => parseFloat(item) / 100))
-    }
-
-    if (panesCount >= 2) {
+    if (panesCount > 1) {
       // если меняется состав открытых\закрытых панелей, то сохраненные значения могут быть нерелевантны
       // как минимум стоит их тоже занулить если открывается/закрывается какая-то панель!!!
 
@@ -425,7 +432,7 @@ export const DockView = withTheme(
                         title,
                         component,
                         elapsed,
-                        hasPageTitle ? 35 : 0,
+                        !!pageTitle ? 35 : 0,
                         makePaneHeaderClickHandler(i),
                         theme,
                         paneHeaderButtons
@@ -442,7 +449,7 @@ export const DockView = withTheme(
                       title,
                       component,
                       elapsed,
-                      hasPageTitle ? 35 : 0,
+                      !!pageTitle ? 35 : 0,
                       makePaneHeaderClickHandler(i),
                       theme,
                       paneHeaderButtons
@@ -462,7 +469,7 @@ export const DockView = withTheme(
                 title,
                 component,
                 elapsed,
-                hasPageTitle ? 35 : 0,
+                !!pageTitle ? 35 : 0,
                 makePaneHeaderClickHandler(i),
                 theme,
                 paneHeaderButtons
@@ -483,7 +490,7 @@ export const DockView = withTheme(
             title,
             component,
             elapsed,
-            hasPageTitle ? 35 : 0,
+            !!pageTitle ? 35 : 0,
             makePaneHeaderClickHandler(0),
             theme,
             paneHeaderButtons
