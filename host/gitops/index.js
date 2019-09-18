@@ -10,7 +10,7 @@ export {
   getRemote
 } from './repository'
 
-export { findConfig, openRepoConfig, getUserNameEmail } from './config'
+export { findConfig, openRepoConfig, getUserNameEmail, setUserNameEmail } from './config'
 export { merge, mergeBranches } from './merge'
 export { fetch } from './fetch'
 export { log } from './log'

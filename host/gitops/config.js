@@ -57,3 +57,14 @@ export async function getUserNameEmail(config) {
 
   return { name, email }
 }
+
+/**
+ *
+ * @param {Config} config
+ * @param {String} username
+ * @param {String} email
+ */
+export async function setUserNameEmail(config, username, email) {
+  await config.setString('user.name', username)
+  await config.setString('user.email', email)
+}

@@ -39,7 +39,7 @@ const sort = array =>
   })
 
 export class VCS {
-  @observable mode = 'commit' // log | commit
+  @observable mode = 'log' // log | commit
 
   onModeChange = () => {}
 
@@ -769,5 +769,15 @@ export class VCS {
 
     await this.status()
     await this.getLog()
+  }
+
+  @action.bound
+  async storeUserDetails(userName, email, useForAllRepositories = false) {
+    transaction(() => {
+      this.name = userName
+      this.email = email
+    })
+
+    await callMain('repository:set-user-details', userName, email, useForAllRepositories)
   }
 }

@@ -14,6 +14,7 @@ import {
   findConfig,
   openRepoConfig,
   getUserNameEmail,
+  setUserNameEmail,
   getRemotes,
   openRepository,
   getReferences,
@@ -442,6 +443,20 @@ answerRenderer('repository:delete-remote', async (browserWindow, name) => {
     await deleteRemote(repo, name)
     return await getRemotes(repo)
   } catch (e) {}
+})
+
+answerRenderer('repository:set-user-details', async (browserWindow, userName, email, useForAllRepositories) => {
+  let config
+  if (useForAllRepositories) {
+    config = await findConfig()
+  }
+  if (!config && !useForAllRepositories) {
+    config = await openRepoConfig(repo)
+  }
+
+  if (!config) return
+
+  await setUserNameEmail(config, userName, email)
 })
 
 /* FAKE APPLICATION (from editor) */

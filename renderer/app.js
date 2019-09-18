@@ -53,6 +53,8 @@ const project = new Project({ applicationDelegate })
 const vcs = new VCS({ workspace, project, applicationDelegate })
 const dock = new Dock()
 
+const noop = () => {}
+
 const RootStyle = styled.div`
   height: 100%;
   display: flex;
@@ -127,7 +129,36 @@ export default class App extends Component {
         dock.setPageButtons('vcs', [
           {
             icon: './assets/ui/git/git-commit.svg',
-            onClick: vcs.commitMode,
+            onClick: async () => {
+              let { name, email } = vcs
+
+              if (!name || !email) {
+                try {
+                  const useForAllRepositories = await Dialog.confirmEnterUserDetails()
+
+                  name = await workspace.showInputBox({
+                    placeHolder: 'User name e.g. John Dow',
+                    validateInput: input => /^[a-zA-Z]+(([',. -][a-zA-Z ])?[a-zA-Z]*)*$/.test(input)
+                  })
+
+                  if (!name) return
+
+                  email = await workspace.showInputBox({
+                    placeHolder: 'Email e.g. jd@example.com',
+                    validateInput: input => /^([a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6})*$/.test(input)
+                  })
+
+                  if (!email) return
+
+                  await vcs.storeUserDetails(name, email, useForAllRepositories)
+                } catch (e) {
+                  console.log('STORE USER DETAILS ERROR:', e)
+                  return
+                }
+              }
+
+              vcs.commitMode()
+            },
             tooltip: 'Commit'
           },
           {

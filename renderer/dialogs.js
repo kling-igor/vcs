@@ -1,13 +1,13 @@
 const { remote } = window.require('electron')
 
-function confirmActionMessage({ message, detail, option, checked = false }) {
+function confirmActionMessage({ message, detail, option, checked = false, acceptButton, dismissButton }) {
   return new Promise((resolve, reject) => {
     remote.dialog.showMessageBox(
       {
         type: 'question',
         message,
         detail,
-        buttons: ['OK', 'Cancel'],
+        buttons: [acceptButton || 'OK', dismissButton || 'Cancel'],
         defaultId: 0,
         cancelId: 1,
         checkboxLabel: option,
@@ -28,14 +28,14 @@ function confirmActionMessage({ message, detail, option, checked = false }) {
   })
 }
 
-function confirmInfoMessage({ message, detail, option, type = 'info', checked = false }) {
+function confirmInfoMessage({ message, detail, option, type = 'info', checked = false, acceptButton }) {
   return new Promise((resolve, reject) => {
     remote.dialog.showMessageBox(
       {
         type,
         message,
         detail,
-        buttons: ['OK'],
+        buttons: [acceptButton || 'OK'],
         defaultId: 0,
         checkboxLabel: option,
         checkboxChecked: checked
@@ -195,6 +195,13 @@ export function confirmPull() {
   const message = 'Confirm Pull'
   const detail = `Working directory contains uncommitted changes. Please commit your changes or stash them before pull otherwise they will be deleted. Do you wish to continue?`
   return confirmActionMessage({ message, detail })
+}
+
+export function confirmEnterUserDetails() {
+  const message = "Can't commit because your name is not configured"
+  const detail = 'You have to enter the user details you wish to associate with your commits'
+  const option = 'Use entered details for all repositories '
+  return confirmActionMessage({ message, detail, option, acceptButton: 'Proceed' })
 }
 
 // Please commit your changes or stash them before
