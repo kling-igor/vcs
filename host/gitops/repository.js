@@ -27,15 +27,48 @@ export async function createRepository(path) {
  * @param {String} [password] - optional password
  */
 export async function cloneRepository(url, path, username, password) {
-  return await nodegit.Clone(url, path, {
-    fetchOpts: {
-      callbacks: {
-        certificateCheck: () => 0, // github will fail cert check on some OSX machines, this overrides that check
-        credentials: username && password ? () => nodegit.Cred.userpassPlaintextNew(username, password) : null
-        // transferProgress: progress => console.log('clone progress:', progress)
+  let attepmpt = 0
+
+  const remoteCallbacks = {
+    certificateCheck: () => 0,
+    credentials: (url, userName) => {
+      // console.log('CRED URL:', url)
+      // console.log('CRED USERNAME:', userName)
+
+      if (attepmpt++ < 5) {
+        return username && password ? nodegit.Cred.userpassPlaintextNew(username, password) : nodegit.Cred.defaultNew()
       }
+
+      throw new Error('auth failed')
     }
-  })
+  }
+
+  try {
+    console.log('CLONNING !!!!')
+    await nodegit.Clone(url, path, {
+      fetchOpts: {
+        callbacks: remoteCallbacks
+      }
+    })
+  } catch (e) {
+    console.log('CLONE ERROR:', e)
+    if (e.message.includes('unexpected HTTP status code:')) {
+      console.log('CHECK CONNECTION...')
+      throw new Error('Connection error')
+    }
+
+    if (e.message.includes('credentials callback returned an invalid cred type')) {
+      console.log('AUTH REQUIRED')
+      throw new Error('Auth required')
+    }
+
+    if (e.message.includes('Method connect has thrown an error.')) {
+      console.log('AUTH FAILED')
+      throw new Error('Auth failed')
+    }
+
+    throw new Error('Unknown clone error')
+  }
 }
 
 /**

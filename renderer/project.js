@@ -17,6 +17,14 @@ export class Project extends EventEmitter {
     this.emit('project-opened')
   }
 
+  close() {
+    this.projectPath = null
+
+    this.projectName = null
+
+    this.emit('project-closed')
+  }
+
   async removeFile(path) {
     return this.applicationDelegate.removeFile(join(this.projectPath, path))
   }

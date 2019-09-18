@@ -47,11 +47,18 @@ import {
   onRemotesHeaderMenu
 } from './src/components/vcs/header-menu'
 
-const workspace = new Workspace()
 const applicationDelegate = new ApplicationDelegate()
 const project = new Project({ applicationDelegate })
+const workspace = new Workspace({ project, applicationDelegate })
 const vcs = new VCS({ workspace, project, applicationDelegate })
+
+// находится в workspace!!!
 const dock = new Dock()
+
+// потом нужно все пути сделать через vision.
+
+// ДОЛЖНО БЫТЬ В package
+import { CloneProjectPane } from './src/components/vcs/stub'
 
 const noop = () => {}
 
@@ -72,6 +79,14 @@ export default class App extends Component {
       pageTitle: 'GIT',
       pageIcon: './assets/ui/git/git.svg'
     })
+
+    // ТАКЖЕ ЭТО ДЕЛАТЬ В ОТВЕТ НА ЗАКРЫТИЕ ПРОЕКТА
+    dock.removePanes('vcs')
+    dock.addPane('vcs', {
+      component: <CloneProjectPane workspace={workspace} vcs={vcs} Dialog={Dialog} />
+    })
+
+    // ТАКЖЕ НУЖНО БУДЕТ УДАЛЯТЬ КОРНЕВОЙ ВИДЖЕТ КОТОРЫЙ СОДЕРЖИТ ПРЕДСТАВЛЕНИЕ VCS
 
     const replacePanes = mode => {
       dock.removePanes('vcs')
@@ -227,16 +242,17 @@ export default class App extends Component {
       }
     }
 
-    vcs.setModeChangeHandler(replacePanes)
+    // vcs.setModeChangeHandler(replacePanes)
 
     // set initial panes
-    replacePanes(vcs.mode)
+    // ЭТО ДЕЛАТЬ В ОТВЕТ НА СОБЫТИЕ ОТКРЫТИЯ ПРОЕКТА
+    // replacePanes(vcs.mode)
 
     dock.showPage('vcs')
 
-    await vcs.openRepo(resolve(__dirname, '../test-repo'))
-    await project.open({ projectPath: resolve(__dirname, '../test-repo') })
-    await vcs.getLog()
+    // await vcs.openRepo(resolve(__dirname, '../test-repo'))
+    // await project.open({ projectPath: resolve(__dirname, '../test-repo') })
+    // await vcs.getLog()
   }
 
   setVerticalLayout = layout => {

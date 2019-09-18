@@ -797,4 +797,9 @@ export class VCS {
 
     await callMain('repository:set-user-details', userName, email, useForAllRepositories)
   }
+
+  @action.bound
+  async clone(remoteUrl, targetFolder, userName, password) {
+    await callMain('repository:clone', remoteUrl, targetFolder, userName, password)
+  }
 }

@@ -1,11 +1,16 @@
+const { remote } = window.require('electron')
 import React from 'react'
-
-import { remote } from 'electron'
+import os from 'os'
 import { Input, QuickPick, InputUnique } from './src/components/quickpick'
 import { observable } from 'mobx'
 // STUB
 export class Workspace {
   @observable.ref customModalView = null
+
+  constructor({ project, applicationDelegate }) {
+    this.applicationDelegate = applicationDelegate
+    this.project = project
+  }
 
   showContextMenu({ title, items }) {
     const contextMenu = new remote.Menu()
@@ -110,5 +115,47 @@ export class Workspace {
         <QuickPick items={items} placeHolder={placeHolder} noResultsText={noResultsText} onSelect={onSelect} />
       )
     })
+  }
+
+  openProject = async projectPath => {
+    if (!projectPath) {
+      projectPath = await this.showOpenFolderMenu()
+    }
+
+    if (!projectPath || projectPath === this.project.projectPath) return
+
+    if (this.project.projectPath) {
+      // закрываем существующий проект
+      try {
+        await this.closeProject()
+      } catch (e) {
+        console.log('WORKSPACE::OPENPROJECT CLOSE EXISTENT PROJECT ERROR', e)
+      }
+    }
+
+    await this.project.open({ projectPath })
+  }
+
+  closeProject = async () => {
+    await this.applicationDelegate.closeProject()
+    await this.project.close()
+  }
+
+  async showOpenFolderMenu() {
+    const openOptions = {
+      properties: ['openDirectory', 'createDirectory', 'promptToCreate'],
+      title: 'Open Folder',
+      defaultPath: os.homedir()
+    }
+
+    this.closable = false
+    const selectedPath = await new Promise(resolve => {
+      remote.dialog.showOpenDialog(null, openOptions, resolve)
+    })
+    this.closable = true
+
+    if (Array.isArray(selectedPath)) {
+      return selectedPath[0]
+    }
   }
 }
