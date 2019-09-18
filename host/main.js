@@ -198,13 +198,13 @@ answerRenderer('commit:get-info', async (browserWindow, sha) => {
   return commitInfo(repo, sha)
 })
 
-answerRenderer('commit:create', async (browserWindow, message, mergingCommitSha) => {
+answerRenderer('commit:create', async (browserWindow, message, mergingCommitSha, name, email) => {
   checkRepo()
 
   try {
     const index = await repo.index()
     await writeIndex(index)
-    await commit(repo, message, user.name, user.email, mergingCommitSha)
+    await commit(repo, message, name, email, mergingCommitSha)
   } catch (e) {
     console.log('COMMIT ERROR:', e)
   }

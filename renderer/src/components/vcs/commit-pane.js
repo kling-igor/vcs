@@ -103,15 +103,40 @@ const CommitAreaStyle = styled(TextArea)`
   }
 `
 
+const PopupStyle = styled.div`
+  width: 400px;
+  height: 230px;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+`
+
+const PopupUpperHorizontalContainer = styled.div`
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+`
+
+const PopupInputContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  margin-left: 28px;
+`
+const PopupInputStyle = styled(InputGroup)`
+  margin-bottom: 8px;
+`
+
 const commitButtonStyle = { paddingLeft: 16, paddingRight: 16 }
 const cancelButtonStyle = { ...commitButtonStyle, marginRight: 8 }
 const historyButtonStyle = { width: '30px', height: '30px', marginRight: '8px', outline: 'none' }
 
-const UserDetails = ({ hash, name, email }) => {
-  const [variant, setVariant] = useState('default')
+const UserDetails = ({ name, email, alterName: _alterName, alterEmail: _alterEmail, onClose }) => {
+  const [variant, setVariant] = useState(_alterName && _alterEmail ? 'alternative' : 'default')
 
-  const [alterName, setAlterName] = useState('')
-  const [alterEmail, setAlterEmail] = useState('')
+  const [alterName, setAlterName] = useState(_alterName)
+  const [alterEmail, setAlterEmail] = useState(_alterEmail)
 
   const onVariantChange = useCallback(event => {
     setVariant(event.currentTarget.value)
@@ -125,11 +150,13 @@ const UserDetails = ({ hash, name, email }) => {
     setAlterEmail(event.target.value)
   })
 
+  const hash = useMemo(() => MD5(email).toString(), [email])
+
   return (
-    <div style={{ width: 400, height: 230, display: 'flex', flexDirection: 'column', padding: 16 }}>
+    <PopupStyle>
       <RadioGroup onChange={onVariantChange} selectedValue={variant}>
         <Radio label="Use default author" value="default">
-          <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
+          <PopupUpperHorizontalContainer>
             <GravatarStyle
               src={`https://www.gravatar.com/avatar/${hash}?s=100&d=identicon`}
               draggable="false"
@@ -137,69 +164,76 @@ const UserDetails = ({ hash, name, email }) => {
               height={50}
             />
             <NameEmailStyle>{`${name} <${email}>`}</NameEmailStyle>
-          </div>
+          </PopupUpperHorizontalContainer>
         </Radio>
         <Radio label="Use alternative author" value="alternative" />
       </RadioGroup>
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'flex-start',
-          alignItems: 'flex-start',
-          marginLeft: 28
-        }}
-      >
-        <InputGroup
-          onChange={onNameChanged}
-          placeholder="Username"
-          value={alterName}
-          small
-          fill
-          style={{ marginBottom: 8 }}
-        />
-        <InputGroup
-          onChange={onEmailChanged}
-          placeholder="Email"
-          value={alterEmail}
-          small
-          fill
-          style={{ marginBottom: 8 }}
-        />
-      </div>
+      <PopupInputContainer>
+        <PopupInputStyle onChange={onNameChanged} placeholder="Username" value={alterName} small fill />
+        <PopupInputStyle onChange={onEmailChanged} placeholder="Email" value={alterEmail} small fill />
+      </PopupInputContainer>
       <Button
         className={Classes.POPOVER_DISMISS}
         text="OK"
         intent="primary"
         onClick={() => {
-          console.log('VARIANT:', variant)
           if (variant === 'alternative') {
-            console.log('ALTER NAME:', alterName)
-            console.log('ALTER EMAIL:', alterEmail)
+            onClose(variant, alterName, alterEmail)
+          } else {
+            onClose(variant)
           }
         }}
         small
         style={{ alignSelf: 'flex-end', width: 100 }}
       />
-    </div>
+    </PopupStyle>
   )
 }
 
 export default memo(
-  ({ name, email, onChange, text, previousCommits, onShowPreviousCommits, onCommit, onCancelCommit }) => {
+  ({
+    name,
+    email,
+    onChange,
+    text,
+    previousCommits,
+    onShowPreviousCommits,
+    onCommit,
+    onCancelCommit,
+    alterName,
+    alterEmail,
+    setAlterUserNameEmail
+  }) => {
     const [commitable, setCommitable] = useState(false)
-    const hash = useMemo(() => MD5(email).toString(), [email])
+    const hash = useMemo(() => MD5(alterEmail || email).toString(), [email, alterEmail])
 
     useEffect(() => {
       setCommitable((text && text.length > 0 && text.trim()) || false)
     }, [text])
+
+    const onPopupClose = useCallback((variant, alterName, alterEmail) => {
+      if (variant === 'alternative') {
+        setAlterUserNameEmail(alterName, alterEmail)
+      } else {
+        setAlterUserNameEmail()
+      }
+    })
 
     return (
       <HorizontalConatiner>
         <Popover
           popoverClassName="popover"
           interactionKind={PopoverInteractionKind.CLICK}
-          content={<UserDetails hash={hash} name={name} email={email} />}
+          content={
+            <UserDetails
+              hash={hash}
+              name={name}
+              email={email}
+              alterName={alterName}
+              alterEmail={alterEmail}
+              onClose={onPopupClose}
+            />
+          }
           hasBackdrop={false}
           inheritDarkTheme
           position={PopoverPosition.top}
@@ -214,7 +248,7 @@ export default memo(
         </Popover>
         <VerticalContainerStyle>
           <UpperHorizontalConatiner>
-            <NameEmailStyle>{`${name} <${email}>`}</NameEmailStyle>
+            <NameEmailStyle>{`${alterName || name} <${alterEmail || email}>`}</NameEmailStyle>
             <Button
               small
               minimal

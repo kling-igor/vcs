@@ -51,6 +51,9 @@ export class VCS {
   @observable name = ''
   @observable email = ''
 
+  @observable alterName = ''
+  @observable alterEmail = ''
+
   // commit
   @observable commitMessage = ''
 
@@ -98,6 +101,14 @@ export class VCS {
     this.applicationDelegate = applicationDelegate
 
     this.debouncedStatus = _.debounce(this.status, 1000)
+  }
+
+  @action.bound
+  setAlterUserNameEmail(userName = '', email = '') {
+    transaction(() => {
+      this.alterName = userName
+      this.alterEmail = email
+    })
   }
 
   @action.bound
@@ -546,7 +557,13 @@ export class VCS {
   async onCommit() {
     if (this.stagedFiles.length === 0 && !this.isMerging) return
 
-    await callMain('commit:create', this.commitMessage, this.mergingSha)
+    await callMain(
+      'commit:create',
+      this.commitMessage,
+      this.mergingSha,
+      this.alterName || this.name,
+      this.alterEmail || this.email
+    )
 
     this.mergingSha = null
 
@@ -690,7 +707,7 @@ export class VCS {
     await this.getLog()
 
     if (this.isMerging && commitOnSuccess) {
-      await callMain('commit:create', 'Merge', sha)
+      await callMain('commit:create', 'Merge', sha, this.alterName || this.name, this.alterEmail || this.email)
 
       this.mergingSha = null
 

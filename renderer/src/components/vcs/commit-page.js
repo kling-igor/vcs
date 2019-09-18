@@ -47,7 +47,10 @@ class CommitPage extends Component {
         originalFile,
         modifiedFile,
         onCommit,
-        onCancelCommit
+        onCancelCommit,
+        setAlterUserNameEmail,
+        alterName,
+        alterEmail
       }
     } = this.props
 
@@ -66,6 +69,9 @@ class CommitPage extends Component {
             onShowPreviousCommits={this.showPreviousCommits}
             onCommit={onCommit}
             onCancelCommit={onCancelCommit}
+            setAlterUserNameEmail={setAlterUserNameEmail}
+            alterName={alterName}
+            alterEmail={alterEmail}
           />
         </Pane>
       </SplitPane>
