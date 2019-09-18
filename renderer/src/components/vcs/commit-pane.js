@@ -1,6 +1,7 @@
 import React, { memo, useMemo, useState, useEffect, useCallback } from 'react'
 import styled from 'styled-components'
 import {
+  Classes,
   Button,
   Intent,
   InputGroup,
@@ -107,11 +108,28 @@ const cancelButtonStyle = { ...commitButtonStyle, marginRight: 8 }
 const historyButtonStyle = { width: '30px', height: '30px', marginRight: '8px', outline: 'none' }
 
 const UserDetails = ({ hash, name, email }) => {
+  const [variant, setVariant] = useState('default')
+
+  const [alterName, setAlterName] = useState('')
+  const [alterEmail, setAlterEmail] = useState('')
+
+  const onVariantChange = useCallback(event => {
+    setVariant(event.currentTarget.value)
+  })
+
+  const onNameChanged = useCallback(event => {
+    setAlterName(event.target.value)
+  })
+
+  const onEmailChanged = useCallback(event => {
+    setAlterEmail(event.target.value)
+  })
+
   return (
     <div style={{ width: 400, height: 230, display: 'flex', flexDirection: 'column', padding: 16 }}>
-      <RadioGroup onChange={event => {}} selectedValue="default">
+      <RadioGroup onChange={onVariantChange} selectedValue={variant}>
         <Radio label="Use default author" value="default">
-          <div style={{display: 'flex', justifyContent: 'flex-start', alignItems: 'center'}}>
+          <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
             <GravatarStyle
               src={`https://www.gravatar.com/avatar/${hash}?s=100&d=identicon`}
               draggable="false"
@@ -121,24 +139,51 @@ const UserDetails = ({ hash, name, email }) => {
             <NameEmailStyle>{`${name} <${email}>`}</NameEmailStyle>
           </div>
         </Radio>
-        <Radio label="Use alternative author" value="alternative"/>
+        <Radio label="Use alternative author" value="alternative" />
       </RadioGroup>
-      <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 28}}>
-        <InputGroup onChange={() => {}} placeholder="Username" defaultValue="Igor Kling" small fill style={{marginBottom: 8}} />
-        <InputGroup onChange={() => {}} placeholder="Email" defaultValue="klingiv@altarix.ru" small fill style={{marginBottom: 8}}/>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-start',
+          alignItems: 'flex-start',
+          marginLeft: 28
+        }}
+      >
+        <InputGroup
+          onChange={onNameChanged}
+          placeholder="Username"
+          value={alterName}
+          small
+          fill
+          style={{ marginBottom: 8 }}
+        />
+        <InputGroup
+          onChange={onEmailChanged}
+          placeholder="Email"
+          value={alterEmail}
+          small
+          fill
+          style={{ marginBottom: 8 }}
+        />
       </div>
       <Button
+        className={Classes.POPOVER_DISMISS}
         text="OK"
         intent="primary"
-        onClick={() => {}}
+        onClick={() => {
+          console.log('VARIANT:', variant)
+          if (variant === 'alternative') {
+            console.log('ALTER NAME:', alterName)
+            console.log('ALTER EMAIL:', alterEmail)
+          }
+        }}
         small
         style={{ alignSelf: 'flex-end', width: 100 }}
-        // style={{ marginTop: 8, marginBottom: 8 }}
       />
     </div>
   )
 }
-
 
 export default memo(
   ({ name, email, onChange, text, previousCommits, onShowPreviousCommits, onCommit, onCancelCommit }) => {
