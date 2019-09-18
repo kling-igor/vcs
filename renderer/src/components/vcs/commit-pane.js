@@ -1,6 +1,18 @@
 import React, { memo, useMemo, useState, useEffect, useCallback } from 'react'
 import styled from 'styled-components'
-import { Button, Intent, Icon, TextArea } from '@blueprintjs/core'
+import {
+  Button,
+  Intent,
+  InputGroup,
+  Icon,
+  TextArea,
+  Popover,
+  PopoverInteractionKind,
+  PopoverPosition,
+  RadioGroup,
+  Radio
+} from '@blueprintjs/core'
+
 import { IconNames } from '@blueprintjs/icons'
 import MD5 from 'crypto-js/md5'
 
@@ -18,14 +30,16 @@ const GravatarStyle = styled.img`
   border-radius: 50%;
   padding: 8px;
   user-select: none;
-  pointer-events: none;
+  cursor: pointer;
 `
 
 const NameEmailStyle = styled.span`
-  margin: 8px;
-  margin-bottom: 0px;
-  margin-left: 0px;
+  margin: 0px;
   user-select: none;
+  font-weight: bold;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 `
 
 const VerticalContainerStyle = styled.div`
@@ -52,10 +66,9 @@ const UpperHorizontalConatiner = styled.div`
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   width: 100%;
   height: 100%;
-  /* background-color: greenyellow; */
 `
 
 const CommitAreaStyle = styled(TextArea)`
@@ -93,6 +106,40 @@ const commitButtonStyle = { paddingLeft: 16, paddingRight: 16 }
 const cancelButtonStyle = { ...commitButtonStyle, marginRight: 8 }
 const historyButtonStyle = { width: '30px', height: '30px', marginRight: '8px', outline: 'none' }
 
+const UserDetails = ({ hash, name, email }) => {
+  return (
+    <div style={{ width: 400, height: 230, display: 'flex', flexDirection: 'column', padding: 16 }}>
+      <RadioGroup onChange={event => {}} selectedValue="default">
+        <Radio label="Use default author" value="default">
+          <div style={{display: 'flex', justifyContent: 'flex-start', alignItems: 'center'}}>
+            <GravatarStyle
+              src={`https://www.gravatar.com/avatar/${hash}?s=100&d=identicon`}
+              draggable="false"
+              width={50}
+              height={50}
+            />
+            <NameEmailStyle>{`${name} <${email}>`}</NameEmailStyle>
+          </div>
+        </Radio>
+        <Radio label="Use alternative author" value="alternative"/>
+      </RadioGroup>
+      <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 28}}>
+        <InputGroup onChange={() => {}} placeholder="Username" defaultValue="Igor Kling" small fill style={{marginBottom: 8}} />
+        <InputGroup onChange={() => {}} placeholder="Email" defaultValue="klingiv@altarix.ru" small fill style={{marginBottom: 8}}/>
+      </div>
+      <Button
+        text="OK"
+        intent="primary"
+        onClick={() => {}}
+        small
+        style={{ alignSelf: 'flex-end', width: 100 }}
+        // style={{ marginTop: 8, marginBottom: 8 }}
+      />
+    </div>
+  )
+}
+
+
 export default memo(
   ({ name, email, onChange, text, previousCommits, onShowPreviousCommits, onCommit, onCancelCommit }) => {
     const [commitable, setCommitable] = useState(false)
@@ -104,12 +151,22 @@ export default memo(
 
     return (
       <HorizontalConatiner>
-        <GravatarStyle
-          src={`https://www.gravatar.com/avatar/${hash}?s=100&d=identicon`}
-          draggable="false"
-          width={50}
-          height={50}
-        />
+        <Popover
+          popoverClassName="popover"
+          interactionKind={PopoverInteractionKind.CLICK}
+          content={<UserDetails hash={hash} name={name} email={email} />}
+          hasBackdrop={false}
+          inheritDarkTheme
+          position={PopoverPosition.top}
+          modifiers={{ arrow: { enabled: true } /*, offset: { offset: '0, 10' } */ }}
+        >
+          <GravatarStyle
+            src={`https://www.gravatar.com/avatar/${hash}?s=100&d=identicon`}
+            draggable="false"
+            width={50}
+            height={50}
+          />
+        </Popover>
         <VerticalContainerStyle>
           <UpperHorizontalConatiner>
             <NameEmailStyle>{`${name} <${email}>`}</NameEmailStyle>
