@@ -141,11 +141,11 @@ export class Workspace {
     await this.project.close()
   }
 
-  async showOpenFolderMenu() {
+  async showOpenFolderMenu({ buttonLabel = 'Open Folder' }) {
     const openOptions = {
       properties: ['openDirectory', 'createDirectory', 'promptToCreate'],
-      title: 'Open Folder',
-      defaultPath: os.homedir()
+      defaultPath: os.homedir(),
+      buttonLabel
     }
 
     this.closable = false

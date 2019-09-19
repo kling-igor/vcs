@@ -19,7 +19,7 @@ const ContainerStyle = styled.div`
 `
 const GIT_ADDR_REGEX = /((git|ssh|file|http(s)?)|(git@[\w\.]+))(:(\/\/)?)([\w\.@\:\/\-~]+)(\.git)(\/)?/
 
-export const CloneProjectPane = withTheme(({ workspace, vcs, Dialog }) => {
+export const CloneProjectPane = withTheme(({ workspace, project, vcs, Dialog }) => {
   const handler = async operation => {
     let userName
     let password
@@ -69,36 +69,86 @@ export const CloneProjectPane = withTheme(({ workspace, vcs, Dialog }) => {
     }
   }
 
+  const cloneRepo = async () => {
+    // target directory
+    const projectFolder = await workspace.showOpenFolderMenu()
+    if (!projectFolder) return
+
+    // repo url
+    const remoteUrl = await workspace.showInputBox({
+      placeHolder: 'Repository URL',
+      validateInput: input => GIT_ADDR_REGEX.test(input)
+    })
+
+    if (!remoteUrl) return
+
+    await handler(async ({ userName, password } = {}) => {
+      await vcs.clone(remoteUrl, projectFolder, userName, password)
+      await workspace.openProject(projectFolder)
+      await vcs.open(projectFolder)
+      await vcs.getLog()
+    })
+  }
+
+  const initRepository = async () => {
+    const choice = await workspace.showQuickPick({
+      placeHolder: 'Pick project folder to initialize git repo in',
+      items: [
+        {
+          label: project.projectName,
+          detail: project.projectPath
+        },
+        {
+          label: 'Choose Folder...'
+        }
+      ]
+    })
+
+    if (choice) {
+      let folder
+
+      if (choice === 'Choose Folder...') {
+        folder = await workspace.showOpenFolderMenu({ buttonLabel: 'Initialize Repository' })
+      } else {
+        folder = project.projectPath
+      }
+
+      console.log('INIT REPO IN FOLDER:', folder)
+
+      try {
+        await vcs.init(folder)
+        await vcs.open(folder)
+        await vcs.getLog()
+      } catch (e) {
+        console.log('INIT REPO ERROR:', e)
+      }
+    }
+  }
+
+  let text = ''
+  let buttonText = ''
+  let buttonClickHandler = null
+
+  if (project.projectPath) {
+    text = 'No source control providers registered'
+    buttonText = 'Init repository'
+    buttonClickHandler = initRepository
+  } else {
+    text = 'You have not yet opened a folder'
+    buttonText = 'Clone'
+    buttonClickHandler = cloneRepo
+  }
+
   return (
     <ContainerStyle>
-      <TextStyle className="bp3-ui-text bp3-text-small bp3-text-muted">You have not yet opened a folder</TextStyle>
+      <TextStyle className="bp3-ui-text bp3-text-small bp3-text-muted">{text}</TextStyle>
       <Button
         small
         intent={Intent.PRIMARY}
-        onClick={async () => {
-          // target directory
-          const projectFolder = await workspace.showOpenFolderMenu()
-          if (!projectFolder) return
-
-          // repo url
-          const remoteUrl = await workspace.showInputBox({
-            placeHolder: 'Repository URL',
-            validateInput: input => GIT_ADDR_REGEX.test(input)
-          })
-
-          if (!remoteUrl) return
-
-          // possible credentials
-
-          await handler(async ({ userName, password } = {}) => {
-            await vcs.clone(remoteUrl, projectFolder, userName, password)
-            await workspace.openProject(projectFolder)
-          })
-        }}
+        text={buttonText}
+        onClick={buttonClickHandler}
         style={{ borderRadius: '0px', width: '100%' }}
-      >
-        Clone
-      </Button>
+      />
     </ContainerStyle>
   )
 })

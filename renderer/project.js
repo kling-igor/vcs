@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events'
-import { join } from 'path'
+import { join, basename } from 'path'
 export class Project extends EventEmitter {
   projectPath = null
   applicationDelegate = null
@@ -13,6 +13,8 @@ export class Project extends EventEmitter {
     await this.applicationDelegate.openProject(projectPath)
 
     this.projectPath = projectPath
+
+    this.projectName = basename(projectPath)
 
     this.emit('project-opened')
   }

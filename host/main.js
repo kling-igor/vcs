@@ -44,6 +44,7 @@ import {
   deleteTagByName,
   headCommit,
   cloneRepository,
+  createRepository,
   pull,
   push,
   fetch,
@@ -462,6 +463,10 @@ answerRenderer('repository:set-user-details', async (browserWindow, userName, em
 
 answerRenderer('repository:clone', async (browserWindow, remoteUrl, targetFolder, userName, password) => {
   await cloneRepository(remoteUrl, targetFolder, userName, password)
+})
+
+answerRenderer('repository:init', async (browserWindow, folder) => {
+  await createRepository(folder)
 })
 
 /* FAKE APPLICATION (from editor) */

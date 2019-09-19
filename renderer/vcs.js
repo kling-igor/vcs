@@ -374,7 +374,7 @@ export class VCS {
   }
 
   @action
-  async openRepo(path) {
+  async open(path) {
     this.projectPath = path
 
     const { user, remotes } = await callMain('repository:open', path)
@@ -801,5 +801,10 @@ export class VCS {
   @action.bound
   async clone(remoteUrl, targetFolder, userName, password) {
     await callMain('repository:clone', remoteUrl, targetFolder, userName, password)
+  }
+
+  @action.bound
+  async init(folder) {
+    await callMain('repository:init', folder)
   }
 }

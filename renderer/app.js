@@ -83,7 +83,7 @@ export default class App extends Component {
     // ТАКЖЕ ЭТО ДЕЛАТЬ В ОТВЕТ НА ЗАКРЫТИЕ ПРОЕКТА
     dock.removePanes('vcs')
     dock.addPane('vcs', {
-      component: <CloneProjectPane workspace={workspace} vcs={vcs} Dialog={Dialog} />
+      component: <CloneProjectPane workspace={workspace} project={project} vcs={vcs} Dialog={Dialog} />
     })
 
     // ТАКЖЕ НУЖНО БУДЕТ УДАЛЯТЬ КОРНЕВОЙ ВИДЖЕТ КОТОРЫЙ СОДЕРЖИТ ПРЕДСТАВЛЕНИЕ VCS
@@ -248,11 +248,11 @@ export default class App extends Component {
     // ЭТО ДЕЛАТЬ В ОТВЕТ НА СОБЫТИЕ ОТКРЫТИЯ ПРОЕКТА
     // replacePanes(vcs.mode)
 
-    dock.showPage('vcs')
-
-    // await vcs.openRepo(resolve(__dirname, '../test-repo'))
-    // await project.open({ projectPath: resolve(__dirname, '../test-repo') })
+    // await vcs.open(resolve(__dirname, '../test-repo'))
+    await project.open({ projectPath: resolve(__dirname, '../test-repo') })
     // await vcs.getLog()
+
+    dock.showPage('vcs')
   }
 
   setVerticalLayout = layout => {
