@@ -8,8 +8,9 @@ const COMMIT_RADIUS = 5
 // TODO: высчитывать динамически в зависимости от максимального кол-ва || веток (процессинг только это покажет)
 const CANVAS_WIDTH = 500
 
+const NO_BRANCH_COLOR = '#a0a5a9'
+
 const colors = [
-  '#a0a5a9',
   '#84b817',
   '#e32017',
   '#ee7c0e',
@@ -31,18 +32,7 @@ const CanvasStyle = styled.canvas`
   pointer-events: none;
 `
 
-const branchColor = branch => {
-  if (branch > 0) {
-    let index = branch % 11
-    if (index === 0) {
-      index += 1
-    }
-
-    return colors[index] || 'black'
-  }
-
-  return colors[0]
-}
+const branchColor = branch => colors[branch % 11] || 'black'
 
 const yPositionForIndex = yIndex => (yIndex + 0.5) * Y_STEP
 
@@ -56,7 +46,7 @@ const drawCommit = (ctx, topOffset, commit, yIndex) => {
   const innerRadius = COMMIT_RADIUS - LINE_WIDTH - (!sha || isHead ? 1 : 0)
 
   ctx.fillStyle = !sha || isHead ? '#ffffff' : branchColor(branch)
-  ctx.strokeStyle = branchColor(branch)
+  ctx.strokeStyle = sha ? branchColor(branch) : NO_BRANCH_COLOR
   ctx.lineWidth = !sha || isHead ? 8 : LINE_WIDTH * 2 - 1 // + (!sha ? 2 : 0)
   ctx.beginPath()
   ctx.arc(x, y, innerRadius, 0, 2 * Math.PI) // Draw a circle
@@ -64,7 +54,8 @@ const drawCommit = (ctx, topOffset, commit, yIndex) => {
   ctx.fill() // Fill the inner circle
 }
 
-const drawRoute = (ctx, topOffset, route, yIndex) => {
+const drawRoute = (ctx, topOffset, route, commit, yIndex) => {
+  const { sha } = commit
   const [from, to, branch] = route
 
   // Starting position for route
@@ -75,7 +66,7 @@ const drawRoute = (ctx, topOffset, route, yIndex) => {
   const toX = xPositionForIndex(to)
   const toY = yPositionForIndex(yIndex + 1) + topOffset
 
-  ctx.strokeStyle = branchColor(branch) // Gets a colour based on the branch no.
+  ctx.strokeStyle = sha ? branchColor(branch) : NO_BRANCH_COLOR // Gets a colour based on the branch no.
   ctx.lineWidth = LINE_WIDTH
 
   ctx.beginPath()
@@ -93,7 +84,7 @@ const drawRoute = (ctx, topOffset, route, yIndex) => {
 const drawGraph = (ctx, topOffset, nodes) => {
   nodes.forEach((node, yIndex) => {
     // Draw the routes for this node
-    node.routes.forEach(route => drawRoute(ctx, topOffset, route, yIndex))
+    node.routes.forEach(route => drawRoute(ctx, topOffset, route, node, yIndex))
 
     // Draw the commit on top of the routes
     drawCommit(ctx, topOffset, node, yIndex)

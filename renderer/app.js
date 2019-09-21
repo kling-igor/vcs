@@ -242,15 +242,15 @@ export default class App extends Component {
       }
     }
 
-    // vcs.setModeChangeHandler(replacePanes)
+    vcs.setModeChangeHandler(replacePanes)
 
     // set initial panes
     // ЭТО ДЕЛАТЬ В ОТВЕТ НА СОБЫТИЕ ОТКРЫТИЯ ПРОЕКТА
-    // replacePanes(vcs.mode)
+    replacePanes(vcs.mode)
 
-    // await vcs.open(resolve(__dirname, '../test-repo'))
+    await vcs.open(resolve(__dirname, '../test-repo'))
     await project.open({ projectPath: resolve(__dirname, '../test-repo') })
-    // await vcs.getLog()
+    await vcs.getLog()
 
     dock.showPage('vcs')
   }

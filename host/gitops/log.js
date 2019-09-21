@@ -110,7 +110,7 @@ export async function log(repo) {
       console.log('ERROR:', e)
     }
   } else if (workDirStatus.length > 0) {
-    const branch = (headCommit && getBranch(headCommit.sha())) || getBranch(null) // TODO: если еще не было коммитов и это изменения в новом репозитарии ?
+    let branch = headCommit ? getBranch(headCommit.sha()) : getBranch(null) // TODO: если еще не было коммитов и это изменения в новом репозитарии ?
     const offset = reserve.indexOf(branch)
 
     if (offset === -1) {
@@ -119,16 +119,17 @@ export async function log(repo) {
 
     commits.push({
       sha: null,
-      message: 'Uncommited changes',
+      message: 'Uncommitted changes',
       committer: null,
       date: Date.now(),
       offset,
       branch,
       routes: [...fillRoutes(I, I, reserve)]
     })
-  } else {
+  } /* // нельзя так делать !!! т.к. с этим связан массив reserve 
+  else {
     branchIndex += 1 // пропускаем серую ветку ???
-  }
+  }*/
 
   const revWalk = repo.createRevWalk()
   revWalk.sorting(nodegit.Revwalk.SORT.TIME)

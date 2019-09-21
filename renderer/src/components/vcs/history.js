@@ -27,7 +27,7 @@ const RowStyle = styled.div`
   }) => {
     const oddColor = type === 'light' ? '#e2e2e2' : '#505050'
 
-    return selected ? activeSelectionBackground : odd ? oddColor : 'transparent'
+    return selected ? '#0098d4' : odd ? oddColor : 'transparent'
   }};
 
   color: ${({
@@ -36,7 +36,7 @@ const RowStyle = styled.div`
       list: { activeSelectionForeground, focusForeground }
     }
   }) => {
-    return selected ? activeSelectionForeground : focusForeground
+    return selected ? '#fff' : focusForeground
   }};
 
   :hover {
@@ -45,7 +45,7 @@ const RowStyle = styled.div`
       theme: {
         list: { activeSelectionBackground, hoverBackground }
       }
-    }) => (selected ? activeSelectionBackground : hoverBackground)};
+    }) => (selected ? '#0098d4' : hoverBackground)};
 
     color: ${({
       selected,
@@ -53,7 +53,7 @@ const RowStyle = styled.div`
         list: { activeSelectionForeground, hoverForeground }
       }
     }) => {
-      return selected ? activeSelectionForeground : hoverForeground
+      return selected ? '#fff' : hoverForeground
     }};
   }
 
