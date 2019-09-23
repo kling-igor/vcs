@@ -1,7 +1,15 @@
 import { action } from 'mobx'
 
 export default ({ vcs, workspace }) => () => {
-  const { changedFiles, stageSelectedFiles, stageAllFiles, selectAllFiles, unselectAllFiles, inverseSelection } = vcs
+  const {
+    changedFiles,
+    stageSelectedFiles,
+    stageAllFiles,
+    selectAllFiles,
+    unselectAllFiles,
+    inverseSelection,
+    discardAllLocalChanges
+  } = vcs
   const hasChangedFiles = changedFiles.length > 0
   const selectedChangesFilesCount = changedFiles.reduce((acc, { selected }) => (acc + selected ? 1 : 0), 0)
 
@@ -39,6 +47,11 @@ export default ({ vcs, workspace }) => () => {
       {
         label: 'Stage All',
         click: stageAllFiles,
+        enabled: hasChangedFiles
+      },
+      {
+        label: 'Discard All Changes',
+        click: discardAllLocalChanges,
         enabled: hasChangedFiles
       }
     ]

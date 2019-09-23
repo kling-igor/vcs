@@ -59,6 +59,8 @@ import {
 // FAKE FROM APPLICATION
 const fileOperations = new FileSystemOperations()
 
+const cleanLeadingSlashes = path => path.replace(/^[\.\/]*/, '')
+
 let repo
 let emptyRepo = false
 let user
@@ -253,9 +255,30 @@ answerRenderer('repository:checkout-commit', async (browserWindow, sha, discardL
   return checkoutToCommit(repo, sha, discardLocalChanges)
 })
 
-answerRenderer('repository:discard-local-changes', async (browserWindow, path) => {
+answerRenderer('repository:discard-local-changes', async (browserWindow, projectRoot, path) => {
   checkRepo()
-  return discardLocalChanges(repo, path)
+  await discardLocalChanges(repo, path)
+
+  const statuses = await status(repo)
+
+  // новые файлы, не добавленные в индекс, нужно удалять самим
+  const removingFiles = statuses.reduce((acc, item) => {
+    if (item.status.includes('WT_NEW')) {
+      return [...acc, resolve(projectRoot, item.path, item.filename)]
+    }
+
+    return acc
+  }, [])
+
+  console.log('REMOVING FILES:', removingFiles)
+
+  for (const path of removingFiles) {
+    try {
+      await fileOperations.removeFile(path)
+    } catch (e) {
+      console.log('ERROR REMOVING FILE', path, e)
+    }
+  }
 })
 
 answerRenderer('repository:fetch', async (browserWindow, remoteName, userName, password) => {

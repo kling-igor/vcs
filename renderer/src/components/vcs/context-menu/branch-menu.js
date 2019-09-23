@@ -3,7 +3,7 @@ const { remote } = window.require('electron')
 const noop = () => {}
 
 export default ({ vcs, workspace, Dialog }) => (_, name) => {
-  const { remotes, currentBranch } = vcs
+  const { remotes, currentBranch, hasLocalChanges } = vcs
 
   const remotesSubmenu = remotes.map(item => ({
     label: item.name,
@@ -17,7 +17,7 @@ export default ({ vcs, workspace, Dialog }) => (_, name) => {
       {
         label: `Checkout '${name}'`,
         click: () => {
-          Dialog.confirmBranchSwitch(name)
+          Dialog.confirmBranchSwitch(name, hasLocalChanges)
             .then(discardLocalChanges => {
               console.log(`SWITCHING TO BRANCH ${name} `)
               vcs.onBranchCheckout(name, discardLocalChanges)

@@ -83,18 +83,18 @@ export function confirmDiscardFileChanges(filepath) {
   return confirmActionMessage({ message, detail })
 }
 
-export function confirmBranchSwitch(branch) {
+export function confirmBranchSwitch(branch, hasLocalChanges) {
   const message = 'Confirm Branch Switch'
   const detail = `Are you sure you want to switch your working copy to the branch '${branch}'?`
   const option = 'Discard local changes'
-  return confirmActionMessage({ message, detail, option })
+  return confirmActionMessage({ message, detail, option: hasLocalChanges ? option : null })
 }
 
-export function confirmCheckoutToDetachedHead(tagOrSha) {
+export function confirmCheckoutToDetachedHead(tagOrSha, hasLocalChanges) {
   const message = 'Confirm Change Working Copy'
   const detail = `Are you sure you want to checkout ${tagOrSha}? Doing so will make your working copy a 'detached HEAD', which means you won't be on a branch anymore. If you want to commit after this you'll probably want either checkout a branch again, or create a new branch. Is this ok?`
   const option = 'Discard local changes'
-  return confirmActionMessage({ message, detail, option })
+  return confirmActionMessage({ message, detail, option: hasLocalChanges ? option : null })
 }
 
 export function confirmBranchMerge() {

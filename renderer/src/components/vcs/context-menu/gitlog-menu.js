@@ -3,7 +3,7 @@ const noop = () => {}
 export default ({ vcs, workspace, Dialog }) => sha => {
   if (!sha) return
 
-  const { currentCommit, heads, tags, headCommit } = vcs
+  const { currentCommit, heads, tags, headCommit, hasLocalChanges } = vcs
 
   const branch = heads.find(item => item.sha === sha)
 
@@ -26,14 +26,14 @@ export default ({ vcs, workspace, Dialog }) => sha => {
           }
 
           if (detachedHead) {
-            Dialog.confirmCheckoutToDetachedHead(name)
+            Dialog.confirmCheckoutToDetachedHead(name, hasLocalChanges)
               .then(discardLocalChanges => {
                 console.log(`SWITCHING TO DETACH HEAD ${name} `)
                 vcs.onCheckoutToCommit(sha, discardLocalChanges)
               })
               .catch(noop)
           } else {
-            Dialog.confirmBranchSwitch(name)
+            Dialog.confirmBranchSwitch(name, hasLocalChanges)
               .then(discardLocalChanges => {
                 console.log(`!!SWITCHING TO BRANCH ${branch.name} `)
                 vcs.onBranchCheckout(branch.name, discardLocalChanges)

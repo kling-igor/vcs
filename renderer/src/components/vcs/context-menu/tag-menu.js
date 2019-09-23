@@ -1,7 +1,7 @@
 const { remote } = window.require('electron')
 const noop = () => {}
 export default ({ vcs, workspace, Dialog }) => (sha, tag) => {
-  const { heads } = vcs
+  const { heads, hasLocalChanges } = vcs
 
   const branch = heads.find(item => item.sha === sha)
 
@@ -18,14 +18,14 @@ export default ({ vcs, workspace, Dialog }) => (sha, tag) => {
         label: `Checkout '${tag}'`,
         click: () => {
           if (branch) {
-            Dialog.confirmBranchSwitch(branch.name)
+            Dialog.confirmBranchSwitch(branch.name, hasLocalChanges)
               .then(discardLocalChanges => {
                 console.log(`!!SWITCHING TO BRANCH ${branch.name} `)
                 vcs.onBranchCheckout(branch.name, discardLocalChanges)
               })
               .catch(noop)
           } else {
-            Dialog.confirmCheckoutToDetachedHead(tag)
+            Dialog.confirmCheckoutToDetachedHead(tag, hasLocalChanges)
               .then(discardLocalChanges => {
                 console.log(`SWITCHING TO DETACH HEAD ${tag} `)
                 vcs.onCheckoutToCommit(sha, discardLocalChanges)

@@ -180,12 +180,20 @@ export async function hardResetToCommit(repo, sha) {
   })
 }
 
-export async function discardLocalChanges(repo, path) {
-  const index = await repo.index()
+// БЫЛО!!!
+// export async function discardLocalChanges(repo, path) {
+//   const index = await repo.index()
 
-  return nodegit.Checkout.index(repo, index, {
+//   return nodegit.Checkout.index(repo, index, {
+//     checkoutStrategy: nodegit.Checkout.STRATEGY.FORCE,
+//     paths: [path]
+//   })
+// }
+
+export async function discardLocalChanges(repo, paths) {
+  return nodegit.Checkout.head(repo, {
     checkoutStrategy: nodegit.Checkout.STRATEGY.FORCE,
-    paths: [path]
+    paths: Array.isArray(paths) ? paths : [paths]
   })
 }
 

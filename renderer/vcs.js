@@ -688,7 +688,18 @@ export class VCS {
 
   @action.bound
   async discardLocalChanges(path) {
-    await callMain('repository:discard-local-changes', cleanLeadingSlashes(path))
+    await callMain('repository:discard-local-changes', this.project.projectPath, cleanLeadingSlashes(path))
+    await this.status()
+  }
+
+  @action.bound
+  async discardAllLocalChanges() {
+    const paths = this.changedFiles.reduce(
+      (acc, item) => [...acc, cleanLeadingSlashes(join(item.path, item.filename))],
+      []
+    )
+
+    await callMain('repository:discard-local-changes', this.project.projectPath, paths)
     await this.status()
   }
 
