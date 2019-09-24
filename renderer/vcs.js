@@ -290,6 +290,14 @@ export class VCS {
           stagedStatus = 'R'
         }
 
+        // special cases
+
+        // unstaging changes
+        if (workdirStatus === 'A' && stagedStatus === 'D') {
+          stagedStatus = ''
+          workdirStatus = 'M'
+        }
+
         if (stagedStatus) {
           const foundInStaged = this.stagedFiles.find(
             ({ path, filename }) => path === item.path && filename === item.filename
