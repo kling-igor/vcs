@@ -1,5 +1,7 @@
 // index is reserved for filename
 
+import nodegit from 'nodegit'
+
 /**
  * Refreshes index
  * @param {Repository} repo
@@ -26,6 +28,18 @@ export async function addToIndex(index, path) {
  */
 export async function removeFromIndex(index, path) {
   return index.removeByPath(path)
+}
+
+/**
+ * Make WT state identical index
+ * @param {*} repo
+ * @param {*} paths
+ */
+export async function discardIndexedChanges(repo, index, paths) {
+  return nodegit.Checkout.index(repo, index, {
+    checkoutStrategy: nodegit.Checkout.STRATEGY.FORCE,
+    paths: Array.isArray(paths) ? paths : [paths]
+  })
 }
 
 /**

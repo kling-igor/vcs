@@ -36,6 +36,7 @@ import {
   hardResetToCommit,
   revertCommit,
   discardLocalChanges,
+  discardIndexedChanges,
   checkoutBranch,
   checkoutToCommit,
   createBranch,
@@ -259,16 +260,29 @@ answerRenderer('repository:discard-local-changes', async (browserWindow, project
   checkRepo()
   await discardLocalChanges(repo, path)
 
+  // после этого у файла появляется статус INDEX_DELETED
+
   const statuses = await status(repo)
 
   // новые файлы, не добавленные в индекс, нужно удалять самим
-  const removingFiles = statuses.reduce((acc, item) => {
-    if (item.status.includes('WT_NEW')) {
-      return [...acc, resolve(projectRoot, item.path, item.filename)]
-    }
+  const [removingFiles, cleaningFromIndex] = statuses.reduce(
+    (acc, item) => {
+      console.log('!!!', item.status)
 
-    return acc
-  }, [])
+      // , WT_NEW
+
+      if (item.status.includes('WT_NEW')) {
+        acc[0].push(resolve(projectRoot, item.path, item.filename))
+      }
+
+      if (item.status.includes('INDEX_DELETED')) {
+        acc[1].push(resolve(item.path, item.filename))
+      }
+
+      return acc
+    },
+    [[], []]
+  )
 
   console.log('REMOVING FILES:', removingFiles)
 
@@ -279,6 +293,14 @@ answerRenderer('repository:discard-local-changes', async (browserWindow, project
       console.log('ERROR REMOVING FILE', path, e)
     }
   }
+
+  const index = await refreshIndex(repo)
+  for (const path of cleaningFromIndex) {
+    await removeFromIndex(index, path)
+  }
+  await writeIndex(index)
+
+  await index.clear()
 })
 
 answerRenderer('repository:fetch', async (browserWindow, remoteName, userName, password) => {
