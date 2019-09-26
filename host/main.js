@@ -262,6 +262,10 @@ answerRenderer('repository:discard-local-changes', async (browserWindow, project
 
   // после этого у файла появляется статус INDEX_DELETED
 
+  // SEE!!!
+  // https://github.com/nodegit/nodegit/blob/master/test/tests/reset.js
+  // git reset HEAD <file>
+
   const statuses = await status(repo)
 
   // новые файлы, не добавленные в индекс, нужно удалять самим
