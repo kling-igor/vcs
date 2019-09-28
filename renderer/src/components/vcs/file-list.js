@@ -18,9 +18,38 @@ const ListItemContainerStyle = styled.li`
 
   cursor: pointer;
   user-select: none;
+
+  background-color: ${({
+    selected,
+    theme: {
+      type,
+      list: { activeSelectionBackground }
+    }
+  }) => (selected ? '#0098d4' : 'transparent')};
+  color: ${({
+    selected,
+    theme: {
+      type,
+      list: { focusForeground }
+    }
+  }) => (selected ? 'white' : 'black')};
+
   :hover {
-    background-color: blue;
-    color: white;
+    background-color: ${({
+      selected,
+      theme: {
+        list: { activeSelectionBackground, hoverBackground }
+      }
+    }) => (selected ? '#0098d4' : hoverBackground)};
+
+    color: ${({
+      selected,
+      theme: {
+        list: { activeSelectionForeground, hoverForeground }
+      }
+    }) => {
+      return selected ? '#fff' : hoverForeground
+    }};
   }
 `
 
@@ -80,7 +109,7 @@ const scrollBarsStyle = { width: '100%', height: '100%' }
 
 // https://www.git-scm.com/docs/git-status#_short_format
 
-const FileList = ({ files, onSelectionChanged, onItemSelect = () => {}, onContextMenu }) => {
+const FileList = ({ files, selectedItem, onSelectionChanged, onItemSelect = () => {}, onContextMenu }) => {
   const onClickHandler = useCallback(event => onItemSelect(event.currentTarget.dataset.path), [])
   const onContextMenuHandler = useCallback(event => onContextMenu(event.currentTarget.dataset.path), [])
 
@@ -107,6 +136,7 @@ const FileList = ({ files, onSelectionChanged, onItemSelect = () => {}, onContex
                 onClick={onClickHandler}
                 onContextMenu={onContextMenuHandler}
                 data-path={fullPath}
+                selected={fullPath === selectedItem}
               >
                 <ListItemLeftGroupStyle>
                   <input type="checkbox" checked={!!selected} onChange={handleInputChange} data-index={index} />

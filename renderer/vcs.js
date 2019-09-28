@@ -60,6 +60,23 @@ export class VCS {
   @observable.ref changedFiles = []
   @observable.ref stagedFiles = []
 
+  // diff editor
+  @observable originalFile = ''
+  @observable modifiedFile = ''
+
+  // файл, для которого отображется diff
+  @observable selectedFilePath = null
+
+  @computed get selectedChangedFile() {
+    const found = this.changedFiles.find(item => `${item.path}/${item.filename}` === this.selectedFilePath)
+    if (found) return `${found.path}/${found.filename}`
+  }
+
+  @computed get selectedStagedFile() {
+    const found = this.stagedFiles.find(item => `${item.path}/${item.filename}` === this.selectedFilePath)
+    if (found) return `${found.path}/${found.filename}`
+  }
+
   @computed get hasLocalChanges() {
     return this.changedFiles.length > 0
   }
@@ -80,10 +97,6 @@ export class VCS {
 
   @observable isMerging = false
   @observable isRebasing = false
-
-  // diff editor
-  @observable originalFile = ''
-  @observable modifiedFile = ''
 
   @observable.ref commitInfo = null
 
@@ -348,6 +361,7 @@ export class VCS {
       transaction(() => {
         this.originalFile = mineContent
         this.modifiedFile = theirsContent
+        this.selectedFilePath = filepath
       })
     } else {
       const { originalContent = '', modifiedContent = '', details: errorDetails } = await callMain(
@@ -359,6 +373,7 @@ export class VCS {
       transaction(() => {
         this.originalFile = originalContent
         this.modifiedFile = modifiedContent
+        this.selectedFilePath = filepath
       })
     }
   }
@@ -373,11 +388,9 @@ export class VCS {
     )
 
     transaction(() => {
-      console.log('originalContent:', originalContent)
-      console.log('modifiedContent:', modifiedContent)
-
       this.originalFile = originalContent
       this.modifiedFile = modifiedContent
+      this.selectedFilePath = filepath
     })
   }
 
@@ -637,12 +650,20 @@ export class VCS {
   async stageSelectedFiles() {
     const paths = this.changedFiles.reduce((acc, item) => {
       if (item.selected) {
-        return [...acc, join(item.path, item.filename)]
+        return [...acc, cleanLeadingSlashes(`${item.path}/${item.filename}`)]
       }
 
       return acc
     }, [])
     if (paths.length > 0) {
+      if (this.selectedChangedFile && paths.includes(cleanLeadingSlashes(this.selectedChangedFile))) {
+        transaction(() => {
+          this.selectedFilePath = null
+          this.originalFile = ''
+          this.modifiedFile = ''
+        })
+      }
+
       await callMain('stage:add', paths)
       await this.status()
     }
@@ -650,8 +671,19 @@ export class VCS {
 
   @action.bound
   async stageAllFiles() {
-    const paths = this.changedFiles.reduce((acc, item) => [...acc, join(item.path, item.filename)], [])
+    const paths = this.changedFiles.reduce(
+      (acc, item) => [...acc, cleanLeadingSlashes(`${item.path}/${item.filename}`)],
+      []
+    )
     if (paths.length > 0) {
+      if (this.selectedChangedFile && paths.includes(cleanLeadingSlashes(this.selectedChangedFile))) {
+        transaction(() => {
+          this.selectedFilePath = null
+          this.originalFile = ''
+          this.modifiedFile = ''
+        })
+      }
+
       await callMain('stage:add', paths)
       await this.status()
     }
@@ -659,20 +691,38 @@ export class VCS {
 
   @action.bound
   async stageFile(path) {
+    if (path === this.selectedChangedFile) {
+      transaction(() => {
+        this.selectedFilePath = null
+        this.originalFile = ''
+        this.modifiedFile = ''
+      })
+    }
+
     await callMain('stage:add', [cleanLeadingSlashes(path)])
     await this.status()
+
+    console.log('STAGE FILE:', path, this.selectedChangedFile)
   }
 
   @action.bound
   async unstageSelectedFiles() {
     const paths = this.stagedFiles.reduce((acc, item) => {
       if (item.selected) {
-        return [...acc, join(item.path, item.filename)]
+        return [...acc, cleanLeadingSlashes(`${item.path}/${item.filename}`)]
       }
 
       return acc
     }, [])
+
     if (paths.length > 0) {
+      if (this.selectedStagedFile && paths.includes(cleanLeadingSlashes(this.selectedStagedFile))) {
+        transaction(() => {
+          this.selectedFilePath = null
+          this.originalFile = ''
+          this.modifiedFile = ''
+        })
+      }
       await callMain('stage:remove', paths)
       await this.status()
     }
@@ -680,16 +730,35 @@ export class VCS {
 
   @action.bound
   async unstageAllFiles() {
-    const paths = this.stagedFiles.reduce((acc, item) => [...acc, join(item.path, item.filename)], [])
-    if (paths.length > 0) {
-      await callMain('stage:remove', paths)
+    const paths = this.stagedFiles.reduce(
+      (acc, item) => [...acc, cleanLeadingSlashes(`${item.path}/${item.filename}`)],
+      []
+    )
 
+    if (paths.length > 0) {
+      if (this.selectedStagedFile && paths.includes(cleanLeadingSlashes(this.selectedStagedFile))) {
+        transaction(() => {
+          this.selectedFilePath = null
+          this.originalFile = ''
+          this.modifiedFile = ''
+        })
+      }
+
+      await callMain('stage:remove', paths)
       await this.status()
     }
   }
 
   @action.bound
   async unstageFile(path) {
+    if (path === this.selectedStagedFile) {
+      transaction(() => {
+        this.selectedFilePath = null
+        this.originalFile = ''
+        this.modifiedFile = ''
+      })
+    }
+
     await callMain('stage:remove', [cleanLeadingSlashes(path)])
     await this.status()
   }
@@ -703,12 +772,21 @@ export class VCS {
   @action.bound
   async discardAllLocalChanges() {
     const paths = this.changedFiles.reduce(
-      (acc, item) => [...acc, cleanLeadingSlashes(join(item.path, item.filename))],
+      (acc, item) => [...acc, cleanLeadingSlashes(`${item.path}/${item.filename}`)],
       []
     )
 
-    await callMain('repository:discard-local-changes', this.project.projectPath, paths)
-    await this.status()
+    if (paths.length > 0) {
+      if (this.selectedChangedFile && paths.includes(cleanLeadingSlashes(this.selectedChangedFile))) {
+        transaction(() => {
+          this.selectedFilePath = null
+          this.originalFile = ''
+          this.modifiedFile = ''
+        })
+      }
+      await callMain('repository:discard-local-changes', this.project.projectPath, paths)
+      await this.status()
+    }
   }
 
   @action.bound

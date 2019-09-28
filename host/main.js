@@ -260,51 +260,42 @@ answerRenderer('repository:discard-local-changes', async (browserWindow, project
   checkRepo()
   await discardLocalChanges(repo, path)
 
-  // после этого у файла появляется статус INDEX_DELETED
+  // const statuses = await status(repo)
 
-  // SEE!!!
-  // https://github.com/nodegit/nodegit/blob/master/test/tests/reset.js
-  // git reset HEAD <file>
+  // // новые файлы, не добавленные в индекс, нужно удалять самим
+  // const [removingFiles, cleaningFromIndex] = statuses.reduce(
+  //   (acc, item) => {
+  //     if (item.status.includes('WT_NEW')) {
+  //       acc[0].push(resolve(projectRoot, item.path, item.filename))
+  //     }
 
-  const statuses = await status(repo)
+  //     if (item.status.includes('INDEX_DELETED')) {
+  //       acc[1].push(resolve(item.path, item.filename))
+  //     }
 
-  // новые файлы, не добавленные в индекс, нужно удалять самим
-  const [removingFiles, cleaningFromIndex] = statuses.reduce(
-    (acc, item) => {
-      console.log('!!!', item.status)
+  //     return acc
+  //   },
+  //   [[], []]
+  // )
 
-      // , WT_NEW
+  // console.log('REMOVING FILES:', removingFiles)
 
-      if (item.status.includes('WT_NEW')) {
-        acc[0].push(resolve(projectRoot, item.path, item.filename))
-      }
+  // for (const path of removingFiles) {
+  //   console.log('REMOVE NEW FILE:', path)
+  //   try {
+  //     await fileOperations.removeFile(path)
+  //   } catch (e) {
+  //     console.log('ERROR REMOVING FILE', path, e)
+  //   }
+  // }
 
-      if (item.status.includes('INDEX_DELETED')) {
-        acc[1].push(resolve(item.path, item.filename))
-      }
+  // const index = await refreshIndex(repo)
+  // for (const path of cleaningFromIndex) {
+  //   await removeFromIndex(index, path)
+  // }
+  // await writeIndex(index)
 
-      return acc
-    },
-    [[], []]
-  )
-
-  console.log('REMOVING FILES:', removingFiles)
-
-  for (const path of removingFiles) {
-    try {
-      await fileOperations.removeFile(path)
-    } catch (e) {
-      console.log('ERROR REMOVING FILE', path, e)
-    }
-  }
-
-  const index = await refreshIndex(repo)
-  for (const path of cleaningFromIndex) {
-    await removeFromIndex(index, path)
-  }
-  await writeIndex(index)
-
-  await index.clear()
+  // await index.clear()
 })
 
 answerRenderer('repository:fetch', async (browserWindow, remoteName, userName, password) => {
