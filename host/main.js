@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 const { callRenderer, answerRenderer } = require('./ipc')(ipcMain, BrowserWindow)
+import { fork } from 'child_process'
 import { join, resolve } from 'path'
 import { EventEmitter } from 'events'
 import { CompositeDisposable } from 'event-kit'
@@ -60,27 +61,13 @@ import {
 // FAKE FROM APPLICATION
 const fileOperations = new FileSystemOperations()
 
-const cleanLeadingSlashes = path => path.replace(/^[\.\/]*/, '')
-
 let repo
 let emptyRepo = false
 let user
 let remotes = []
 
-// https://github.com/atom/node-keytar
-// keytar
-//   .setPassword('Vision', 'kling-igor', 'password')
-//   .then(() => {})
-//   .catch(e => {
-//     console.log('KEYTAR ERROR:', e)
-//   })
-
-// keytar
-//   .getPassword('Vision', 'kling-igor')
-//   .then(password => {
-//     console.log('PASS:', password)
-//   })
-//   .catch(e => console.log('PASS ERR:', error))
+let gitOpsWorker = null
+let gitOpsCurrentCorrelationMarker = null
 
 app.on('ready', async () => {
   const window = new BrowserWindow({
@@ -387,10 +374,24 @@ answerRenderer('commit:conflictedfile-diff', async (browserWindow, filePath) => 
   }
 })
 
-answerRenderer('repository:log', async browserWindow => {
+answerRenderer('repository:log', async (browserWindow, correlationMarker, projectPath) => {
   checkRepo()
 
-  return log(repo)
+  if (gitOpsWorker /* && gitOpsCurrentCorrelationMarker && gitOpsCurrentCorrelationMarker !== correlationMarker*/) {
+    gitOpsWorker.kill('SIGKILL')
+    gitOpsWorker = null
+  }
+
+  if (!gitOpsWorker) {
+    gitOpsCurrentCorrelationMarker = correlationMarker
+    gitOpsWorker = fork(join(__dirname, 'gitops-worker.js'), ['gitlog', projectPath])
+
+    gitOpsWorker.on('message', result => {
+      browserWindow.webContents.send('repository:log', result)
+    })
+  }
+
+  // return log(repo)
 })
 
 answerRenderer('branch:create', async (browserWindow, name, commit) => {

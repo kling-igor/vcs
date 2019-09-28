@@ -175,7 +175,17 @@ const RightContainerStyle = styled.div`
 // TODO: useContext onRowClick
 
 export const History = memo(
-  ({ commits, committers, heads, remoteHeads, tags, onCommitSelect, onContextMenu, selectedCommit }) => {
+  ({
+    commits,
+    committers,
+    heads,
+    remoteHeads,
+    tags,
+    onCommitSelect,
+    onContextMenu,
+    selectedCommit,
+    isProcessingGitLog
+  }) => {
     const onClickHandler = useCallback(event => onCommitSelect(event.currentTarget.dataset.sha), [])
     const onContextMenuHandler = useCallback(event => onContextMenu(event.currentTarget.dataset.sha), [])
 
@@ -275,6 +285,10 @@ export const History = memo(
           </RightContainerStyle>
         </RowStyle>
       )
+    }
+
+    if (isProcessingGitLog) {
+      return <p>Processing...</p>
     }
 
     return (

@@ -108,12 +108,16 @@ export class VCS {
 
   @observable commitSelectedFile = null
 
+  @observable isProcessingGitLog = false
+
   constructor({ workspace, project, applicationDelegate }) {
     this.workspace = workspace
     this.project = project
     this.applicationDelegate = applicationDelegate
 
     this.debouncedStatus = _.debounce(this.status, 1000)
+
+    applicationDelegate.onGitLog(this.onGitLog)
   }
 
   @action.bound
@@ -466,60 +470,68 @@ export class VCS {
 
   @action.bound
   async getLog() {
-    try {
-      const data = await callMain('repository:log')
+    this.isProcessingGitLog = true
 
-      if (data) {
-        const {
-          commits = [],
-          committers = [],
-          refs = [],
-          headCommit,
-          currentBranch,
-          isMerging = false,
-          isRebasing = false,
-          hasConflicts = false
-        } = data
+    this.correlationMarker = 'DEADBEEF'
+    await callMain('repository:log', this.correlationMarker, this.project.projectPath)
+  }
 
-        console.log('isMerging:', isMerging)
+  // реакция на получение результатов gitlog
+  @action.bound
+  onGitLog(sender, { log, error }) {
+    this.isProcessingGitLog = false
 
-        const LOCAL_HEADS = 0
-        const REMOTE_HEADS = 1
-        const TAGS = 2
+    this.correlationMarker = null
 
-        const [heads, remoteHeads, tags] = refs.reduce(
-          (acc, item) => {
-            const { name } = item
-
-            if (name.includes('refs/heads/')) {
-              acc[LOCAL_HEADS].push({ ...item, name: name.replace('refs/heads/', '') })
-            } else if (name.includes('refs/remotes/')) {
-              acc[REMOTE_HEADS].push({ ...item, name: name.replace('refs/remotes/', '') })
-            } else if (name.includes('refs/tags/')) {
-              acc[TAGS].push({ ...item, name: name.replace('refs/tags/', '') })
-            }
-
-            return acc
-          },
-          [[], [], []]
-        )
-
-        transaction(() => {
-          this.commits = commits
-          this.committers = committers
-          this.heads = heads
-          this.remoteHeads = remoteHeads
-          this.tags = tags
-          this.headCommit = headCommit
-          this.currentBranch = currentBranch
-          this.isMerging = isMerging
-          this.isRebasing = isRebasing
-          this.hasConflicts = hasConflicts
-        })
-      }
-    } catch (e) {
-      console.log('GITLOG ERROR:', e)
+    if (error) {
+      console.log('GITLOG ERROR:', error)
+      return
     }
+
+    const {
+      commits = [],
+      committers = [],
+      refs = [],
+      headCommit,
+      currentBranch,
+      isMerging = false,
+      isRebasing = false,
+      hasConflicts = false
+    } = log
+
+    const LOCAL_HEADS = 0
+    const REMOTE_HEADS = 1
+    const TAGS = 2
+
+    const [heads, remoteHeads, tags] = refs.reduce(
+      (acc, item) => {
+        const { name } = item
+
+        if (name.includes('refs/heads/')) {
+          acc[LOCAL_HEADS].push({ ...item, name: name.replace('refs/heads/', '') })
+        } else if (name.includes('refs/remotes/')) {
+          acc[REMOTE_HEADS].push({ ...item, name: name.replace('refs/remotes/', '') })
+        } else if (name.includes('refs/tags/')) {
+          acc[TAGS].push({ ...item, name: name.replace('refs/tags/', '') })
+        }
+
+        return acc
+      },
+      [[], [], []]
+    )
+
+    transaction(() => {
+      this.commits = commits
+      this.committers = committers
+      this.heads = heads
+      this.remoteHeads = remoteHeads
+      this.tags = tags
+      this.headCommit = headCommit
+      this.currentBranch = currentBranch
+      this.isMerging = isMerging
+      this.isRebasing = isRebasing
+      this.hasConflicts = hasConflicts
+    })
   }
 
   @action.bound

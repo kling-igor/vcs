@@ -16,6 +16,11 @@ export class ApplicationDelegate {
     return ipcRenderer.send('close-project')
   }
 
+  onGitLog(handler) {
+    ipcRenderer.on('repository:log', handler)
+    return new Disposable(() => ipcRenderer.removeListener('repository:log', handler))
+  }
+
   onProjectFilePathAdd(handler) {
     ipcRenderer.on('file-tree:path-add', handler)
     return new Disposable(() => ipcRenderer.removeListener('file-tree:path-add', handler))

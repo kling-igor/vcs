@@ -32,7 +32,8 @@ class HistoryPage extends Component {
       originalFile,
       modifiedFile,
       onCommitSelect,
-      selectedCommit
+      selectedCommit,
+      isProcessingGitLog
     } = this.props.storage
 
     return (
@@ -47,6 +48,7 @@ class HistoryPage extends Component {
             onCommitSelect={onCommitSelect}
             onContextMenu={this.props.onContextMenu}
             selectedCommit={selectedCommit}
+            isProcessingGitLog={isProcessingGitLog}
           />
         </Pane>
         <Pane size={lowerSize} minSize="50px" maxSize="100%">
