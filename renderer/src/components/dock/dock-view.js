@@ -2,7 +2,8 @@ import React, { useState, useCallback } from 'react'
 import styled, { withTheme } from 'styled-components'
 import { Scrollbars } from 'react-custom-scrollbars'
 import { observer } from 'mobx-react'
-
+import LinearProgress from '@material-ui/core/LinearProgress'
+import { withStyles } from '@material-ui/core/styles'
 import SplitPane, { Pane } from '../react-split'
 
 const svgThemedName = (theme, path) => {
@@ -54,6 +55,12 @@ const DockStyle = styled.div`
 /**
  * Заголовок страницы дока
  */
+
+const DockHeaderWrapperStyle = styled.div`
+  position: relative;
+  overflow: hidden;
+`
+
 const DockHeaderStyle = styled.div`
   overflow: hidden;
 
@@ -237,6 +244,37 @@ const Button = ({ src, disabled, onClick }) => {
   )
 }
 
+const ColorLinearProgress = withStyles({
+  root: {
+    height: 2,
+    width: '100%',
+    backgroundColor: 'transparent'
+  },
+  bar: {
+    backgroundColor: '#6fa0f6'
+  }
+})(LinearProgress)
+
+const ProgressRootStyle = styled.div`
+  position: absolute;
+  left: 0px;
+  top: 33px;
+  width: 100%;
+  z-index: 9999;
+`
+
+const LinearProgressIndicator = ({ inProgress }) => {
+  if (inProgress) {
+    return (
+      <ProgressRootStyle>
+        <ColorLinearProgress />
+      </ProgressRootStyle>
+    )
+  }
+
+  return null
+}
+
 const DockPane = ({ headerButtons = [], theme, elapsed, onHeaderClick, title, children }) => {
   const [hovered, setHovered] = useState(false)
 
@@ -338,30 +376,33 @@ const renderDockPane = (
   )
 }
 
-const renderPageHeader = ({ theme, pageTitle, pageIcon, pageHeaderButtons = [] }) => {
+const renderPageHeader = ({ theme, pageTitle, pageIcon, pageHeaderButtons = [], inProgress }) => {
   if (!pageTitle) return null
   return (
-    <DockHeaderStyle>
-      <LeftAlignedBlock>
-        {!!pageIcon && <DockHeaderButtonStyle src={pageIcon} width={16} height={16}></DockHeaderButtonStyle>}
-        <UnselectableStyle>
-          <DockPageTitleStyle>{pageTitle}</DockPageTitleStyle>
-        </UnselectableStyle>
-      </LeftAlignedBlock>
-      <RightAlignedBlock>
-        {pageHeaderButtons.map(({ icon, onClick, tooltip, disabled }) => {
-          const onClickHandler = event => {
-            event.preventDefault()
-            event.stopPropagation()
-            if (!disabled) {
-              onClick()
+    <DockHeaderWrapperStyle>
+      <DockHeaderStyle>
+        <LeftAlignedBlock>
+          {!!pageIcon && <DockHeaderButtonStyle src={pageIcon} width={16} height={16}></DockHeaderButtonStyle>}
+          <UnselectableStyle>
+            <DockPageTitleStyle>{pageTitle}</DockPageTitleStyle>
+          </UnselectableStyle>
+        </LeftAlignedBlock>
+        <RightAlignedBlock>
+          {pageHeaderButtons.map(({ icon, onClick, tooltip, disabled }) => {
+            const onClickHandler = event => {
+              event.preventDefault()
+              event.stopPropagation()
+              if (!disabled) {
+                onClick()
+              }
             }
-          }
 
-          return <Button key={icon} src={svgThemedName(theme, icon)} disabled={disabled} onClick={onClickHandler} />
-        })}
-      </RightAlignedBlock>
-    </DockHeaderStyle>
+            return <Button key={icon} src={svgThemedName(theme, icon)} disabled={disabled} onClick={onClickHandler} />
+          })}
+        </RightAlignedBlock>
+      </DockHeaderStyle>
+      <LinearProgressIndicator inProgress={inProgress} />
+    </DockHeaderWrapperStyle>
   )
 }
 

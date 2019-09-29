@@ -221,6 +221,15 @@ export class Dock {
     }
   }
 
+  @action.bound
+  setPageProgress(pageId, progress) {
+    const page = this.pages[pageId]
+    if (page) {
+      page.inProgress = progress
+      this.pages = { ...this.pages }
+    }
+  }
+
   @computed get widget() {
     return this._widget
   }
