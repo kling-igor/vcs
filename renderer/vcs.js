@@ -41,12 +41,6 @@ const sort = array =>
 export class VCS extends Emitter {
   @observable mode = 'log' // log | commit
 
-  onModeChange = () => {}
-
-  setModeChangeHandler(handler) {
-    this.onModeChange = handler
-  }
-
   // committer info
   @observable name = ''
   @observable email = ''
@@ -651,8 +645,10 @@ export class VCS extends Emitter {
       this.mode = 'commit'
       this.originalFile = ''
       this.modifiedFile = ''
+      this.selectedFilePath = null
+      this.commitSelectedFile = null
 
-      this.onModeChange(this.mode)
+      this.emit('mode:changed', 'commit')
     })
   }
 
@@ -663,8 +659,10 @@ export class VCS extends Emitter {
       this.mode = 'log'
       this.originalFile = ''
       this.modifiedFile = ''
+      this.selectedFilePath = null
+      this.commitSelectedFile = null
 
-      this.onModeChange(this.mode)
+      this.emit('mode:changed', 'log')
     })
   }
 

@@ -243,7 +243,7 @@ export default class App extends Component {
       }
     }
 
-    vcs.setModeChangeHandler(replacePanes)
+    vcs.on('mode:changed', replacePanes)
 
     // set initial panes
     // ЭТО ДЕЛАТЬ В ОТВЕТ НА СОБЫТИЕ ОТКРЫТИЯ ПРОЕКТА
