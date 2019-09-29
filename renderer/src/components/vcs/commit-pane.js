@@ -1,5 +1,6 @@
 import React, { memo, useMemo, useState, useEffect, useCallback } from 'react'
-import styled from 'styled-components'
+import styled, { withTheme } from 'styled-components'
+import MD5 from 'crypto-js/md5'
 import {
   Classes,
   Button,
@@ -13,9 +14,7 @@ import {
   RadioGroup,
   Radio
 } from '@blueprintjs/core'
-
 import { IconNames } from '@blueprintjs/icons'
-import MD5 from 'crypto-js/md5'
 
 const ButtonsContainerStyle = styled.div`
   display: flex;
@@ -37,10 +36,10 @@ const GravatarStyle = styled.img`
 const NameEmailStyle = styled.span`
   margin: 0px;
   user-select: none;
-  font-weight: bold;
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
+  color: ${({ theme: { type } }) => (type === 'dark' ? '#ffffffaa' : '#000000aa')};
 `
 
 const VerticalContainerStyle = styled.div`
@@ -60,7 +59,7 @@ const HorizontalConatiner = styled.div`
   align-items: flex-start;
   width: 100%;
   height: 100%;
-  background-color: cyan;
+  background-color: ${({ theme: { type } }) => (type === 'dark' ? '#293742' : '#ebf1f5')};
 `
 
 const UpperHorizontalConatiner = styled.div`
@@ -83,6 +82,10 @@ const CommitAreaStyle = styled(TextArea)`
   min-width: calc(100% - 8px);
   max-height: calc(100% - 74px);
   min-height: calc(100% - 74px);
+
+  color: ${({ theme: { type } }) => (type === 'dark' ? '#f5f8fa' : 'black')};
+  background-color: ${({ theme: { type } }) => (type === 'dark' ? 'rgba(16, 22, 26, 0.3)' : 'white')};
+
   &:focus {
     outline: none;
   }
@@ -191,86 +194,91 @@ const UserDetails = ({ name, email, alterName: _alterName, alterEmail: _alterEma
 }
 
 export default memo(
-  ({
-    name,
-    email,
-    onChange,
-    text,
-    previousCommits,
-    onShowPreviousCommits,
-    onCommit,
-    onCancelCommit,
-    alterName,
-    alterEmail,
-    setAlterUserNameEmail
-  }) => {
-    const [commitable, setCommitable] = useState(false)
-    const hash = useMemo(() => MD5(alterEmail || email).toString(), [email, alterEmail])
+  withTheme(
+    ({
+      theme,
+      name,
+      email,
+      onChange,
+      text,
+      previousCommits,
+      onShowPreviousCommits,
+      onCommit,
+      onCancelCommit,
+      alterName,
+      alterEmail,
+      setAlterUserNameEmail
+    }) => {
+      const [committable, setCommittable] = useState(false)
+      const hash = useMemo(() => MD5(alterEmail || email).toString(), [email, alterEmail])
 
-    useEffect(() => {
-      setCommitable((text && text.length > 0 && text.trim()) || false)
-    }, [text])
+      useEffect(() => {
+        setCommittable((text && text.length > 0 && text.trim()) || false)
+      }, [text])
 
-    const onPopupClose = useCallback((variant, alterName, alterEmail) => {
-      if (variant === 'alternative') {
-        setAlterUserNameEmail(alterName, alterEmail)
-      } else {
-        setAlterUserNameEmail()
-      }
-    })
+      const onPopupClose = useCallback((variant, alterName, alterEmail) => {
+        if (variant === 'alternative') {
+          setAlterUserNameEmail(alterName, alterEmail)
+        } else {
+          setAlterUserNameEmail()
+        }
+      })
 
-    return (
-      <HorizontalConatiner>
-        <Popover
-          popoverClassName="popover"
-          interactionKind={PopoverInteractionKind.CLICK}
-          content={
-            <UserDetails
-              hash={hash}
-              name={name}
-              email={email}
-              alterName={alterName}
-              alterEmail={alterEmail}
-              onClose={onPopupClose}
+      const popoverClassName = useMemo(() => (theme.type === 'dark' ? 'popover bp3-dark' : 'popover'), theme)
+
+      return (
+        <HorizontalConatiner>
+          <Popover
+            popoverClassName={popoverClassName}
+            interactionKind={PopoverInteractionKind.CLICK}
+            content={
+              <UserDetails
+                hash={hash}
+                name={name}
+                email={email}
+                alterName={alterName}
+                alterEmail={alterEmail}
+                onClose={onPopupClose}
+              />
+            }
+            hasBackdrop={false}
+            inheritDarkTheme
+            position={PopoverPosition.top}
+            modifiers={{ arrow: { enabled: true } /*, offset: { offset: '0, 10' } */ }}
+          >
+            <GravatarStyle
+              src={`https://www.gravatar.com/avatar/${hash}?s=100&d=identicon`}
+              draggable="false"
+              width={50}
+              height={50}
             />
-          }
-          hasBackdrop={false}
-          inheritDarkTheme
-          position={PopoverPosition.top}
-          modifiers={{ arrow: { enabled: true } /*, offset: { offset: '0, 10' } */ }}
-        >
-          <GravatarStyle
-            src={`https://www.gravatar.com/avatar/${hash}?s=100&d=identicon`}
-            draggable="false"
-            width={50}
-            height={50}
-          />
-        </Popover>
-        <VerticalContainerStyle>
-          <UpperHorizontalConatiner>
-            <NameEmailStyle>{`${alterName || name} <${alterEmail || email}>`}</NameEmailStyle>
-            <Button
-              small
-              minimal
-              disabled={previousCommits.length === 0}
-              icon={IconNames.HISTORY}
-              onClick={onShowPreviousCommits}
-              intent={Intent.PRIMARY}
-              // disabled={!hasHistoryChanges}
-              style={historyButtonStyle}
-            />
-          </UpperHorizontalConatiner>
-          <CommitAreaStyle onChange={onChange} value={text} />
-          <ButtonsContainerStyle>
-            <Button small style={cancelButtonStyle} onClick={onCancelCommit}>
-              Cancel
-            </Button>
-            <Button small intent="primary" style={commitButtonStyle} disabled={!commitable} onClick={onCommit}>
-              Commit
-            </Button>
-          </ButtonsContainerStyle>
-        </VerticalContainerStyle>
-      </HorizontalConatiner>
-    )
-  }
+          </Popover>
+          <VerticalContainerStyle>
+            <UpperHorizontalConatiner>
+              <NameEmailStyle>{`${alterName || name} <${alterEmail || email}>`}</NameEmailStyle>
+              <Button
+                small
+                minimal
+                disabled={previousCommits.length === 0}
+                icon={IconNames.HISTORY}
+                onClick={onShowPreviousCommits}
+                intent={Intent.PRIMARY}
+                // disabled={!hasHistoryChanges}
+                style={historyButtonStyle}
+              />
+            </UpperHorizontalConatiner>
+            <CommitAreaStyle onChange={onChange} value={text} />
+            <ButtonsContainerStyle>
+              <Button small style={cancelButtonStyle} onClick={onCancelCommit}>
+                Cancel
+              </Button>
+              <Button small intent="primary" style={commitButtonStyle} disabled={!committable} onClick={onCommit}>
+                Commit
+              </Button>
+            </ButtonsContainerStyle>
+          </VerticalContainerStyle>
+        </HorizontalConatiner>
+      )
+    }
+  )
 )

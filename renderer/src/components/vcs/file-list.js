@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useMemo, useState, useEffect, useRef } from 'react'
-import styled from 'styled-components'
+import styled, { withTheme } from 'styled-components'
 import { Scrollbars } from 'react-custom-scrollbars'
 
 import StatusBadge from './status-badge'
@@ -22,17 +22,16 @@ const ListItemContainerStyle = styled.li`
   background-color: ${({
     selected,
     theme: {
-      type,
       list: { activeSelectionBackground }
     }
-  }) => (selected ? '#0098d4' : 'transparent')};
+  }) => (selected ? activeSelectionBackground : 'transparent')};
+
   color: ${({
     selected,
     theme: {
-      type,
-      list: { focusForeground }
+      list: { activeSelectionForeground, focusForeground }
     }
-  }) => (selected ? 'white' : 'black')};
+  }) => (selected ? activeSelectionForeground : focusForeground)};
 
   :hover {
     background-color: ${({
@@ -40,7 +39,7 @@ const ListItemContainerStyle = styled.li`
       theme: {
         list: { activeSelectionBackground, hoverBackground }
       }
-    }) => (selected ? '#0098d4' : hoverBackground)};
+    }) => (selected ? activeSelectionBackground : hoverBackground)};
 
     color: ${({
       selected,
@@ -48,7 +47,7 @@ const ListItemContainerStyle = styled.li`
         list: { activeSelectionForeground, hoverForeground }
       }
     }) => {
-      return selected ? '#fff' : hoverForeground
+      return selected ? activeSelectionForeground : hoverForeground
     }};
   }
 `
@@ -153,4 +152,4 @@ const FileList = ({ files, selectedItem, onSelectionChanged, onItemSelect = () =
   )
 }
 
-export default FileList
+export default withTheme(FileList)

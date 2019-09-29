@@ -156,7 +156,7 @@ const BranchStyle = styled.span`
   color: black;
   padding-left: 2px;
   padding-right: 2px;
-  border-color: black;
+  border-color: ${({ theme: { type } }) => (type === 'dark' ? 'white' : 'black')};
   border-width: 1px;
   border-radius: 3px;
   border-style: solid;
@@ -164,11 +164,11 @@ const BranchStyle = styled.span`
 `
 
 const TagStyle = styled.span`
-  background-color: navy;
+  background-color: #00adff;
   color: white;
   padding-left: 2px;
   padding-right: 2px;
-  border-color: black;
+  border-color: ${({ theme: { type } }) => (type === 'dark' ? 'white' : 'black')};
   border-width: 1px;
   border-radius: 3px;
   border-style: solid;

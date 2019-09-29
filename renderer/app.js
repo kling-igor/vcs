@@ -19,7 +19,7 @@ import { VCS } from './vcs'
 
 import { Dock } from './src/components/dock'
 
-import VCSView from './src/components/vcs'
+import { VCSView } from './src/components/vcs'
 import ChangesFileList from './src/components/vcs/changedfiles-list'
 import CommitInfo from './src/components/vcs/commit-info'
 import ChangedFiles from './src/components/vcs/changed-files'

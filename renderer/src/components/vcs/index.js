@@ -11,9 +11,9 @@ const RootStyle = styled.div`
 `
 
 @observer
-class VCSView extends Component {
+export class VCSView extends Component {
   render() {
-    const { storage, workspace, onGitLogContextMenu } = this.props
+    const { storage, workspace, onGitLogContextMenu, theme } = this.props
 
     if (storage.mode === 'log') {
       return (
@@ -32,5 +32,3 @@ class VCSView extends Component {
     return null
   }
 }
-
-export default VCSView
