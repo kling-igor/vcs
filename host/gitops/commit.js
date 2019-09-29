@@ -111,7 +111,9 @@ export async function commitInfo(repo, sha) {
 
     const repoRefs = await getReferences(repo)
 
-    const labels = repoRefs.filter(item => item.sha === sha).map(({ name }) => name)
+    const labels = repoRefs
+      .filter(item => item.sha === sha)
+      .map(({ name }) => name.replace('refs/tags/', '').replace('refs/remotes/', ''))
 
     return {
       commit: commit.toString(),
