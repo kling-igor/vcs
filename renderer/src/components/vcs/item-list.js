@@ -19,7 +19,6 @@ const ListItemContainerStyle = styled.li`
   background-color: ${({
     selected,
     theme: {
-      type,
       list: { activeSelectionBackground }
     }
   }) => (selected ? activeSelectionBackground : 'transparent')};
@@ -60,13 +59,13 @@ const ListItemNameStyle = styled.div`
 
 const ListStyle = styled.ul`
   font-size: 13px;
-  font-family: 'Open Sans', sans-serif;
+  /* font-family: 'Open Sans', sans-serif; */
   line-height: 1.7em;
   white-space: nowrap;
   padding: 0;
   margin: 0px;
-  padding-top: 4px;
-  padding-bottom: 4px;
+  /* padding-top: 4px;
+  padding-bottom: 4px; */
 `
 
 const ListRootStyle = styled.div`

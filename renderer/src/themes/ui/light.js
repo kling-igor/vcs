@@ -77,8 +77,8 @@ export default {
     inactiveModifiedBorder: '#f1f1f1' //Border on the top of modified (dirty) inactive tabs in an active group.
   },
   list: {
-    activeSelectionBackground: '#e0e2ef', // List/Tree background color for the selected item when the list/tree is active.
-    activeSelectionForeground: '#5b5b5b', // List/Tree foreground color for the selected item when the list/tree is active.
+    activeSelectionBackground: '#0098d4', // List/Tree background color for the selected item when the list/tree is active.
+    activeSelectionForeground: '#ffffff', // List/Tree foreground color for the selected item when the list/tree is active.
     focusBackground: '#f1f1f1', // List/Tree background color for the focused item when the list/tree is active.
     focusForeground: '#5b5b5b', // List/Tree foreground color for the focused item when the list/tree is active. An active list/tree has keyboard focus, an inactive does not.
     hoverBackground: '#e5e5e5', // List/Tree background when hovering over items using the mouse.

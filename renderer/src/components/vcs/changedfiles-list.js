@@ -54,9 +54,7 @@ const ListItemContainerStyle = styled.li`
     theme: {
       list: { activeSelectionForeground, focusForeground }
     }
-  }) => {
-    return selected ? activeSelectionForeground : focusForeground
-  }};
+  }) => (selected ? activeSelectionForeground : focusForeground)};
 
   :hover {
     background-color: ${({
@@ -71,9 +69,7 @@ const ListItemContainerStyle = styled.li`
       theme: {
         list: { activeSelectionForeground, hoverForeground }
       }
-    }) => {
-      return selected ? activeSelectionForeground : hoverForeground
-    }};
+    }) => (selected ? activeSelectionForeground : hoverForeground)};
   }
 `
 

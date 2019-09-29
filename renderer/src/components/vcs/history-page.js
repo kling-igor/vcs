@@ -1,10 +1,8 @@
 /**
  * Отображение gitlog
  */
-const { remote } = window.require('electron')
-
 import React, { Component } from 'react'
-import { observer, inject } from 'mobx-react'
+import { observer } from 'mobx-react'
 import SplitPane, { Pane } from '../react-split'
 import { DiffPane } from './diff-pane'
 import { History } from './history'

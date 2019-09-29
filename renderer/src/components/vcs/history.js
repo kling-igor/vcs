@@ -4,7 +4,6 @@ import { List, AutoSizer, ScrollSync } from 'react-virtualized'
 import moment from 'moment'
 
 import CircularProgress from '@material-ui/core/CircularProgress'
-import { makeStyles } from '@material-ui/core/styles'
 
 import { Tree } from './tree'
 import { ROW_HEIGHT, X_STEP } from './constants'
@@ -15,12 +14,6 @@ moment.locale('en', {
     sameDay: '[Today at] H:mm'
   }
 })
-
-// const useStyles = makeStyles(() => ({
-//   progress: {
-//     margin: theme.spacing(2)
-//   }
-// }))
 
 const RowStyle = styled.div`
   padding-left: 20px;
@@ -190,8 +183,6 @@ const ProgressRootStyle = styled.div`
   padding-top: 10px;
 `
 
-// TODO: useContext onRowClick
-
 export const History = memo(
   ({
     commits,
@@ -224,13 +215,9 @@ export const History = memo(
       //   offset = 1
       // }
 
-      let datetime
-
-      if (moment(date).isSame(moment(), 'day')) {
-        datetime = moment().calendar(date)
-      } else {
-        datetime = moment(date).format('MMMM Do YYYY, H:mm')
-      }
+      const datetime = moment(date).isSame(moment(), 'day')
+        ? moment().calendar(date)
+        : moment(date).format('MMMM Do YYYY, H:mm')
 
       if (!sha) {
         return (
