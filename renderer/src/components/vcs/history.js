@@ -3,6 +3,9 @@ import styled from 'styled-components'
 import { List, AutoSizer, ScrollSync } from 'react-virtualized'
 import moment from 'moment'
 
+import CircularProgress from '@material-ui/core/CircularProgress'
+import { makeStyles } from '@material-ui/core/styles'
+
 import { Tree } from './tree'
 import { ROW_HEIGHT, X_STEP } from './constants'
 
@@ -12,6 +15,12 @@ moment.locale('en', {
     sameDay: '[Today at] H:mm'
   }
 })
+
+// const useStyles = makeStyles(() => ({
+//   progress: {
+//     margin: theme.spacing(2)
+//   }
+// }))
 
 const RowStyle = styled.div`
   padding-left: 20px;
@@ -172,6 +181,15 @@ const RightContainerStyle = styled.div`
   white-space: nowrap;
 `
 
+const ProgressRootStyle = styled.div`
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 10px;
+`
+
 // TODO: useContext onRowClick
 
 export const History = memo(
@@ -288,7 +306,11 @@ export const History = memo(
     }
 
     if (isProcessingGitLog) {
-      return <p>Processing...</p>
+      return (
+        <ProgressRootStyle>
+          <CircularProgress size={20} thickness={3} />
+        </ProgressRootStyle>
+      )
     }
 
     return (
