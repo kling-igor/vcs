@@ -3,7 +3,7 @@ const noop = () => {}
 export default ({ vcs, workspace, Dialog }) => sha => {
   if (!sha) return
 
-  const { currentCommit, heads, tags, headCommit, hasLocalChanges } = vcs
+  const { currentCommit, heads, tags, headCommit, hasLocalChanges, pendingOperation } = vcs
 
   const branch = heads.find(item => item.sha === sha)
 
@@ -40,7 +40,8 @@ export default ({ vcs, workspace, Dialog }) => sha => {
               })
               .catch(noop)
           }
-        }
+        },
+        enabled: !pendingOperation
       },
       {
         label: 'Merge...',
@@ -58,7 +59,7 @@ export default ({ vcs, workspace, Dialog }) => sha => {
             })
             .catch(noop)
         },
-        enabled: headCommit !== sha
+        enabled: headCommit !== sha && !pendingOperation
       },
       {
         label: 'Rebase...',
@@ -69,7 +70,7 @@ export default ({ vcs, workspace, Dialog }) => sha => {
             })
             .catch(noop)
         },
-        enabled: headCommit !== sha
+        enabled: headCommit !== sha && !pendingOperation
       },
       {
         type: 'separator'
@@ -102,7 +103,8 @@ export default ({ vcs, workspace, Dialog }) => sha => {
               vcs.createTag(sha, tagName, tagMessage)
             })
             .catch(noop)
-        }
+        },
+        enabled: !pendingOperation
       },
       {
         label: 'Branch...',
@@ -121,7 +123,7 @@ export default ({ vcs, workspace, Dialog }) => sha => {
             })
             .catch(noop)
         },
-        enabled: sha === headCommit
+        enabled: sha === headCommit && !pendingOperation
       },
       {
         type: 'separator'
@@ -135,7 +137,8 @@ export default ({ vcs, workspace, Dialog }) => sha => {
               vcs.softResetCommit(sha)
             })
             .catch(noop)
-        }
+        },
+        enabled: !pendingOperation
       },
       {
         label: 'Mixed Reset Branch...',
@@ -146,7 +149,8 @@ export default ({ vcs, workspace, Dialog }) => sha => {
               vcs.mixedResetCommit(sha)
             })
             .catch(noop)
-        }
+        },
+        enabled: !pendingOperation
       },
       {
         label: 'Hard Reset Branch...',
@@ -157,7 +161,8 @@ export default ({ vcs, workspace, Dialog }) => sha => {
               vcs.hardResetCommit(sha)
             })
             .catch(noop)
-        }
+        },
+        enabled: !pendingOperation
       },
       {
         type: 'separator'
@@ -171,7 +176,8 @@ export default ({ vcs, workspace, Dialog }) => sha => {
               vcs.revertCommit(sha)
             })
             .catch(noop)
-        }
+        },
+        enabled: !pendingOperation
       },
       {
         type: 'separator'

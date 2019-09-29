@@ -1,7 +1,7 @@
 const GIT_ADDR_REGEX = /((git|ssh|file|http(s)?)|(git@[\w\.]+))(:(\/\/)?)([\w\.@\:\/\-~]+)(\.git)(\/)?/
 
 export default ({ vcs, workspace, Dialog }) => () => {
-  const { remotes, heads } = vcs
+  const { remotes, heads, pendingOperation } = vcs
 
   const getPushingBranch = async () => {
     return await workspace.showQuickPick({
@@ -103,16 +103,14 @@ export default ({ vcs, workspace, Dialog }) => () => {
       {
         label: `Fetch`,
         click: async () => {
-          console.log('FETCH!!!')
           const remoteName = await getPersistentRemote()
           if (!remoteName) return
 
           await handler(async ({ userName, password } = {}) => {
             await vcs.fetch(remoteName, userName, password)
           })
-
-          console.log('DONE')
-        }
+        },
+        enabled: !pendingOperation
       },
       {
         label: `Fetch from...`,
@@ -121,14 +119,13 @@ export default ({ vcs, workspace, Dialog }) => () => {
           if (remoteName) {
             vcs.fetch(remoteName)
           }
-        }
+        },
+        enabled: !pendingOperation
       },
       {
         label: `Pull`,
         // click: getPersistentRemote('pull')
         click: async () => {
-          console.log('PULL!!!')
-
           const remoteName = await getPersistentRemote()
           if (!remoteName) return
 
@@ -143,19 +140,12 @@ export default ({ vcs, workspace, Dialog }) => () => {
           await handler(async ({ userName, password } = {}) => {
             await vcs.pull(remoteName, userName, password)
           })
-
-          console.log('DONE')
-        }
-      },
-      {
-        label: `Pull from...`
-        // click: getRemote('pull')
+        },
+        enabled: !pendingOperation
       },
       {
         label: `Push`,
         click: async () => {
-          console.log('PUSH!!!')
-
           if (heads.length === 0) return
 
           const branch = await getPushingBranch()
@@ -169,13 +159,8 @@ export default ({ vcs, workspace, Dialog }) => () => {
           await handler(async ({ userName, password } = {}) => {
             await vcs.push(remoteName, branch, userName, password)
           })
-
-          console.log('DONE')
-        }
-      },
-      {
-        label: `Push to...`
-        // click: getRemote('push')
+        },
+        enabled: !pendingOperation
       }
     ]
   })

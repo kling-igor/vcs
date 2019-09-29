@@ -3,7 +3,7 @@ const { remote } = window.require('electron')
 const noop = () => {}
 
 export default ({ vcs, workspace, Dialog }) => (_, name) => {
-  const { remotes, currentBranch, hasLocalChanges } = vcs
+  const { remotes, currentBranch, hasLocalChanges, pendingOperation } = vcs
 
   const remotesSubmenu = remotes.map(item => ({
     label: item.name,
@@ -23,7 +23,8 @@ export default ({ vcs, workspace, Dialog }) => (_, name) => {
               vcs.onBranchCheckout(name, discardLocalChanges)
             })
             .catch(noop)
-        }
+        },
+        enabled: !pendingOperation
       },
       {
         label: `Merge '${name}'`,
@@ -33,7 +34,8 @@ export default ({ vcs, workspace, Dialog }) => (_, name) => {
               console.log(`MERGING INTO CURRENT BRANCH AND COMMITING ${commitImmediatley}`)
             })
             .catch(noop)
-        }
+        },
+        enabled: !pendingOperation
       },
       {
         label: `Rebase '${name}'`,
@@ -43,14 +45,16 @@ export default ({ vcs, workspace, Dialog }) => (_, name) => {
               console.log('REBASING CURRENT CHANGES TO ', name)
             })
             .catch(noop)
-        }
+        },
+        enabled: !pendingOperation
       },
       {
         type: 'separator'
       },
       {
         label: `Push to`,
-        submenu: remotesSubmenu
+        submenu: remotesSubmenu,
+        enabled: !pendingOperation
       },
       {
         type: 'separator'
@@ -70,7 +74,8 @@ export default ({ vcs, workspace, Dialog }) => (_, name) => {
               }
             })
             .catch(noop)
-        }
+        },
+        enabled: !pendingOperation
       },
       {
         label: `Delete '${name}'`,
@@ -85,7 +90,7 @@ export default ({ vcs, workspace, Dialog }) => (_, name) => {
             })
             .catch(noop)
         },
-        enabled: currentBranch !== name
+        enabled: currentBranch !== name && !pendingOperation
       },
       {
         type: 'separator'

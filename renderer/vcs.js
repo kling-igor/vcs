@@ -1,6 +1,6 @@
 // const { ipcRenderer } = window.require('electron')
 // const { callMain } = require('./ipc').default(ipcRenderer)
-import { CompositeDisposable, Disposable } from 'event-kit'
+import { CompositeDisposable, Disposable, Emitter } from 'event-kit'
 import { join } from 'path'
 import * as _ from 'lodash'
 import { callMain } from './ipc'
@@ -38,7 +38,7 @@ const sort = array =>
     return 0
   })
 
-export class VCS {
+export class VCS extends Emitter {
   @observable mode = 'log' // log | commit
 
   onModeChange = () => {}
@@ -110,7 +110,11 @@ export class VCS {
 
   @observable isProcessingGitLog = false
 
+  @observable pendingOperation = null
+
   constructor({ workspace, project, applicationDelegate }) {
+    super()
+
     this.workspace = workspace
     this.project = project
     this.applicationDelegate = applicationDelegate
@@ -118,6 +122,24 @@ export class VCS {
     this.debouncedStatus = _.debounce(this.status, 1000)
 
     applicationDelegate.onGitLog(this.onGitLog)
+
+    this.on(
+      'operation:begin',
+      action(operation => {
+        if (!this.pendingOperation) {
+          this.pendingOperation = operation
+        }
+      })
+    )
+
+    this.on(
+      'operation:finish',
+      action(operation => {
+        if (this.pendingOperation === operation) {
+          this.pendingOperation = null
+        }
+      })
+    )
   }
 
   @action.bound
@@ -859,22 +881,29 @@ export class VCS {
 
   @action.bound
   async push(remoteName, branch, userName, password) {
+    this.emit('operation:begin', 'push')
     await callMain('repository:push', remoteName, branch, userName, password)
 
     await this.status()
     await this.getLog()
+
+    this.emit('operation:finish', 'push')
   }
 
   @action.bound
   async fetch(remoteName, userName, password) {
+    this.emit('operation:begin', 'fetch')
     await callMain('repository:fetch', remoteName, userName, password)
 
     await this.status()
     await this.getLog()
+
+    this.emit('operation:finish', 'fetch')
   }
 
   @action.bound
   async pull(remoteName, userName, password) {
+    this.emit('operation:begin', 'pull')
     await this.fetch(remoteName, userName, password)
 
     const mergingBranches = this.heads.reduce((acc, item) => {
@@ -895,6 +924,8 @@ export class VCS {
 
     await this.status()
     await this.getLog()
+
+    this.emit('operation:finish', 'pull')
   }
 
   @action.bound
@@ -909,7 +940,9 @@ export class VCS {
 
   @action.bound
   async clone(remoteUrl, targetFolder, userName, password) {
+    this.emit('operation:begin', 'clone')
     await callMain('repository:clone', remoteUrl, targetFolder, userName, password)
+    this.emit('operation:finish', 'clone')
   }
 
   @action.bound

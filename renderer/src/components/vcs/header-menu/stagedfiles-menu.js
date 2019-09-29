@@ -1,7 +1,15 @@
 import { action } from 'mobx'
 
 export default ({ vcs, workspace }) => () => {
-  const { stagedFiles, unstageSelectedFiles, unstageAllFiles, selectAllFiles, unselectAllFiles, inverseSelection } = vcs
+  const {
+    stagedFiles,
+    unstageSelectedFiles,
+    unstageAllFiles,
+    selectAllFiles,
+    unselectAllFiles,
+    inverseSelection,
+    pendingOperation
+  } = vcs
 
   const hasStagedFiles = stagedFiles.length > 0
   const selectedStagedFilesCount = stagedFiles.reduce((acc, { selected }) => (acc + selected ? 1 : 0), 0)
@@ -35,12 +43,12 @@ export default ({ vcs, workspace }) => () => {
       {
         label: 'Unstage Selected',
         click: unstageSelectedFiles,
-        enabled: hasStagedFiles && selectedStagedFilesCount > 0
+        enabled: hasStagedFiles && selectedStagedFilesCount > 0 && !pendingOperation
       },
       {
         label: 'Unstage All',
         click: unstageAllFiles,
-        enabled: hasStagedFiles
+        enabled: hasStagedFiles && !pendingOperation
       }
     ]
   })

@@ -1,6 +1,7 @@
 const { remote } = window.require('electron')
 const noop = () => {}
 export default ({ vcs, workspace, project, Dialog }) => path => {
+  const { pendingOperation } = vcs
   const { status } = vcs.changedFiles.find(item => `${item.path}/${item.filename}` === path)
 
   workspace.showContextMenu({

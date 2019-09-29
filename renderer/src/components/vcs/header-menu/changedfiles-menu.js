@@ -8,7 +8,8 @@ export default ({ vcs, workspace }) => () => {
     selectAllFiles,
     unselectAllFiles,
     inverseSelection,
-    discardAllLocalChanges
+    discardAllLocalChanges,
+    pendingOperation
   } = vcs
   const hasChangedFiles = changedFiles.length > 0
   const selectedChangesFilesCount = changedFiles.reduce((acc, { selected }) => (acc + selected ? 1 : 0), 0)
@@ -42,17 +43,17 @@ export default ({ vcs, workspace }) => () => {
       {
         label: 'Stage Selected',
         click: stageSelectedFiles,
-        enabled: hasChangedFiles && selectedChangesFilesCount > 0
+        enabled: hasChangedFiles && selectedChangesFilesCount > 0 && !pendingOperation
       },
       {
         label: 'Stage All',
         click: stageAllFiles,
-        enabled: hasChangedFiles
+        enabled: hasChangedFiles && !pendingOperation
       },
       {
         label: 'Discard All Changes',
         click: discardAllLocalChanges,
-        enabled: hasChangedFiles
+        enabled: hasChangedFiles && !pendingOperation
       }
     ]
   })

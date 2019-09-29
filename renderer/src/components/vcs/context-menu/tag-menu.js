@@ -1,7 +1,7 @@
 const { remote } = window.require('electron')
 const noop = () => {}
 export default ({ vcs, workspace, Dialog }) => (sha, tag) => {
-  const { heads, hasLocalChanges } = vcs
+  const { heads, hasLocalChanges, pendingOperation } = vcs
 
   const branch = heads.find(item => item.sha === sha)
 

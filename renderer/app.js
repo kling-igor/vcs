@@ -91,6 +91,23 @@ export default class App extends Component {
     const replacePanes = mode => {
       dock.removePanes('vcs')
 
+      const refreshButton = {
+        icon: './assets/ui/refresh.svg',
+        onClick: async () => {
+          if (vcs.isProcessingGitLog) return
+
+          await vcs.getLog()
+          await vcs.status()
+        },
+        tooltip: 'Refresh'
+      }
+
+      const etcButton = {
+        icon: './assets/ui/ellipsis.svg',
+        onClick: onVcsContextMenu({ vcs, workspace, Dialog }),
+        tooltip: ''
+      }
+
       if (mode === 'commit') {
         dock.setPageButtons('vcs', [
           {
@@ -98,19 +115,8 @@ export default class App extends Component {
             onClick: vcs.logMode,
             tooltip: 'Log'
           },
-          {
-            icon: './assets/ui/refresh.svg',
-            onClick: async () => {
-              await vcs.getLog()
-              await vcs.status()
-            },
-            tooltip: 'Refresh'
-          },
-          {
-            icon: './assets/ui/ellipsis.svg',
-            onClick: onVcsContextMenu({ vcs, workspace, Dialog }),
-            tooltip: ''
-          }
+          refreshButton,
+          etcButton
         ])
 
         dock.addPane('vcs', {
@@ -176,19 +182,8 @@ export default class App extends Component {
             },
             tooltip: 'Commit'
           },
-          {
-            icon: './assets/ui/refresh.svg',
-            onClick: async () => {
-              await vcs.getLog()
-              await vcs.status()
-            },
-            tooltip: 'Refresh'
-          },
-          {
-            icon: './assets/ui/ellipsis.svg',
-            onClick: onVcsContextMenu({ vcs, workspace, Dialog }),
-            tooltip: ''
-          }
+          refreshButton,
+          etcButton
         ])
 
         dock.addPane('vcs', {
@@ -210,6 +205,9 @@ export default class App extends Component {
           paneHeaderButtons: [
             {
               icon: './assets/ui/ellipsis.svg',
+              onClick: () => {
+                console.log('HAS NO IMPLEMENTATION YET')
+              },
               tooltip: ''
             }
           ]
@@ -222,6 +220,9 @@ export default class App extends Component {
           paneHeaderButtons: [
             {
               icon: './assets/ui/ellipsis.svg',
+              onClick: () => {
+                console.log('HAS NO IMPLEMENTATION YET')
+              },
               tooltip: ''
             }
           ]
@@ -250,6 +251,15 @@ export default class App extends Component {
 
     await vcs.open(resolve(__dirname, '../test-repo'))
     await project.open({ projectPath: resolve(__dirname, '../test-repo') })
+
+    vcs.on('operation:begin', operation => {
+      dock.setPageProgress('vcs', true)
+    })
+
+    vcs.on('operation:finish', operation => {
+      dock.setPageProgress('vcs', false)
+    })
+
     await vcs.getLog()
 
     dock.showPage('vcs')

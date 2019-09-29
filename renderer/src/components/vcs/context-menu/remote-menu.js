@@ -1,5 +1,7 @@
 const noop = () => {}
 export default ({ vcs, workspace, Dialog }) => name => {
+  const { pendingOperation } = vcs
+
   workspace.showContextMenu({
     items: [
       {
@@ -11,7 +13,8 @@ export default ({ vcs, workspace, Dialog }) => name => {
               vcs.deleteRemote(name)
             })
             .catch(noop)
-        }
+        },
+        enabled: !pendingOperation
       }
     ]
   })
