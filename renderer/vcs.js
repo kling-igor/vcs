@@ -493,6 +493,8 @@ export class VCS extends Emitter {
 
     const { log, error } = await callMain('repository:log', this.project.projectPath)
 
+    console.log('GOT RESULT!!!')
+
     this.isProcessingGitLog = false
 
     if (error) {

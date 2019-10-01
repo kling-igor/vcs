@@ -245,10 +245,16 @@ export async function log(repo) {
   const headOnBranchTop =
     headCommit && repoRefs.find(({ sha, name }) => sha === headCommit.sha() && !name.includes('refs/tags/'))
 
+  console.log('RETURN GITLOG RESULT')
+
+  console.log('COMMITS:', commits.length)
+  console.log('COMMITERS:', committers.length)
+  console.log('REFS:', repoRefs.length)
+
   return {
     // опционально добавляем HEAD ссылку
     refs: !headOnBranchTop ? [{ name: 'HEAD', sha: headCommit.sha() }, ...repoRefs] : repoRefs,
-    commits,
+    commits: commits.slice(0, 10),
     committers,
     headCommit: (headCommit && headCommit.sha()) || undefined,
     currentBranch,
