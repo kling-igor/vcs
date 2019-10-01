@@ -353,12 +353,12 @@ answerRenderer('repository:log', async (browserWindow, projectPath) => {
 
   gitOpsWorker = fork(join(__dirname, 'gitops-worker.js'), ['gitlog', projectPath])
 
-  return new Promise(resolve => {
+  return await new Promise(resolve => {
     gitOpsWorker.once('message', resolve)
   })
 })
 
-answerRenderer('repository:fetch', async (browserWindow, remoteName, userName, password) => {
+answerRenderer('repository:fetch', async (browserWindow, projectPath, remoteName, userName, password) => {
   checkRepo()
 
   const remote = await getRemote(repo, remoteName)
@@ -366,15 +366,12 @@ answerRenderer('repository:fetch', async (browserWindow, remoteName, userName, p
   let name
   let pass
 
-  // todo если предоставлены userName, password то сохранить их keytar
   if (userName && password) {
-    console.log('STORE CREDENTIALS FOR:', remote.url())
     await keytar.setPassword(remote.url(), userName, password)
 
     name = userName
     pass = password
   } else {
-    console.log('REQUEST CREDENTIALS FOR:', remote.url())
     const [record = {}] = await keytar.findCredentials(remote.url())
 
     name = record.account
@@ -386,14 +383,14 @@ answerRenderer('repository:fetch', async (browserWindow, remoteName, userName, p
     gitOpsWorker = null
   }
 
-  // gitOpsWorker = fork(join(__dirname, 'gitops-worker.js'), ['fetch', projectPath, remoteName, name, pass])
+  gitOpsWorker = fork(join(__dirname, 'gitops-worker.js'), ['fetch', projectPath, remoteName, name, pass])
 
-  // gitOpsWorker.once('message', () => {
-  //   browserWindow.webContents.send('repository:fetch')
-  // })
+  return await new Promise(resolve => {
+    gitOpsWorker.once('message', resolve)
+  })
 })
 
-answerRenderer('repository:push', async (browserWindow, remoteName, branch, userName, password) => {
+answerRenderer('repository:push', async (browserWindow, projectPath, remoteName, branch, userName, password) => {
   checkRepo()
 
   const remote = await getRemote(repo, remoteName)
@@ -406,14 +403,11 @@ answerRenderer('repository:push', async (browserWindow, remoteName, branch, user
 
     name = userName
     pass = password
-    // return push(repo, remoteName, branch, userName, password)
   } else {
     const [record = {}] = await keytar.findCredentials(remote.url())
 
     name = record.account
     pass = record.password
-
-    // return push(repo, remoteName, branch, record.account, record.password)
   }
 
   if (gitOpsWorker) {
@@ -421,15 +415,14 @@ answerRenderer('repository:push', async (browserWindow, remoteName, branch, user
     gitOpsWorker = null
   }
 
+  gitOpsWorker = fork(join(__dirname, 'gitops-worker.js'), ['push', projectPath, remoteName, branch, name, pass])
 
-  // gitOpsWorker = fork(join(__dirname, 'gitops-worker.js'), ['push', projectPath, remoteName, branch, name, pass])
-
-  // gitOpsWorker.once('message', () => {
-  //   browserWindow.webContents.send('repository:push')
-  // })
+  return await new Promise(resolve => {
+    gitOpsWorker.once('message', resolve)
+  })
 })
 
-answerRenderer('repository:pull', async (browserWindow, remoteName, userName, password) => {
+answerRenderer('repository:pull', async (browserWindow, projectPath, remoteName, userName, password) => {
   checkRepo()
 
   const remote = await getRemote(repo, remoteName)
@@ -437,15 +430,12 @@ answerRenderer('repository:pull', async (browserWindow, remoteName, userName, pa
   let name
   let pass
 
-  // todo если предоставлены userName, password то сохранить их keytar
   if (userName && password) {
-    console.log('STORE CREDENTIALS FOR:', remote.url())
     await keytar.setPassword(remote.url(), userName, password)
 
     name = userName
     pass = password
   } else {
-    console.log('REQUEST CREDENTIALS FOR:', remote.url())
     const [record = {}] = await keytar.findCredentials(remote.url())
 
     name = record.account
@@ -458,7 +448,6 @@ answerRenderer('repository:pull', async (browserWindow, remoteName, userName, pa
   }
 
   if (!gitOpsWorker) {
-    gitOpsCurrentCorrelationMarker = correlationMarker
     gitOpsWorker = fork(join(__dirname, 'gitops-worker.js'), ['fetch', projectPath, remoteName, name, pass])
 
     gitOpsWorker.once('message', () => {

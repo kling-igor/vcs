@@ -115,10 +115,10 @@ export class VCS extends Emitter {
 
     this.debouncedStatus = _.debounce(this.status, 1000)
 
-    applicationDelegate.onGitLog(this.onGitLog)
-    applicationDelegate.onFetch(this.onFetch)
-    applicationDelegate.onPush(this.onPush)
-    applicationDelegate.onPull(this.onPull)
+    // applicationDelegate.onGitLog(this.onGitLog)
+    // applicationDelegate.onFetch(this.onFetch)
+    // applicationDelegate.onPush(this.onPush)
+    // applicationDelegate.onPull(this.onPull)
 
     this.on(
       'operation:begin',
@@ -491,14 +491,8 @@ export class VCS extends Emitter {
   async getLog() {
     this.isProcessingGitLog = true
 
-    // вернуть  callMain!!! - продумать связку !!!
+    const { log, error } = await callMain('repository:log', this.project.projectPath)
 
-    ipcRenderer.send('repository:log', this.project.projectPath)
-  }
-
-  // реакция на получение результатов gitlog
-  @action.bound
-  onGitLog(sender, { log, error }) {
     this.isProcessingGitLog = false
 
     if (error) {
@@ -551,6 +545,10 @@ export class VCS extends Emitter {
       this.hasConflicts = hasConflicts
     })
   }
+
+  // // реакция на получение результатов gitlog
+  // @action.bound
+  // onGitLog(sender, { log, error }) {}
 
   @action.bound
   async onCommitSelect(sha) {
@@ -882,16 +880,8 @@ export class VCS extends Emitter {
   @action.bound
   async push(remoteName, branch, userName, password) {
     this.emit('operation:begin', 'push')
-    await callMain('repository:push', remoteName, branch, userName, password)
+    await callMain('repository:push', this.project.projectPath, remoteName, branch, userName, password)
 
-    // await this.status()
-    // await this.getLog()
-
-    // this.emit('operation:finish', 'push')
-  }
-
-  @action.bound
-  async onPush() {
     await this.status()
     await this.getLog()
 
@@ -901,16 +891,8 @@ export class VCS extends Emitter {
   @action.bound
   async fetch(remoteName, userName, password) {
     this.emit('operation:begin', 'fetch')
-    await callMain('repository:fetch', remoteName, userName, password)
+    await callMain('repository:fetch', this.project.projectPath, remoteName, userName, password)
 
-    // await this.status()
-    // await this.getLog()
-
-    // this.emit('operation:finish', 'fetch')
-  }
-
-  @action.bound
-  async onFetch() {
     await this.status()
     await this.getLog()
 
@@ -920,32 +902,9 @@ export class VCS extends Emitter {
   @action.bound
   async pull(remoteName, userName, password) {
     this.emit('operation:begin', 'pull')
-    // await this.fetch(remoteName, userName, password)
-    await callMain('repository:pull', remoteName, userName, password)
 
-    // const mergingBranches = this.heads.reduce((acc, item) => {
-    //   const { name, upstream, ahead, behind } = item
+    await callMain('repository:pull', this.project.projectPath, remoteName, userName, password)
 
-    //   if (upstream && (ahead || behind)) {
-    //     return [...acc, [name, upstream.replace('refs/remotes/', '')]]
-    //   }
-
-    //   return acc
-    // }, [])
-
-    // console.log('MERGING PAIRS:', mergingBranches)
-
-    // for (const [ourBranchName, theirBranchName] of mergingBranches) {
-    //   await callMain('repository:merge-branches', ourBranchName, theirBranchName)
-    // }
-
-    // await this.status()
-    // await this.getLog()
-
-    // this.emit('operation:finish', 'pull')
-  }
-
-  async onPull() {
     const mergingBranches = this.heads.reduce((acc, item) => {
       const { name, upstream, ahead, behind } = item
 
