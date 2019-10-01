@@ -63,7 +63,7 @@ export async function log(repo) {
 
   let headCommit
   try {
-    headCommit = (await repo.getHeadCommit()).sha().slice(0, 8)
+    headCommit = await repo.getHeadCommit()
   } catch (e) {
     console.log('UNABLE TO GET HEAD, POSSIBLE REPO IS EMPTY:', e)
   }
@@ -83,8 +83,8 @@ export async function log(repo) {
   // делаем искусственную запись
   if (headCommit && (repo.isMerging() || repo.isRebasing())) {
     try {
-      const mineCommit = headCommit
-      const theirsCommit = (await repo.getBranchCommit('MERGE_HEAD')).sha().slice(0, 8)
+      const mineCommit = headCommit.sha()
+      const theirsCommit = (await repo.getBranchCommit('MERGE_HEAD')).sha()
 
       const branch = getBranch(mineCommit)
       const offset = reserve.indexOf(branch)
@@ -110,7 +110,7 @@ export async function log(repo) {
       console.log('ERROR:', e)
     }
   } else if (workDirStatus.length > 0) {
-    let branch = headCommit ? getBranch(headCommit) : getBranch(null) // TODO: если еще не было коммитов и это изменения в новом репозитарии ?
+    let branch = headCommit ? getBranch(headCommit.sha()) : getBranch(null) // TODO: если еще не было коммитов и это изменения в новом репозитарии ?
     const offset = reserve.indexOf(branch)
 
     if (offset === -1) {
@@ -215,8 +215,8 @@ export async function log(repo) {
     }
 
     commits.push({
-      sha: sha.slice(0, 8),
-      isHead: sha === headCommit && workDirStatus.length === 0,
+      sha,
+      isHead: sha === headCommit.sha() && workDirStatus.length === 0,
       message,
       committer: getCommiterIndex(commit.author().name(), commit.author().email()),
       date: commit.timeMs(),
@@ -243,14 +243,14 @@ export async function log(repo) {
 
   // если HEAD не на вершине ветки
   const headOnBranchTop =
-    headCommit && repoRefs.find(({ sha, name }) => !name.includes('refs/tags/')) && sha.slice(0, 8) === headCommit
+    headCommit && repoRefs.find(({ sha, name }) => sha === headCommit.sha() && !name.includes('refs/tags/'))
 
   return {
     // опционально добавляем HEAD ссылку
-    refs: !headOnBranchTop ? [{ name: 'HEAD', sha: headCommit }, ...repoRefs] : repoRefs,
+    refs: !headOnBranchTop ? [{ name: 'HEAD', sha: headCommit.sha() }, ...repoRefs] : repoRefs,
     commits,
     committers,
-    headCommit,
+    headCommit: (headCommit && headCommit.sha()) || undefined,
     currentBranch,
     isMerging: repo.isMerging(),
     isRebasing: repo.isRebasing(),
