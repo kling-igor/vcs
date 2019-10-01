@@ -546,13 +546,9 @@ export class VCS extends Emitter {
     })
   }
 
-  // // реакция на получение результатов gitlog
-  // @action.bound
-  // onGitLog(sender, { log, error }) {}
-
   @action.bound
   async onCommitSelect(sha) {
-    if (this.commitInfo && this.commitInfo.commit === sha) return
+    if (this.commitInfo && this.commitInfo.commit.slice(0, 8) === sha) return
 
     const commitInfo = await callMain('commit:get-info', sha)
 

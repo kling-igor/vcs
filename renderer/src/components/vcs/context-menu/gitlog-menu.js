@@ -5,9 +5,8 @@ export default ({ vcs, workspace, Dialog }) => sha => {
 
   const { currentCommit, heads, tags, headCommit, hasLocalChanges, pendingOperation } = vcs
 
-  const branch = heads.find(item => item.sha === sha)
-
-  const tag = tags.find(item => item.sha === sha)
+  const branch = heads.find(item => item.sha.slice(0, 8) === sha)
+  const tag = tags.find(item => item.sha.slice(0, 8) === sha)
 
   // TODO: в VCS добавить знание о текущем коммите рабочего каталога
 

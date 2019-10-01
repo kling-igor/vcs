@@ -249,8 +249,10 @@ export default class App extends Component {
     // ЭТО ДЕЛАТЬ В ОТВЕТ НА СОБЫТИЕ ОТКРЫТИЯ ПРОЕКТА
     replacePanes(vcs.mode)
 
-    await vcs.open(resolve(__dirname, '../test-repo'))
-    await project.open({ projectPath: resolve(__dirname, '../test-repo') })
+    const PROJECT_PATH = resolve(__dirname, '../test-repo')
+
+    await vcs.open(PROJECT_PATH)
+    await project.open({ projectPath: PROJECT_PATH })
 
     vcs.on('operation:begin', operation => {
       dock.setPageProgress('vcs', true)
