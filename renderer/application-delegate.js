@@ -21,6 +21,21 @@ export class ApplicationDelegate {
     return new Disposable(() => ipcRenderer.removeListener('repository:log', handler))
   }
 
+  onFetch(handler) {
+    ipcRenderer.on('repository:fetch', handler)
+    return new Disposable(() => ipcRenderer.removeListener('repository:fetch', handler))
+  }
+
+  onPush(handler) {
+    ipcRenderer.on('repository:push', handler)
+    return new Disposable(() => ipcRenderer.removeListener('repository:push', handler))
+  }
+
+  onPull(handler) {
+    ipcRenderer.on('repository:pull', handler)
+    return new Disposable(() => ipcRenderer.removeListener('repository:pull', handler))
+  }
+
   onProjectFilePathAdd(handler) {
     ipcRenderer.on('file-tree:path-add', handler)
     return new Disposable(() => ipcRenderer.removeListener('file-tree:path-add', handler))

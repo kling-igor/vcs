@@ -1,31 +1,39 @@
-import { openRepository, log, fetch } from './gitops'
+import { openRepository, log, fetch, push } from './gitops'
 
 const [command, ...args] = process.argv.slice(2)
 
-async function gitlog(repoPath) {
-  if (!repoPath) throw new Error('Repositiry path not specified')
+async function gitlogOperation(repoPath) {
+  if (!repoPath) throw new Error('Repository path not specified')
 
   const repo = await openRepository(repoPath)
   return log(repo)
 }
 
-async function fetch(repoPath, remoteName, userName, password) {
-  if (!repoPath) throw new Error('Repositiry path not specified')
+async function fetchOperation(repoPath, remoteName, userName, password) {
+  if (!repoPath) throw new Error('Repository path not specified')
 
   const repo = await openRepository(repoPath)
   return fetch(repo, remoteName, userName, password)
 }
 
-// и другие операции
+async function pushOperation(repoPath, remoteName, branch, userName, password) {
+  if (!repoPath) throw new Error('Repository path not specified')
+
+  const repo = await openRepository(repoPath)
+  return push(repo, remoteName, branch, userName, password)
+}
 
 ;(async () => {
   try {
     if (command === 'gitlog') {
-      const history = await gitlog(...args)
+      const history = await gitlogOperation(...args)
       process.send({ log: history })
     } else if (command === 'fetch') {
-      await fetch(...args)
-      process.send({ fetch: 'done' })
+      await fetchOperation(...args)
+      process.send('done')
+    } else if (command === 'push') {
+      await pushOperation(...args)
+      process.send('done')
     }
   } catch (e) {
     process.send({ error: e.message })

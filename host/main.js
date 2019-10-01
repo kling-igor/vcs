@@ -3,7 +3,7 @@ const { callRenderer, answerRenderer } = require('./ipc')(ipcMain, BrowserWindow
 import { fork } from 'child_process'
 import { join, resolve } from 'path'
 import { EventEmitter } from 'events'
-import { CompositeDisposable } from 'event-kit'
+import { CompositeDisposable, Disposable } from 'event-kit'
 import { FileSystemOperations } from './file-operations'
 import * as URL from 'url'
 import keytar from 'keytar'
@@ -47,9 +47,9 @@ import {
   headCommit,
   cloneRepository,
   createRepository,
-  pull,
-  push,
-  fetch,
+  // pull,
+  // push,
+  // fetch,
   merge,
   mergeBranches,
   removeConflict,
@@ -67,7 +67,7 @@ let user
 let remotes = []
 
 let gitOpsWorker = null
-let gitOpsCurrentCorrelationMarker = null
+// let gitOpsDisposable
 
 app.on('ready', async () => {
   const window = new BrowserWindow({
@@ -285,37 +285,6 @@ answerRenderer('repository:discard-local-changes', async (browserWindow, project
   // await index.clear()
 })
 
-answerRenderer('repository:fetch', async (browserWindow, remoteName, userName, password) => {
-  checkRepo()
-
-  const remote = await getRemote(repo, remoteName)
-
-  // todo если предоставлены userName, password то сохранить их keytar
-  if (userName && password) {
-    console.log('STORE CREDENTIALS FOR:', remote.url())
-    await keytar.setPassword(remote.url(), userName, password)
-    return fetch(repo, remoteName, userName, password)
-  } else {
-    console.log('REQUEST CREDENTIALS FOR:', remote.url())
-    const [record = {}] = await keytar.findCredentials(remote.url())
-    return fetch(repo, remoteName, record.account, record.password)
-  }
-})
-
-answerRenderer('repository:push', async (browserWindow, remoteName, branch, userName, password) => {
-  checkRepo()
-
-  const remote = await getRemote(repo, remoteName)
-
-  if (userName && password) {
-    await keytar.setPassword(remote.url(), userName, password)
-    return push(repo, remoteName, branch, userName, password)
-  } else {
-    const [record = {}] = await keytar.findCredentials(remote.url())
-    return push(repo, remoteName, branch, record.account, record.password)
-  }
-})
-
 answerRenderer('repository:merge', async (browserWindow, theirSha) => {
   console.log('MERGE WITH:', theirSha)
   checkRepo()
@@ -374,24 +343,128 @@ answerRenderer('commit:conflictedfile-diff', async (browserWindow, filePath) => 
   }
 })
 
-answerRenderer('repository:log', async (browserWindow, correlationMarker, projectPath) => {
+answerRenderer('repository:log', async (browserWindow, projectPath) => {
   checkRepo()
 
-  if (gitOpsWorker /* && gitOpsCurrentCorrelationMarker && gitOpsCurrentCorrelationMarker !== correlationMarker*/) {
+  if (gitOpsWorker) {
+    gitOpsWorker.kill('SIGKILL')
+    gitOpsWorker = null
+  }
+
+  gitOpsWorker = fork(join(__dirname, 'gitops-worker.js'), ['gitlog', projectPath])
+
+  return new Promise(resolve => {
+    gitOpsWorker.once('message', resolve)
+  })
+})
+
+answerRenderer('repository:fetch', async (browserWindow, remoteName, userName, password) => {
+  checkRepo()
+
+  const remote = await getRemote(repo, remoteName)
+
+  let name
+  let pass
+
+  // todo если предоставлены userName, password то сохранить их keytar
+  if (userName && password) {
+    console.log('STORE CREDENTIALS FOR:', remote.url())
+    await keytar.setPassword(remote.url(), userName, password)
+
+    name = userName
+    pass = password
+  } else {
+    console.log('REQUEST CREDENTIALS FOR:', remote.url())
+    const [record = {}] = await keytar.findCredentials(remote.url())
+
+    name = record.account
+    pass = record.password
+  }
+
+  if (gitOpsWorker) {
+    gitOpsWorker.kill('SIGKILL')
+    gitOpsWorker = null
+  }
+
+  // gitOpsWorker = fork(join(__dirname, 'gitops-worker.js'), ['fetch', projectPath, remoteName, name, pass])
+
+  // gitOpsWorker.once('message', () => {
+  //   browserWindow.webContents.send('repository:fetch')
+  // })
+})
+
+answerRenderer('repository:push', async (browserWindow, remoteName, branch, userName, password) => {
+  checkRepo()
+
+  const remote = await getRemote(repo, remoteName)
+
+  let name
+  let pass
+
+  if (userName && password) {
+    await keytar.setPassword(remote.url(), userName, password)
+
+    name = userName
+    pass = password
+    // return push(repo, remoteName, branch, userName, password)
+  } else {
+    const [record = {}] = await keytar.findCredentials(remote.url())
+
+    name = record.account
+    pass = record.password
+
+    // return push(repo, remoteName, branch, record.account, record.password)
+  }
+
+  if (gitOpsWorker) {
+    gitOpsWorker.kill('SIGKILL')
+    gitOpsWorker = null
+  }
+
+
+  // gitOpsWorker = fork(join(__dirname, 'gitops-worker.js'), ['push', projectPath, remoteName, branch, name, pass])
+
+  // gitOpsWorker.once('message', () => {
+  //   browserWindow.webContents.send('repository:push')
+  // })
+})
+
+answerRenderer('repository:pull', async (browserWindow, remoteName, userName, password) => {
+  checkRepo()
+
+  const remote = await getRemote(repo, remoteName)
+
+  let name
+  let pass
+
+  // todo если предоставлены userName, password то сохранить их keytar
+  if (userName && password) {
+    console.log('STORE CREDENTIALS FOR:', remote.url())
+    await keytar.setPassword(remote.url(), userName, password)
+
+    name = userName
+    pass = password
+  } else {
+    console.log('REQUEST CREDENTIALS FOR:', remote.url())
+    const [record = {}] = await keytar.findCredentials(remote.url())
+
+    name = record.account
+    pass = record.password
+  }
+
+  if (gitOpsWorker) {
     gitOpsWorker.kill('SIGKILL')
     gitOpsWorker = null
   }
 
   if (!gitOpsWorker) {
     gitOpsCurrentCorrelationMarker = correlationMarker
-    gitOpsWorker = fork(join(__dirname, 'gitops-worker.js'), ['gitlog', projectPath])
+    gitOpsWorker = fork(join(__dirname, 'gitops-worker.js'), ['fetch', projectPath, remoteName, name, pass])
 
-    gitOpsWorker.on('message', result => {
-      browserWindow.webContents.send('repository:log', result)
+    gitOpsWorker.once('message', () => {
+      browserWindow.webContents.send('repository:pull')
     })
   }
-
-  // return log(repo)
 })
 
 answerRenderer('branch:create', async (browserWindow, name, commit) => {
