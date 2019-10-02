@@ -27,7 +27,7 @@ async function pushOperation(repoPath, remoteName, branch, userName, password) {
   try {
     if (command === 'gitlog') {
       const history = await gitlogOperation(...args)
-      console.log('HISTORY:', history)
+      // console.log('HISTORY:', history)
       process.send({ log: history })
     } else if (command === 'fetch') {
       await fetchOperation(...args)

@@ -118,9 +118,9 @@ export async function log(repo) {
     }
 
     commits.push({
-      sha: null,
+      // sha: undefined,
       message: 'Uncommitted changes',
-      committer: null,
+      // committer: undefined,
       date: Date.now(),
       offset,
       branch,
@@ -133,7 +133,9 @@ export async function log(repo) {
 
   const revWalk = repo.createRevWalk()
   revWalk.sorting(nodegit.Revwalk.SORT.TIME)
-  revWalk.pushGlob('refs/*') // чтобы захватить все рефернесы (иначе не все попадет)
+  revWalk.pushGlob('refs/tags/*') // чтобы захватить все рефернесы (иначе не все попадет)
+  revWalk.pushGlob('refs/heads/*')
+  revWalk.pushGlob('refs/remotes/*')
 
   let oid
 
@@ -144,7 +146,9 @@ export async function log(repo) {
     return // nothing to return
   }
 
-  while (oid) {
+  let GUARD = 22
+
+  while (oid && GUARD-- > 0) {
     let commit
     try {
       commit = await repo.getCommit(oid)
@@ -207,14 +211,14 @@ export async function log(repo) {
     }
 
     // удаляем ветку из кеша (на нее никто не ссылается больше)
-    delete branches[sha]
+    // delete branches[sha]
 
     let message = commit.summary()
-    if (message.length > 80) {
-      message = message.slice(0, 79) + '\u2026'
+    if (message.length > 20) {
+      message = message.slice(0, 20) + '\u2026'
     }
 
-    commits.push({
+    const record = {
       sha,
       isHead: sha === headCommit.sha() && workDirStatus.length === 0,
       message,
@@ -223,7 +227,12 @@ export async function log(repo) {
       offset,
       branch,
       routes
-    })
+    }
+
+    console.log(`----------${GUARD}----------`)
+    console.log(record)
+
+    commits.push(record)
 
     // first ever commit
     if (parents.length === 0) {
@@ -251,11 +260,13 @@ export async function log(repo) {
   console.log('COMMITERS:', committers.length)
   console.log('REFS:', repoRefs.length)
 
+  const STRIPPED_REFS = repoRefs.map(({ sha, ...other }) => ({ ...other, sha: sha.slice(0, 8) }))
+
   return {
     // опционально добавляем HEAD ссылку
-    refs: !headOnBranchTop ? [{ name: 'HEAD', sha: headCommit.sha() }, ...repoRefs] : repoRefs,
-    commits: commits.slice(0, 10),
-    committers,
+    refs: !headOnBranchTop ? [{ name: 'HEAD', sha: headCommit.sha() }, ...STRIPPED_REFS] : STRIPPED_REFS,
+    commits,
+    committers: committers.map(({ name, email }) => ({ name: name.slice(0, 8), email: email.slice(0, 8) })),
     headCommit: (headCommit && headCommit.sha()) || undefined,
     currentBranch,
     isMerging: repo.isMerging(),

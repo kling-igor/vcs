@@ -438,51 +438,51 @@ export class VCS extends Emitter {
     this.disposables = new CompositeDisposable()
 
     // on project open
-    this.disposables.add(
-      disposableEventHandler(this.project, 'project-opened', () => {
-        this.projectDisposables = new CompositeDisposable()
+    // this.disposables.add(
+    //   disposableEventHandler(this.project, 'project-opened', () => {
+    //     this.projectDisposables = new CompositeDisposable()
 
-        this.projectDisposables.add(
-          this.applicationDelegate.onProjectFilePathAdd((sender, path) => {
-            console.log(`[VCS] added ${path.replace(this.project.projectPath, '')}`)
-            this.debouncedStatus()
-          }),
+    //     this.projectDisposables.add(
+    //       this.applicationDelegate.onProjectFilePathAdd((sender, path) => {
+    //         console.log(`[VCS] added ${path.replace(this.project.projectPath, '')}`)
+    //         this.debouncedStatus()
+    //       }),
 
-          this.applicationDelegate.onProjectFilePathRemove((sender, path) => {
-            const relativePath = path.replace(this.project.projectPath, '')
-            console.log(`[VCS] removed ${relativePath}`)
-            // this.fileTreeView.remove(relativePath)
-            this.debouncedStatus()
-          }),
+    //       this.applicationDelegate.onProjectFilePathRemove((sender, path) => {
+    //         const relativePath = path.replace(this.project.projectPath, '')
+    //         console.log(`[VCS] removed ${relativePath}`)
+    //         // this.fileTreeView.remove(relativePath)
+    //         this.debouncedStatus()
+    //       }),
 
-          this.applicationDelegate.onProjectFilePathRename((sender, src, dst) => {
-            console.log(
-              `[VCS] renaming ${src.replace(this.project.projectPath, '')} to ${dst.replace(
-                this.project.projectPath,
-                ''
-              )}`
-            )
-            this.debouncedStatus()
-            // this.fileTreeView.rename(
-            //   src.replace(vision.project.projectPath, ''),
-            //   dst.replace(vision.project.projectPath, '')
-            // )
-          }),
+    //       this.applicationDelegate.onProjectFilePathRename((sender, src, dst) => {
+    //         console.log(
+    //           `[VCS] renaming ${src.replace(this.project.projectPath, '')} to ${dst.replace(
+    //             this.project.projectPath,
+    //             ''
+    //           )}`
+    //         )
+    //         this.debouncedStatus()
+    //         // this.fileTreeView.rename(
+    //         //   src.replace(vision.project.projectPath, ''),
+    //         //   dst.replace(vision.project.projectPath, '')
+    //         // )
+    //       }),
 
-          this.applicationDelegate.onProjectFilePathChange((sender, path) => {
-            console.log(`[VCS] changed outside of IDE ${path.replace(this.project.projectPath, '')}`)
-            this.debouncedStatus()
-          })
-        )
-      }),
+    //       this.applicationDelegate.onProjectFilePathChange((sender, path) => {
+    //         console.log(`[VCS] changed outside of IDE ${path.replace(this.project.projectPath, '')}`)
+    //         this.debouncedStatus()
+    //       })
+    //     )
+    //   }),
 
-      disposableEventHandler(this.project, 'project-closed', () => {
-        if (this.projectDisposables) {
-          this.projectDisposables.dispose()
-          this.projectDisposables = null
-        }
-      })
-    )
+    //   disposableEventHandler(this.project, 'project-closed', () => {
+    //     if (this.projectDisposables) {
+    //       this.projectDisposables.dispose()
+    //       this.projectDisposables = null
+    //     }
+    //   })
+    // )
 
     this.debouncedStatus()
   }

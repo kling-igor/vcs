@@ -138,10 +138,12 @@ export async function getReferences(repo) {
               sha: commit.toString()
             })
           } else {
-            repoRefs.push({
-              name: refName,
-              sha: reference.target().toString()
-            })
+            if (!refName.includes('refs/stash')) {
+              repoRefs.push({
+                name: refName,
+                sha: reference.target().toString()
+              })
+            }
           }
         } else if (reference.isSymbolic()) {
           console.log('Symbolic reference:', refName, reference.symbolicTarget().toString())
