@@ -24,22 +24,63 @@ import { openRepository, log } from './gitops'
     await setImmediatePromise()
 
     console.log(`SENDING ${refs.length} REFS...`)
-    for (const ref of refs) {
-      process.send({ ref })
-      await setImmediatePromise()
-    }
+    // for (const ref of refs) {
+    //   process.send({ ref })
+    //   await setImmediatePromise()
+    // }
+
+    await new Promise(resolve => {
+      let counter = 0
+      const handler = setInterval(() => {
+        console.log(counter)
+        process.send({ ref: refs[counter] })
+        counter += 1
+        if (counter >= refs.length) {
+          console.log('REFS SENT')
+          clearInterval(handler)
+          resolve()
+        }
+      }, 0)
+    })
 
     console.log(`SENDING ${committers.length} COMMITTERS...`)
-    for (const committer of committers) {
-      process.send({ committer })
-      await setImmediatePromise()
-    }
+    // for (const committer of committers) {
+    //   process.send({ committer })
+    //   await setImmediatePromise()
+    // }
+
+    await new Promise(resolve => {
+      let counter = 0
+      const handler = setInterval(() => {
+        console.log(counter)
+        process.send({ committer: committers[counter] })
+        counter += 1
+        if (counter >= committers.length) {
+          console.log('COMMITTERS SENT')
+          clearInterval(handler)
+          resolve()
+        }
+      }, 0)
+    })
 
     console.log(`SENDING  ${commits.length} COMMITS...`)
-    for (const commit of commits.slice(0, 2000)) {
-      process.send({ commit })
-      await setImmediatePromise()
-    }
+    // for (const commit of commits.slice(0, 2000)) {
+    //   process.send({ commit })
+    //   await setImmediatePromise()
+    // }
+
+    await new Promise(resolve => {
+      let counter = 0
+      const handler = setInterval(() => {
+        process.send({ commits: commits[counter] })
+        counter += 1
+        if (counter >= commits.length) {
+          console.log('COMMITS SENT')
+          clearInterval(handler)
+          resolve()
+        }
+      }, 10)
+    })
 
     console.log('WORKER SENT ALL DATA')
     process.send('DONE')

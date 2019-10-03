@@ -385,13 +385,19 @@ answerRenderer('repository:log', async (browserWindow, projectPath) => {
         } else if (commit) {
           if (!gitLogResult) throw new Error('invalid log sequence - got commit info before main body')
 
+          console.log('got commit')
+
           gitLogResult.commits.push(commit)
         } else if (committer) {
           if (!gitLogResult) throw new Error('invalid log sequence - got committer info before main body')
 
+          console.log('got committer')
+
           gitLogResult.committers.push(committer)
         } else if (ref) {
           if (!gitLogResult) throw new Error('invalid log sequence - got ref info before main body')
+
+          console.log('got ref')
 
           gitLogResult.refs.push(ref)
         }
