@@ -146,9 +146,9 @@ export async function log(repo) {
     return // nothing to return
   }
 
-  let GUARD = 22
+  let maxOffset = 0
 
-  while (oid && GUARD-- > 0) {
+  while (oid) {
     let commit
     try {
       commit = await repo.getCommit(oid)
@@ -163,6 +163,8 @@ export async function log(repo) {
 
     const branch = getBranch(sha)
     const offset = reserve.indexOf(branch)
+
+    maxOffset = Math.max(maxOffset, offset)
 
     let routes = []
 
@@ -214,8 +216,8 @@ export async function log(repo) {
     // delete branches[sha]
 
     let message = commit.summary()
-    if (message.length > 20) {
-      message = message.slice(0, 20) + '\u2026'
+    if (message.length > 80) {
+      message = message.slice(0, 79) + '\u2026'
     }
 
     const record = {
@@ -228,9 +230,6 @@ export async function log(repo) {
       branch,
       routes
     }
-
-    console.log(`----------${GUARD}----------`)
-    console.log(record)
 
     commits.push(record)
 
@@ -254,21 +253,14 @@ export async function log(repo) {
   const headOnBranchTop =
     headCommit && repoRefs.find(({ sha, name }) => sha === headCommit.sha() && !name.includes('refs/tags/'))
 
-  console.log('RETURN GITLOG RESULT')
-
-  console.log('COMMITS:', commits.length)
-  console.log('COMMITERS:', committers.length)
-  console.log('REFS:', repoRefs.length)
-
-  const STRIPPED_REFS = repoRefs.map(({ sha, ...other }) => ({ ...other, sha: sha.slice(0, 8) }))
-
   return {
     // опционально добавляем HEAD ссылку
-    refs: !headOnBranchTop ? [{ name: 'HEAD', sha: headCommit.sha() }, ...STRIPPED_REFS] : STRIPPED_REFS,
+    refs: !headOnBranchTop ? [{ name: 'HEAD', sha: headCommit.sha().slice(0, 8) }, ...repoRefs] : repoRefs,
     commits,
-    committers: committers.map(({ name, email }) => ({ name: name.slice(0, 8), email: email.slice(0, 8) })),
-    headCommit: (headCommit && headCommit.sha()) || undefined,
+    committers,
+    headCommit: (headCommit && headCommit.sha().slice(0, 8)) || undefined,
     currentBranch,
+    maxOffset, // нужно чтобы знать максимальную ширину Canvas
     isMerging: repo.isMerging(),
     isRebasing: repo.isRebasing(),
     hasConflicts

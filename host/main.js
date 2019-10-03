@@ -67,7 +67,9 @@ let user
 let remotes = []
 
 let gitOpsWorker = null
-// let gitOpsDisposable
+let gitLogWorker = null
+
+let gitLogResult = null
 
 app.on('ready', async () => {
   const window = new BrowserWindow({
@@ -343,30 +345,74 @@ answerRenderer('commit:conflictedfile-diff', async (browserWindow, filePath) => 
   }
 })
 
+// получение информации о коммите для отображения в списке
+answerRenderer('commit:digest-info', async (browserWindow, startIndex, endIndex) => {
+  return gitLogResult.commits.slice(startIndex, endIndex)
+})
+
 answerRenderer('repository:log', async (browserWindow, projectPath) => {
   checkRepo()
 
-  if (gitOpsWorker) {
-    gitOpsWorker.kill('SIGKILL')
-    gitOpsWorker = null
+  if (gitLogWorker) {
+    gitLogWorker.kill('SIGKILL')
+    gitLogWorker = null
   }
 
-  gitOpsWorker = fork(join(__dirname, 'gitops-worker.js'), ['gitlog', projectPath])
+  gitLogWorker = fork(join(__dirname, 'gitlog-worker.js'), [projectPath])
+
+  // результат gitlog будет храниться в main
+
+  gitLogResult = null
 
   return await new Promise(resolve => {
-    gitOpsWorker.once('message', body => {
-      console.log('GOT RESPONSE FROM WORKER')
+    gitLogWorker.on('message', body => {
+      if (body === 'DONE') {
+        if (!gitLogResult) throw new Error('invalid log sequence - has not response body')
 
-      const { error, log } = body
-      if (error) {
-        console.log('ERR:', e)
+        const { commits, ...other } = gitLogResult
+
+        resolve({ log: { ...other, commitsCount: commits.length } })
       } else {
-        console.log('LOG:', log.commits.length)
-      }
+        const { error, log, commit, ref, committer, ...other } = body
 
-      resolve(body)
+        if (error) {
+          console.log('ERROR:', error)
+          throw new Error(error)
+        }
+
+        if (log) {
+          gitLogResult = log
+        } else if (commit) {
+          if (!gitLogResult) throw new Error('invalid log sequence - got commit info before main body')
+
+          gitLogResult.commits.push(commit)
+        } else if (committer) {
+          if (!gitLogResult) throw new Error('invalid log sequence - got committer info before main body')
+
+          gitLogResult.committers.push(committer)
+        } else if (ref) {
+          if (!gitLogResult) throw new Error('invalid log sequence - got ref info before main body')
+
+          gitLogResult.refs.push(ref)
+        }
+      }
     })
   })
+
+  // return await new Promise(resolve => {
+  //   gitOpsWorker.once('message', body => {
+  //     console.log('GOT RESPONSE FROM WORKER')
+
+  //     const { error, log } = body
+  //     if (error) {
+  //       console.log('ERR:', e)
+  //     } else {
+  //       console.log('LOG:', log.commits.length)
+  //     }
+
+  //     resolve(body)
+  //   })
+  // })
 })
 
 answerRenderer('repository:fetch', async (browserWindow, projectPath, remoteName, userName, password) => {

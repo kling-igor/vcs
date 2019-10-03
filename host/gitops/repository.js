@@ -128,7 +128,7 @@ export async function getReferences(repo) {
       try {
         const reference = await repo.getReference(refName)
         if (reference.isConcrete()) {
-          console.log('Concrete reference:', refName, reference.target().toString())
+          // console.log('Concrete reference:', refName, reference.target().toString())
 
           if (reference.isTag()) {
             const targetRef = await reference.peel(nodegit.Object.TYPE.COMMIT)
@@ -146,7 +146,7 @@ export async function getReferences(repo) {
             }
           }
         } else if (reference.isSymbolic()) {
-          console.log('Symbolic reference:', refName, reference.symbolicTarget().toString())
+          // console.log('Symbolic reference:', refName, reference.symbolicTarget().toString())
         }
       } catch (e) {
         console.log('UNABLE TO GET REFERENCE:', refName, e)

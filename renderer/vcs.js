@@ -78,12 +78,13 @@ export class VCS extends Emitter {
   @observable.ref previousCommits = []
 
   // git tree
-  @observable.ref commits = []
+  @observable commitsCount = 0
   @observable.ref committers = []
   @observable.ref heads = []
   @observable.ref remoteHeads = []
   @observable.ref tags = []
   @observable.ref remotes = []
+  @observable maxOffset = 0
 
   @observable headCommit = null
 
@@ -491,21 +492,27 @@ export class VCS extends Emitter {
   async getLog() {
     this.isProcessingGitLog = true
 
-    const { log, error } = await callMain('repository:log', this.project.projectPath)
+    let log
+    let error
 
-    console.log('GOT RESULT!!!')
+    try {
+      ;({ log, error } = await callMain('repository:log', this.project.projectPath))
+
+      if (error) {
+        console.log('GITLOG ERROR:', error)
+        return
+      }
+    } catch (e) {
+      console.log('repository:log ERROR:', e)
+    }
 
     this.isProcessingGitLog = false
 
-    if (error) {
-      console.log('GITLOG ERROR:', error)
-      return
-    }
-
     const {
-      commits = [],
+      commitsCount = 0,
       committers = [],
       refs = [],
+      maxOffset = 0,
       headCommit,
       currentBranch,
       isMerging = false,
@@ -535,9 +542,10 @@ export class VCS extends Emitter {
     )
 
     transaction(() => {
-      this.commits = commits
+      this.commitsCount = commitsCount
       this.committers = committers
       this.heads = heads
+      this.maxOffset = maxOffset
       this.remoteHeads = remoteHeads
       this.tags = tags
       this.headCommit = headCommit
@@ -945,5 +953,10 @@ export class VCS extends Emitter {
   @action.bound
   async init(folder) {
     await callMain('repository:init', folder)
+  }
+
+  @action.bound
+  async getCommits(startIndex, endIndex) {
+    return callMain('commit:digest-info', startIndex, endIndex)
   }
 }

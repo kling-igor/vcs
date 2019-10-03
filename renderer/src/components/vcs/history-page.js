@@ -22,9 +22,11 @@ class HistoryPage extends Component {
     const lowerSize = +this.state.layout[1] / 100
 
     const {
-      commits,
+      getCommits,
+      commitsCount,
       committers,
       heads,
+      maxOffset,
       remoteHeads,
       tags,
       originalFile,
@@ -38,9 +40,11 @@ class HistoryPage extends Component {
       <SplitPane split="horizontal" allowResize resizersSize={0} onResizeEnd={this.setLayout}>
         <Pane size={upperSize} minSize="50px" maxSize="100%">
           <History
-            commits={commits}
+            getCommits={getCommits}
+            commitsCount={commitsCount}
             committers={committers}
             heads={heads}
+            maxOffset={maxOffset}
             remoteHeads={remoteHeads}
             tags={tags}
             onCommitSelect={onCommitSelect}
