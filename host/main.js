@@ -365,42 +365,44 @@ answerRenderer('repository:log', async (browserWindow, projectPath) => {
   gitLogResult = null
 
   return await new Promise(resolve => {
+    gitLogWorker.on('close', () => {
+      if (!gitLogResult) throw new Error('invalid log sequence - has not response body')
+
+      console.log('WORKER CLOSED...')
+
+      const { commits, ...other } = gitLogResult
+
+      resolve({ log: { ...other, commitsCount: commits.length } })
+    })
+
     gitLogWorker.on('message', body => {
-      if (body === 'DONE') {
-        if (!gitLogResult) throw new Error('invalid log sequence - has not response body')
+      const { error, log, commit, ref, committer, ...other } = body
 
-        const { commits, ...other } = gitLogResult
+      if (error) {
+        console.log('ERROR:', error)
+        throw new Error(error)
+      }
 
-        resolve({ log: { ...other, commitsCount: commits.length } })
-      } else {
-        const { error, log, commit, ref, committer, ...other } = body
+      if (log) {
+        gitLogResult = log
+      } else if (commit) {
+        if (!gitLogResult) throw new Error('invalid log sequence - got commit info before main body')
 
-        if (error) {
-          console.log('ERROR:', error)
-          throw new Error(error)
-        }
+        console.log('got commit')
 
-        if (log) {
-          gitLogResult = log
-        } else if (commit) {
-          if (!gitLogResult) throw new Error('invalid log sequence - got commit info before main body')
+        gitLogResult.commits.push(commit)
+      } else if (committer) {
+        if (!gitLogResult) throw new Error('invalid log sequence - got committer info before main body')
 
-          console.log('got commit')
+        console.log('got committer')
 
-          gitLogResult.commits.push(commit)
-        } else if (committer) {
-          if (!gitLogResult) throw new Error('invalid log sequence - got committer info before main body')
+        gitLogResult.committers.push(committer)
+      } else if (ref) {
+        if (!gitLogResult) throw new Error('invalid log sequence - got ref info before main body')
 
-          console.log('got committer')
+        console.log('got ref')
 
-          gitLogResult.committers.push(committer)
-        } else if (ref) {
-          if (!gitLogResult) throw new Error('invalid log sequence - got ref info before main body')
-
-          console.log('got ref')
-
-          gitLogResult.refs.push(ref)
-        }
+        gitLogResult.refs.push(ref)
       }
     })
   })

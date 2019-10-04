@@ -21,7 +21,7 @@ import { openRepository, log } from './gitops'
     console.log('SENDING MAIN BLOCK...')
     process.send({ log: { ...other, commits: [], refs: [], committers: [] } })
 
-    await setImmediatePromise()
+    // await setImmediatePromise()
 
     console.log(`SENDING ${refs.length} REFS...`)
     // for (const ref of refs) {
@@ -70,6 +70,7 @@ import { openRepository, log } from './gitops'
     // }
 
     await new Promise(resolve => {
+      console.log('DEBUG!!')
       let counter = 0
       const handler = setInterval(() => {
         process.send({ commits: commits[counter] })
@@ -83,10 +84,10 @@ import { openRepository, log } from './gitops'
     })
 
     console.log('WORKER SENT ALL DATA')
-    process.send('DONE')
   } catch (e) {
+    console.log('WORKER ERROR:', e)
     process.send({ error: e.message })
   }
 
-  process.exit(0)
+  // process.exit(0)
 })()
