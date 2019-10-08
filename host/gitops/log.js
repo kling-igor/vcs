@@ -190,30 +190,32 @@ export async function log(repo) {
     } else if (parents.length === 2) {
       if (branches[parent] == null) {
         branches[parent] = branch
+
+        routes = [...routes, ...fillRoutes(I, I, reserve)]
       } else {
         const parentOffset = reserve.indexOf(branches[parent])
         if (parentOffset !== offset) {
-          // загибаем
+          // загибаем ветку в сторону родителя
           routes = [...routes, [offset, parentOffset, branch]]
-          reserve.splice(offset, 1)
 
-          // значение offset далее невалидно, т.к. соответствующее значение удалено из списка
-          for (const i of Object.keys(branches)) {
-            if (branches[i] >= offset) {
-              branches[i] -= 1
-            }
-          }
+          routes = [
+            ...routes,
+            // все возможные ветки правее текущей загибаем влево
+            ...fillRoutes(i => i + offset + 1, i => i + offset + 1 - 1, reserve.slice(offset + 1)),
+            // все возможные ветки левее текущей продолжают идти параллельно
+            ...fillRoutes(I, I, reserve.slice(0, offset))
+          ]
+
+          reserve.splice(offset, 1)
         }
       }
-
-      routes = [...routes, ...fillRoutes(I, I, reserve)]
 
       const otherBranch = getBranch(otherParent)
       routes = [...routes, [offset, reserve.indexOf(otherBranch), otherBranch]]
     }
 
     // удаляем ветку из кеша (на нее никто не ссылается больше)
-    // delete branches[sha]
+    delete branches[sha]
 
     let message = commit.summary()
     if (message.length > 80) {
