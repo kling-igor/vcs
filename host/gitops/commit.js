@@ -29,7 +29,8 @@ export async function commit(repo, message, name = 'User', email = 'no email', m
   if (mergingCommitSha) {
     repo.stateCleanup()
     await index.conflictCleanup()
-    other = await repo.getCommit(mergingCommitSha)
+    const fullSHA = (await nodegit.Commit.lookupPrefix(repo, nodegit.Oid.fromString(mergingCommitSha), 8)).sha()
+    other = await repo.getCommit(fullSHA)
   }
 
   const parents = [parent, other].filter(item => !!item)
@@ -51,7 +52,9 @@ export async function commit(repo, message, name = 'User', email = 'no email', m
  * @returns {{Object}[]}
  */
 export async function commitInfo(repo, sha) {
-  const oid = nodegit.Oid.fromString(sha)
+  // странное поведение commit.getDiff() если брать commit как результат nodegit.Commit.lookupPrefix
+  const fullSHA = (await nodegit.Commit.lookupPrefix(repo, nodegit.Oid.fromString(sha), 8)).sha()
+  const oid = nodegit.Oid.fromString(fullSHA)
   try {
     const commit = await repo.getCommit(oid)
 
@@ -112,7 +115,7 @@ export async function commitInfo(repo, sha) {
     const repoRefs = await getReferences(repo)
 
     const labels = repoRefs
-      .filter(item => item.sha === sha)
+      .filter(item => item.sha === commit.sha())
       .map(({ name }) => name.replace('refs/tags/', '').replace('refs/remotes/', ''))
 
     return {
@@ -154,7 +157,8 @@ export async function headCommit(repo) {
  */
 export async function checkoutToCommit(repo, sha, discardLocalChanges) {
   console.log('checkoutToCommit:', sha, discardLocalChanges)
-  const oid = nodegit.Oid.fromString(sha)
+  const fullSHA = (await nodegit.Commit.lookupPrefix(repo, nodegit.Oid.fromString(sha), 8)).sha()
+  const oid = nodegit.Oid.fromString(fullSHA)
   const commit = await repo.getCommit(oid)
   await nodegit.Checkout.tree(repo, commit, {
     checkoutStrategy: discardLocalChanges ? nodegit.Checkout.STRATEGY.FORCE : nodegit.Checkout.STRATEGY.SAFE
@@ -163,7 +167,8 @@ export async function checkoutToCommit(repo, sha, discardLocalChanges) {
 }
 
 async function resetToCommit(repo, sha, kind, options = {}) {
-  const oid = nodegit.Oid.fromString(sha)
+  const fullSHA = (await nodegit.Commit.lookupPrefix(repo, nodegit.Oid.fromString(sha), 8)).sha()
+  const oid = nodegit.Oid.fromString(fullSHA)
   const commit = await repo.getCommit(oid)
   return nodegit.Reset.reset(repo, commit, kind, options)
 }
@@ -203,7 +208,8 @@ export async function discardLocalChanges(repo, paths) {
 }
 
 export async function revertCommit(repo, sha) {
-  const oid = nodegit.Oid.fromString(sha)
+  const fullSHA = (await nodegit.Commit.lookupPrefix(repo, nodegit.Oid.fromString(sha), 8)).sha()
+  const oid = nodegit.Oid.fromString(fullSHA)
   const commit = await repo.getCommit(oid)
 
   const headCommit = await repo.getHeadCommit()

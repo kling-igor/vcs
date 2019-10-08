@@ -118,9 +118,9 @@ export async function log(repo) {
     }
 
     commits.push({
-      sha: null,
+      // sha: undefined,
       message: 'Uncommitted changes',
-      committer: null,
+      // committer: undefined,
       date: Date.now(),
       offset,
       branch,
@@ -133,7 +133,9 @@ export async function log(repo) {
 
   const revWalk = repo.createRevWalk()
   revWalk.sorting(nodegit.Revwalk.SORT.TIME)
-  revWalk.pushGlob('refs/*') // чтобы захватить все рефернесы (иначе не все попадет)
+  revWalk.pushGlob('refs/tags/*') // чтобы захватить все рефернесы (иначе не все попадет)
+  revWalk.pushGlob('refs/heads/*')
+  revWalk.pushGlob('refs/remotes/*')
 
   let oid
 
@@ -143,6 +145,8 @@ export async function log(repo) {
     console.log('REVWALK ERROR - POSSIBLE REPO IS EMPTY')
     return // nothing to return
   }
+
+  let maxOffset = 0
 
   while (oid) {
     let commit
@@ -159,6 +163,8 @@ export async function log(repo) {
 
     const branch = getBranch(sha)
     const offset = reserve.indexOf(branch)
+
+    maxOffset = Math.max(maxOffset, offset)
 
     let routes = []
 
@@ -184,23 +190,25 @@ export async function log(repo) {
     } else if (parents.length === 2) {
       if (branches[parent] == null) {
         branches[parent] = branch
+
+        routes = [...routes, ...fillRoutes(I, I, reserve)]
       } else {
         const parentOffset = reserve.indexOf(branches[parent])
         if (parentOffset !== offset) {
-          // загибаем
+          // загибаем ветку в сторону родителя
           routes = [...routes, [offset, parentOffset, branch]]
-          reserve.splice(offset, 1)
 
-          // значение offset далее невалидно, т.к. соответствующее значение удалено из списка
-          for (const i of Object.keys(branches)) {
-            if (branches[i] >= offset) {
-              branches[i] -= 1
-            }
-          }
+          routes = [
+            ...routes,
+            // все возможные ветки правее текущей загибаем влево
+            ...fillRoutes(i => i + offset + 1, i => i + offset + 1 - 1, reserve.slice(offset + 1)),
+            // все возможные ветки левее текущей продолжают идти параллельно
+            ...fillRoutes(I, I, reserve.slice(0, offset))
+          ]
+
+          reserve.splice(offset, 1)
         }
       }
-
-      routes = [...routes, ...fillRoutes(I, I, reserve)]
 
       const otherBranch = getBranch(otherParent)
       routes = [...routes, [offset, reserve.indexOf(otherBranch), otherBranch]]
@@ -214,7 +222,7 @@ export async function log(repo) {
       message = message.slice(0, 79) + '\u2026'
     }
 
-    commits.push({
+    const record = {
       sha,
       isHead: sha === headCommit.sha() && workDirStatus.length === 0,
       message,
@@ -223,7 +231,9 @@ export async function log(repo) {
       offset,
       branch,
       routes
-    })
+    }
+
+    commits.push(record)
 
     // first ever commit
     if (parents.length === 0) {
@@ -247,11 +257,12 @@ export async function log(repo) {
 
   return {
     // опционально добавляем HEAD ссылку
-    refs: !headOnBranchTop ? [{ name: 'HEAD', sha: headCommit.sha() }, ...repoRefs] : repoRefs,
+    refs: !headOnBranchTop ? [{ name: 'HEAD', sha: headCommit.sha().slice(0, 8) }, ...repoRefs] : repoRefs,
     commits,
     committers,
-    headCommit: (headCommit && headCommit.sha()) || undefined,
+    headCommit: (headCommit && headCommit.sha().slice(0, 8)) || undefined,
     currentBranch,
+    maxOffset, // нужно чтобы знать максимальную ширину Canvas
     isMerging: repo.isMerging(),
     isRebasing: repo.isRebasing(),
     hasConflicts

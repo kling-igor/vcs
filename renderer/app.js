@@ -9,8 +9,8 @@ import { observer } from 'mobx-react'
 
 import SplitPane, { Pane } from './src/components/react-split'
 
-// import theme from './src/themes/ui/dark'
-import theme from './src/themes/ui/light'
+import theme from './src/themes/ui/dark'
+// import theme from './src/themes/ui/light'
 
 import { Project } from './project'
 import { ApplicationDelegate } from './application-delegate'
@@ -249,8 +249,10 @@ export default class App extends Component {
     // ЭТО ДЕЛАТЬ В ОТВЕТ НА СОБЫТИЕ ОТКРЫТИЯ ПРОЕКТА
     replacePanes(vcs.mode)
 
-    await vcs.open(resolve(__dirname, '../test-repo'))
-    await project.open({ projectPath: resolve(__dirname, '../test-repo') })
+    const PROJECT_PATH = '/Users/user/Projects/client' //resolve(__dirname, '../test-repo')
+
+    await vcs.open(PROJECT_PATH)
+    await project.open({ projectPath: PROJECT_PATH })
 
     vcs.on('operation:begin', operation => {
       dock.setPageProgress('vcs', true)

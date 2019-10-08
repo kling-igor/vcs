@@ -78,12 +78,13 @@ export class VCS extends Emitter {
   @observable.ref previousCommits = []
 
   // git tree
-  @observable.ref commits = []
+  @observable commitsCount = 0
   @observable.ref committers = []
   @observable.ref heads = []
   @observable.ref remoteHeads = []
   @observable.ref tags = []
   @observable.ref remotes = []
+  @observable maxOffset = 0
 
   @observable headCommit = null
 
@@ -115,7 +116,10 @@ export class VCS extends Emitter {
 
     this.debouncedStatus = _.debounce(this.status, 1000)
 
-    applicationDelegate.onGitLog(this.onGitLog)
+    // applicationDelegate.onGitLog(this.onGitLog)
+    // applicationDelegate.onFetch(this.onFetch)
+    // applicationDelegate.onPush(this.onPush)
+    // applicationDelegate.onPull(this.onPull)
 
     this.on(
       'operation:begin',
@@ -435,51 +439,51 @@ export class VCS extends Emitter {
     this.disposables = new CompositeDisposable()
 
     // on project open
-    this.disposables.add(
-      disposableEventHandler(this.project, 'project-opened', () => {
-        this.projectDisposables = new CompositeDisposable()
+    // this.disposables.add(
+    //   disposableEventHandler(this.project, 'project-opened', () => {
+    //     this.projectDisposables = new CompositeDisposable()
 
-        this.projectDisposables.add(
-          this.applicationDelegate.onProjectFilePathAdd((sender, path) => {
-            console.log(`[VCS] added ${path.replace(this.project.projectPath, '')}`)
-            this.debouncedStatus()
-          }),
+    //     this.projectDisposables.add(
+    //       this.applicationDelegate.onProjectFilePathAdd((sender, path) => {
+    //         console.log(`[VCS] added ${path.replace(this.project.projectPath, '')}`)
+    //         this.debouncedStatus()
+    //       }),
 
-          this.applicationDelegate.onProjectFilePathRemove((sender, path) => {
-            const relativePath = path.replace(this.project.projectPath, '')
-            console.log(`[VCS] removed ${relativePath}`)
-            // this.fileTreeView.remove(relativePath)
-            this.debouncedStatus()
-          }),
+    //       this.applicationDelegate.onProjectFilePathRemove((sender, path) => {
+    //         const relativePath = path.replace(this.project.projectPath, '')
+    //         console.log(`[VCS] removed ${relativePath}`)
+    //         // this.fileTreeView.remove(relativePath)
+    //         this.debouncedStatus()
+    //       }),
 
-          this.applicationDelegate.onProjectFilePathRename((sender, src, dst) => {
-            console.log(
-              `[VCS] renaming ${src.replace(this.project.projectPath, '')} to ${dst.replace(
-                this.project.projectPath,
-                ''
-              )}`
-            )
-            this.debouncedStatus()
-            // this.fileTreeView.rename(
-            //   src.replace(vision.project.projectPath, ''),
-            //   dst.replace(vision.project.projectPath, '')
-            // )
-          }),
+    //       this.applicationDelegate.onProjectFilePathRename((sender, src, dst) => {
+    //         console.log(
+    //           `[VCS] renaming ${src.replace(this.project.projectPath, '')} to ${dst.replace(
+    //             this.project.projectPath,
+    //             ''
+    //           )}`
+    //         )
+    //         this.debouncedStatus()
+    //         // this.fileTreeView.rename(
+    //         //   src.replace(vision.project.projectPath, ''),
+    //         //   dst.replace(vision.project.projectPath, '')
+    //         // )
+    //       }),
 
-          this.applicationDelegate.onProjectFilePathChange((sender, path) => {
-            console.log(`[VCS] changed outside of IDE ${path.replace(this.project.projectPath, '')}`)
-            this.debouncedStatus()
-          })
-        )
-      }),
+    //       this.applicationDelegate.onProjectFilePathChange((sender, path) => {
+    //         console.log(`[VCS] changed outside of IDE ${path.replace(this.project.projectPath, '')}`)
+    //         this.debouncedStatus()
+    //       })
+    //     )
+    //   }),
 
-      disposableEventHandler(this.project, 'project-closed', () => {
-        if (this.projectDisposables) {
-          this.projectDisposables.dispose()
-          this.projectDisposables = null
-        }
-      })
-    )
+    //   disposableEventHandler(this.project, 'project-closed', () => {
+    //     if (this.projectDisposables) {
+    //       this.projectDisposables.dispose()
+    //       this.projectDisposables = null
+    //     }
+    //   })
+    // )
 
     this.debouncedStatus()
   }
@@ -488,26 +492,27 @@ export class VCS extends Emitter {
   async getLog() {
     this.isProcessingGitLog = true
 
-    this.correlationMarker = 'DEADBEEF'
-    await callMain('repository:log', this.correlationMarker, this.project.projectPath)
-  }
+    let log
+    let error
 
-  // реакция на получение результатов gitlog
-  @action.bound
-  onGitLog(sender, { log, error }) {
-    this.isProcessingGitLog = false
+    try {
+      ;({ log, error } = await callMain('repository:log', this.project.projectPath))
 
-    this.correlationMarker = null
-
-    if (error) {
-      console.log('GITLOG ERROR:', error)
-      return
+      if (error) {
+        console.log('GITLOG ERROR:', error)
+        return
+      }
+    } catch (e) {
+      console.log('repository:log ERROR:', e)
     }
 
+    this.isProcessingGitLog = false
+
     const {
-      commits = [],
+      commitsCount = 0,
       committers = [],
       refs = [],
+      maxOffset = 0,
       headCommit,
       currentBranch,
       isMerging = false,
@@ -537,9 +542,10 @@ export class VCS extends Emitter {
     )
 
     transaction(() => {
-      this.commits = commits
+      this.commitsCount = commitsCount
       this.committers = committers
       this.heads = heads
+      this.maxOffset = maxOffset
       this.remoteHeads = remoteHeads
       this.tags = tags
       this.headCommit = headCommit
@@ -552,7 +558,7 @@ export class VCS extends Emitter {
 
   @action.bound
   async onCommitSelect(sha) {
-    if (this.commitInfo && this.commitInfo.commit === sha) return
+    if (this.commitInfo && this.commitInfo.commit.slice(0, 8) === sha) return
 
     const commitInfo = await callMain('commit:get-info', sha)
 
@@ -880,7 +886,7 @@ export class VCS extends Emitter {
   @action.bound
   async push(remoteName, branch, userName, password) {
     this.emit('operation:begin', 'push')
-    await callMain('repository:push', remoteName, branch, userName, password)
+    await callMain('repository:push', this.project.projectPath, remoteName, branch, userName, password)
 
     await this.status()
     await this.getLog()
@@ -891,7 +897,7 @@ export class VCS extends Emitter {
   @action.bound
   async fetch(remoteName, userName, password) {
     this.emit('operation:begin', 'fetch')
-    await callMain('repository:fetch', remoteName, userName, password)
+    await callMain('repository:fetch', this.project.projectPath, remoteName, userName, password)
 
     await this.status()
     await this.getLog()
@@ -902,7 +908,8 @@ export class VCS extends Emitter {
   @action.bound
   async pull(remoteName, userName, password) {
     this.emit('operation:begin', 'pull')
-    await this.fetch(remoteName, userName, password)
+
+    await callMain('repository:pull', this.project.projectPath, remoteName, userName, password)
 
     const mergingBranches = this.heads.reduce((acc, item) => {
       const { name, upstream, ahead, behind } = item
@@ -946,5 +953,10 @@ export class VCS extends Emitter {
   @action.bound
   async init(folder) {
     await callMain('repository:init', folder)
+  }
+
+  @action.bound
+  async getCommits(startIndex, endIndex) {
+    return callMain('commit:digest-info', startIndex, endIndex)
   }
 }

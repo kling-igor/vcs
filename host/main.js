@@ -1,9 +1,10 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 const { callRenderer, answerRenderer } = require('./ipc')(ipcMain, BrowserWindow)
-import { fork } from 'child_process'
+import { fork, spawn } from 'child_process'
+import { Writable } from 'stream'
 import { join, resolve } from 'path'
 import { EventEmitter } from 'events'
-import { CompositeDisposable } from 'event-kit'
+import { CompositeDisposable, Disposable } from 'event-kit'
 import { FileSystemOperations } from './file-operations'
 import * as URL from 'url'
 import keytar from 'keytar'
@@ -47,9 +48,9 @@ import {
   headCommit,
   cloneRepository,
   createRepository,
-  pull,
-  push,
-  fetch,
+  // pull,
+  // push,
+  // fetch,
   merge,
   mergeBranches,
   removeConflict,
@@ -67,7 +68,9 @@ let user
 let remotes = []
 
 let gitOpsWorker = null
-let gitOpsCurrentCorrelationMarker = null
+let gitLogWorker = null
+
+let gitLogResult = null
 
 app.on('ready', async () => {
   const window = new BrowserWindow({
@@ -285,37 +288,6 @@ answerRenderer('repository:discard-local-changes', async (browserWindow, project
   // await index.clear()
 })
 
-answerRenderer('repository:fetch', async (browserWindow, remoteName, userName, password) => {
-  checkRepo()
-
-  const remote = await getRemote(repo, remoteName)
-
-  // todo если предоставлены userName, password то сохранить их keytar
-  if (userName && password) {
-    console.log('STORE CREDENTIALS FOR:', remote.url())
-    await keytar.setPassword(remote.url(), userName, password)
-    return fetch(repo, remoteName, userName, password)
-  } else {
-    console.log('REQUEST CREDENTIALS FOR:', remote.url())
-    const [record = {}] = await keytar.findCredentials(remote.url())
-    return fetch(repo, remoteName, record.account, record.password)
-  }
-})
-
-answerRenderer('repository:push', async (browserWindow, remoteName, branch, userName, password) => {
-  checkRepo()
-
-  const remote = await getRemote(repo, remoteName)
-
-  if (userName && password) {
-    await keytar.setPassword(remote.url(), userName, password)
-    return push(repo, remoteName, branch, userName, password)
-  } else {
-    const [record = {}] = await keytar.findCredentials(remote.url())
-    return push(repo, remoteName, branch, record.account, record.password)
-  }
-})
-
 answerRenderer('repository:merge', async (browserWindow, theirSha) => {
   console.log('MERGE WITH:', theirSha)
   checkRepo()
@@ -374,24 +346,172 @@ answerRenderer('commit:conflictedfile-diff', async (browserWindow, filePath) => 
   }
 })
 
-answerRenderer('repository:log', async (browserWindow, correlationMarker, projectPath) => {
+// получение информации о коммите для отображения в списке
+answerRenderer('commit:digest-info', async (browserWindow, startIndex, endIndex) => {
+  return gitLogResult.commits.slice(startIndex, endIndex)
+})
+
+answerRenderer('repository:log', async (browserWindow, projectPath) => {
   checkRepo()
 
-  if (gitOpsWorker /* && gitOpsCurrentCorrelationMarker && gitOpsCurrentCorrelationMarker !== correlationMarker*/) {
+  // результат gitlog будет храниться в main
+
+  console.log('GETTING LOG...')
+
+  gitLogResult = await new Promise((resolve, reject) => {
+    const writer = new (class extends Writable {
+      constructor(opts) {
+        super(opts)
+        this.data = {}
+      }
+
+      _write(chunk, encoding, next) {
+        const str = chunk.toString()
+
+        const splitted = str.split('\n')
+        for (const item of splitted) {
+          try {
+            const trimmed = item.trim()
+            if (trimmed) {
+              const obj = JSON.parse(trimmed)
+
+              const { error, log, commit, ref, committer } = obj
+
+              if (log) {
+                this.data = log
+              } else if (commit) {
+                this.data.commits.push(commit)
+              } else if (committer) {
+                this.data.committers.push(committer)
+              } else if (ref) {
+                this.data.refs.push(ref)
+              } else if (error) {
+                reject(error)
+              }
+            }
+          } catch (e) {
+            console.log('ERR:', e)
+            reject(e)
+          }
+        }
+
+        next()
+      }
+    })()
+
+    gitLogWorker = spawn(process.execPath, [join(__dirname, 'gitlog-worker.js'), projectPath], {
+      stdio: ['inherit', 'inherit', 'inherit', 'pipe']
+    })
+
+    gitLogWorker.once('close', () => {
+      resolve(writer.data)
+    })
+
+    gitLogWorker.once('error', reject)
+
+    gitLogWorker.stdio[3].pipe(writer)
+  })
+
+  const { commits, ...other } = gitLogResult
+  return { log: { ...other, commitsCount: commits.length } }
+})
+
+answerRenderer('repository:fetch', async (browserWindow, projectPath, remoteName, userName, password) => {
+  checkRepo()
+
+  const remote = await getRemote(repo, remoteName)
+
+  let name
+  let pass
+
+  if (userName && password) {
+    await keytar.setPassword(remote.url(), userName, password)
+
+    name = userName
+    pass = password
+  } else {
+    const [record = {}] = await keytar.findCredentials(remote.url())
+
+    name = record.account
+    pass = record.password
+  }
+
+  if (gitOpsWorker) {
+    gitOpsWorker.kill('SIGKILL')
+    gitOpsWorker = null
+  }
+
+  gitOpsWorker = fork(join(__dirname, 'gitops-worker.js'), ['fetch', projectPath, remoteName, name, pass])
+
+  return await new Promise(resolve => {
+    gitOpsWorker.once('message', resolve)
+  })
+})
+
+answerRenderer('repository:push', async (browserWindow, projectPath, remoteName, branch, userName, password) => {
+  checkRepo()
+
+  const remote = await getRemote(repo, remoteName)
+
+  let name
+  let pass
+
+  if (userName && password) {
+    await keytar.setPassword(remote.url(), userName, password)
+
+    name = userName
+    pass = password
+  } else {
+    const [record = {}] = await keytar.findCredentials(remote.url())
+
+    name = record.account
+    pass = record.password
+  }
+
+  if (gitOpsWorker) {
+    gitOpsWorker.kill('SIGKILL')
+    gitOpsWorker = null
+  }
+
+  gitOpsWorker = fork(join(__dirname, 'gitops-worker.js'), ['push', projectPath, remoteName, branch, name, pass])
+
+  return await new Promise(resolve => {
+    gitOpsWorker.once('message', resolve)
+  })
+})
+
+answerRenderer('repository:pull', async (browserWindow, projectPath, remoteName, userName, password) => {
+  checkRepo()
+
+  const remote = await getRemote(repo, remoteName)
+
+  let name
+  let pass
+
+  if (userName && password) {
+    await keytar.setPassword(remote.url(), userName, password)
+
+    name = userName
+    pass = password
+  } else {
+    const [record = {}] = await keytar.findCredentials(remote.url())
+
+    name = record.account
+    pass = record.password
+  }
+
+  if (gitOpsWorker) {
     gitOpsWorker.kill('SIGKILL')
     gitOpsWorker = null
   }
 
   if (!gitOpsWorker) {
-    gitOpsCurrentCorrelationMarker = correlationMarker
-    gitOpsWorker = fork(join(__dirname, 'gitops-worker.js'), ['gitlog', projectPath])
+    gitOpsWorker = fork(join(__dirname, 'gitops-worker.js'), ['fetch', projectPath, remoteName, name, pass])
 
-    gitOpsWorker.on('message', result => {
-      browserWindow.webContents.send('repository:log', result)
+    gitOpsWorker.once('message', () => {
+      browserWindow.webContents.send('repository:pull')
     })
   }
-
-  // return log(repo)
 })
 
 answerRenderer('branch:create', async (browserWindow, name, commit) => {
@@ -518,42 +638,37 @@ answerRenderer('remove-file', (browserWindow, path) => {
 })
 
 answerRenderer('open-project', (browserWindow, projectPath) => {
-  return new Promise((resolve, reject) => {
-    fileOperations
-      .openProject(projectPath)
-      .then(notifier => {
-        notifier.on('ready', fileTree => {
-          browserWindow.webContents.send('file-tree:ready', fileTree)
-        })
-
-        notifier.on('path-add', path => {
-          browserWindow.webContents.send('file-tree:path-add', path)
-        })
-
-        notifier.on('path-remove', path => {
-          browserWindow.webContents.send('file-tree:path-remove', path)
-        })
-
-        // notifier.on('path-rename', (src, dst) => {
-        //   browserWindow.webContents.send('file-tree:path-rename', src, dst)
-        // })
-
-        notifier.on('path-rename', ([source, destination]) => {
-          browserWindow.webContents.send('file-tree:path-rename', source, destination)
-        })
-
-        notifier.on('path-change', path => {
-          browserWindow.webContents.send('file-tree:path-change', path)
-        })
-
-        resolve()
-      })
-      .catch(reject)
-  })
+  // return Promise.resolve()
+  // return new Promise((resolve, reject) => {
+  //   fileOperations
+  //     .openProject(projectPath)
+  //     .then(notifier => {
+  //       notifier.on('ready', fileTree => {
+  //         browserWindow.webContents.send('file-tree:ready', fileTree)
+  //       })
+  //       notifier.on('path-add', path => {
+  //         browserWindow.webContents.send('file-tree:path-add', path)
+  //       })
+  //       notifier.on('path-remove', path => {
+  //         browserWindow.webContents.send('file-tree:path-remove', path)
+  //       })
+  //       // notifier.on('path-rename', (src, dst) => {
+  //       //   browserWindow.webContents.send('file-tree:path-rename', src, dst)
+  //       // })
+  //       notifier.on('path-rename', ([source, destination]) => {
+  //         browserWindow.webContents.send('file-tree:path-rename', source, destination)
+  //       })
+  //       notifier.on('path-change', path => {
+  //         browserWindow.webContents.send('file-tree:path-change', path)
+  //       })
+  //       resolve()
+  //     })
+  //     .catch(reject)
+  // })
 })
 
 ipcMain.on('close-project', event => {
-  fileOperations.closeProject()
+  // fileOperations.closeProject()
 })
 
 answerRenderer('folder-create', (browserWindow, folderPath) => {

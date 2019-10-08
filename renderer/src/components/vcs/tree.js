@@ -1,12 +1,9 @@
-import React, { memo, useRef, useEffect } from 'react'
+import React, { memo, useRef, useEffect, useMemo } from 'react'
 import styled from 'styled-components'
 import { ROW_HEIGHT, X_STEP, Y_STEP } from './constants'
 
 const LINE_WIDTH = 2
 const COMMIT_RADIUS = 5
-
-// TODO: высчитывать динамически в зависимости от максимального кол-ва || веток (процессинг только это покажет)
-const CANVAS_WIDTH = 500
 
 const NO_BRANCH_COLOR = '#a0a5a9'
 
@@ -83,11 +80,13 @@ const drawRoute = (ctx, topOffset, route, commit, yIndex) => {
 
 const drawGraph = (ctx, topOffset, nodes) => {
   nodes.forEach((node, yIndex) => {
-    // Draw the routes for this node
-    node.routes.forEach(route => drawRoute(ctx, topOffset, route, node, yIndex))
+    if (node) {
+      // Draw the routes for this node
+      node.routes.forEach(route => drawRoute(ctx, topOffset, route, node, yIndex))
 
-    // Draw the commit on top of the routes
-    drawCommit(ctx, topOffset, node, yIndex)
+      // Draw the commit on top of the routes
+      drawCommit(ctx, topOffset, node, yIndex)
+    }
   })
 }
 
@@ -97,24 +96,24 @@ const drawGraph = (ctx, topOffset, nodes) => {
  * @param {Number} height - видимая высота рисования
  * @param {Array} commits - данные для отображения
  */
-export const Tree = memo(({ scrollTop, height, commits }) => {
+export const Tree = memo(({ scrollTop, height, maxOffset, commits, commitsCount }) => {
   const canvasRef = useRef(null)
-  let topOffset = 0
+
+  const skip = useMemo(() => Math.floor(scrollTop / ROW_HEIGHT), [scrollTop])
+  const count = useMemo(() => Math.floor(height / ROW_HEIGHT) + 2, [height])
+  const topOffset = useMemo(() => -scrollTop % ROW_HEIGHT, [scrollTop])
+
+  const canvasWidth = useMemo(() => (1 + maxOffset) * X_STEP, [maxOffset])
+
   useEffect(() => {
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
-    ctx.clearRect(0, 0, CANVAS_WIDTH, height)
-
-    const skip = Math.floor(scrollTop / ROW_HEIGHT)
-    const count = Math.floor(height / ROW_HEIGHT) + 2
-    topOffset = -scrollTop % ROW_HEIGHT
+    ctx.clearRect(0, 0, canvasWidth, height)
 
     const drawingCommits = commits.slice(skip, skip + count)
 
-    drawGraph(ctx, topOffset, drawingCommits) // тут имеет смысл передавать смещение и высчитанное кол-ов отображаемых коммитов чтобы не процессить ненужные
-    // имеем смысл также не процессить каждый раз а только в тот момент когда в этом есть необходимость (поменялась структура дерева)
-  }, [scrollTop, height, commits])
+    drawGraph(ctx, topOffset, drawingCommits)
+  }, [height, skip, count, topOffset, commitsCount])
 
-  // ширина может быть высчитанна в результате препроцессинга (для отображаемого диапазона может быть определено максимальное кол-во параллельно идущих веток)
-  return <CanvasStyle ref={canvasRef} width={CANVAS_WIDTH} height={height} />
+  return <CanvasStyle ref={canvasRef} width={canvasWidth} height={height} />
 })

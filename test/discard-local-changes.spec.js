@@ -11,9 +11,9 @@ const nodegit = require('nodegit')
 
 const REPO_DIR = '/tmp/repo'
 
-const FILENAME = './file.txt'
+const FILENAME = 'file.txt'
 
-describe('discard changes spec', () => {
+describe.only('discard changes spec', () => {
   it.only('', async () => {
     await remove(REPO_DIR)
     await mkdirp(REPO_DIR)
@@ -24,15 +24,20 @@ describe('discard changes spec', () => {
     await writeFile(path.resolve(repo.workdir(), FILENAME), 'HELLO WORLD')
     await index.addByPath(FILENAME)
     await index.write()
-    // может в этом проблема ?
-    // let treeOid = await index.writeTree()
 
-    const [file] = await repo.getStatusExt()
+    const [fileStatus1] = await repo.getStatusExt()
 
-    console.log('STATUS:', file.path(), file.status())
+    console.log('AFTER ADD STATUS:', fileStatus1.path(), fileStatus1.status())
 
-    await index.removeByPath(path)
+    expect(deepEql(fileStatus1.status(), ['INDEX_NEW'])).to.be.true
 
-    expect(true).eq(true)
+    await index.removeByPath(FILENAME)
+    await index.write()
+
+    const [fileStatus2] = await repo.getStatusExt()
+
+    console.log('AFTER REMOVE STATUS:', fileStatus2.path(), fileStatus2.status())
+
+    expect(true).to.be.true
   })
 })

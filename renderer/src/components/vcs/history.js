@@ -1,6 +1,6 @@
-import React, { memo, useCallback, useEffect, useRef } from 'react'
+import React, { memo, useCallback, useEffect, useRef, useMemo } from 'react'
 import styled from 'styled-components'
-import { List, AutoSizer, ScrollSync } from 'react-virtualized'
+import { List, AutoSizer, ScrollSync, InfiniteLoader } from 'react-virtualized'
 import moment from 'moment'
 
 import CircularProgress from '@material-ui/core/CircularProgress'
@@ -27,7 +27,7 @@ const RowStyle = styled.div`
       list: { activeSelectionBackground }
     }
   }) => {
-    const oddColor = type === 'light' ? '#e2e2e2' : '#505050'
+    const oddColor = type === 'light' ? '#e2e2e2' : '#272727' //'#505050'
 
     return selected ? '#0098d4' : odd ? oddColor : 'transparent'
   }};
@@ -92,7 +92,7 @@ const BranchIcon = ({ color = '#fff' }) => (
 
 const TextStyle = styled.span`
   margin-left: ${({ offset }) => `${offset}px`};
-  font-size: 12px;
+  font-size: 13px;
   line-height: ${() => `${ROW_HEIGHT}px`};
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -185,9 +185,11 @@ const ProgressRootStyle = styled.div`
 
 export const History = memo(
   ({
-    commits,
+    getCommits,
+    commitsCount,
     committers,
     heads,
+    maxOffset,
     remoteHeads,
     tags,
     onCommitSelect,
@@ -198,8 +200,25 @@ export const History = memo(
     const onClickHandler = useCallback(event => onCommitSelect(event.currentTarget.dataset.sha), [])
     const onContextMenuHandler = useCallback(event => onContextMenu(event.currentTarget.dataset.sha), [])
 
+    // тут будут кешироваться все данные для отображения строк
+    const rowsRef = useRef({ rows: [] })
+
+    const isRowLoaded = ({ index }) => !!rowsRef.current.rows[index]
+
+    const loadMoreRows = async ({ startIndex, stopIndex }) => {
+      const chunk = await getCommits(startIndex, stopIndex + 1)
+      const { rows } = rowsRef.current
+      for (let i = startIndex; i < stopIndex; i++) {
+        rows[i] = chunk[i - startIndex]
+      }
+    }
+
     const rowRenderer = ({ index, isScrolling, key, style }) => {
-      const { sha, message, routes, committer, date } = commits[index]
+      const rowData = rowsRef.current.rows[index]
+
+      if (!rowData) return null
+
+      const { sha, message, routes, committer, date } = rowData //commits[index]
 
       const offset = routes.length > 0 ? routes.length : 1
 
@@ -228,9 +247,7 @@ export const History = memo(
             onClick={onClickHandler}
             onContextMenu={onContextMenuHandler}
           >
-            <TextStyle offset={offset * X_STEP}>
-              <b>{message}</b>
-            </TextStyle>
+            <TextStyle offset={offset * X_STEP}>{message}</TextStyle>
             <TimeStampStyle>{datetime}</TimeStampStyle>
           </RowStyle>
         )
@@ -278,7 +295,7 @@ export const History = memo(
                   </BranchStyle>
                 )
               })}
-            <b>{message}</b>
+            {message}
           </TextStyle>
           <RightContainerStyle>
             <TextStyle>
@@ -303,25 +320,39 @@ export const History = memo(
     return (
       <AutoSizer>
         {({ width, height }) => (
-          <ScrollSync>
-            {({ clientHeight, clientWidth, onScroll, scrollHeight, scrollLeft, scrollTop, scrollWidth }) => (
-              <div className="Table">
-                <div className="LeftColumn">{<Tree height={height} scrollTop={scrollTop} commits={commits} />}</div>
-                <div className="RightColumn">
-                  <List
-                    onScroll={onScroll}
-                    width={width}
-                    height={height}
-                    overscanRowCount={1}
-                    rowRenderer={rowRenderer}
-                    rowCount={commits.length}
-                    rowHeight={ROW_HEIGHT}
-                    // scrollToIndex={scrollToIndex}
-                  />
-                </div>
-              </div>
+          <InfiniteLoader isRowLoaded={isRowLoaded} loadMoreRows={loadMoreRows} rowCount={commitsCount}>
+            {({ onRowsRendered, registerChild }) => (
+              <ScrollSync>
+                {({ clientHeight, clientWidth, onScroll, scrollHeight, scrollLeft, scrollTop, scrollWidth }) => (
+                  <div className="Table">
+                    <div className="LeftColumn">
+                      <Tree
+                        height={height}
+                        scrollTop={scrollTop}
+                        maxOffset={maxOffset}
+                        commits={rowsRef.current.rows}
+                        commitsCount={rowsRef.current.rows.length}
+                      />
+                    </div>
+                    <div className="RightColumn">
+                      <List
+                        ref={registerChild}
+                        onRowsRendered={onRowsRendered}
+                        onScroll={onScroll}
+                        width={width}
+                        height={height}
+                        overscanRowCount={1}
+                        rowRenderer={rowRenderer}
+                        rowCount={commitsCount}
+                        rowHeight={ROW_HEIGHT}
+                        // scrollToIndex={scrollToIndex}
+                      />
+                    </div>
+                  </div>
+                )}
+              </ScrollSync>
             )}
-          </ScrollSync>
+          </InfiniteLoader>
         )}
       </AutoSizer>
     )
