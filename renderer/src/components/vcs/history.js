@@ -27,7 +27,7 @@ const RowStyle = styled.div`
       list: { activeSelectionBackground }
     }
   }) => {
-    const oddColor = type === 'light' ? '#e2e2e2' : '#505050'
+    const oddColor = type === 'light' ? '#e2e2e2' : '#272727' //'#505050'
 
     return selected ? '#0098d4' : odd ? oddColor : 'transparent'
   }};
@@ -92,7 +92,7 @@ const BranchIcon = ({ color = '#fff' }) => (
 
 const TextStyle = styled.span`
   margin-left: ${({ offset }) => `${offset}px`};
-  font-size: 12px;
+  font-size: 13px;
   line-height: ${() => `${ROW_HEIGHT}px`};
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -247,9 +247,7 @@ export const History = memo(
             onClick={onClickHandler}
             onContextMenu={onContextMenuHandler}
           >
-            <TextStyle offset={offset * X_STEP}>
-              <b>{message}</b>
-            </TextStyle>
+            <TextStyle offset={offset * X_STEP}>{message}</TextStyle>
             <TimeStampStyle>{datetime}</TimeStampStyle>
           </RowStyle>
         )
@@ -297,7 +295,7 @@ export const History = memo(
                   </BranchStyle>
                 )
               })}
-            <b>{message}</b>
+            {message}
           </TextStyle>
           <RightContainerStyle>
             <TextStyle>

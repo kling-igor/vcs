@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 const { callRenderer, answerRenderer } = require('./ipc')(ipcMain, BrowserWindow)
-import { fork } from 'child_process'
+import { fork, spawn } from 'child_process'
+import { Writable } from 'stream'
 import { join, resolve } from 'path'
 import { EventEmitter } from 'events'
 import { CompositeDisposable, Disposable } from 'event-kit'
@@ -353,74 +354,66 @@ answerRenderer('commit:digest-info', async (browserWindow, startIndex, endIndex)
 answerRenderer('repository:log', async (browserWindow, projectPath) => {
   checkRepo()
 
-  if (gitLogWorker) {
-    gitLogWorker.kill('SIGKILL')
-    gitLogWorker = null
-  }
-
-  gitLogWorker = fork(join(__dirname, 'gitlog-worker.js'), [projectPath])
-
   // результат gitlog будет храниться в main
 
-  gitLogResult = null
+  console.log('GETTING LOG...')
 
-  return await new Promise(resolve => {
-    gitLogWorker.on('close', () => {
-      if (!gitLogResult) throw new Error('invalid log sequence - has not response body')
-
-      console.log('WORKER CLOSED...')
-
-      const { commits, ...other } = gitLogResult
-
-      resolve({ log: { ...other, commitsCount: commits.length } })
-    })
-
-    gitLogWorker.on('message', body => {
-      const { error, log, commit, ref, committer, ...other } = body
-
-      if (error) {
-        console.log('ERROR:', error)
-        throw new Error(error)
+  gitLogResult = await new Promise((resolve, reject) => {
+    const writer = new (class extends Writable {
+      constructor(opts) {
+        super(opts)
+        this.data = {}
       }
 
-      if (log) {
-        gitLogResult = log
-      } else if (commit) {
-        if (!gitLogResult) throw new Error('invalid log sequence - got commit info before main body')
+      _write(chunk, encoding, next) {
+        const str = chunk.toString()
 
-        console.log('got commit')
+        const splitted = str.split('\n')
+        for (const item of splitted) {
+          try {
+            const trimmed = item.trim()
+            if (trimmed) {
+              const obj = JSON.parse(trimmed)
 
-        gitLogResult.commits.push(commit)
-      } else if (committer) {
-        if (!gitLogResult) throw new Error('invalid log sequence - got committer info before main body')
+              const { error, log, commit, ref, committer } = obj
 
-        console.log('got committer')
+              if (log) {
+                this.data = log
+              } else if (commit) {
+                this.data.commits.push(commit)
+              } else if (committer) {
+                this.data.committers.push(committer)
+              } else if (ref) {
+                this.data.refs.push(ref)
+              } else if (error) {
+                reject(error)
+              }
+            }
+          } catch (e) {
+            console.log('ERR:', e)
+            reject(e)
+          }
+        }
 
-        gitLogResult.committers.push(committer)
-      } else if (ref) {
-        if (!gitLogResult) throw new Error('invalid log sequence - got ref info before main body')
-
-        console.log('got ref')
-
-        gitLogResult.refs.push(ref)
+        next()
       }
+    })()
+
+    gitLogWorker = spawn(process.execPath, [join(__dirname, 'gitlog-worker.js'), projectPath], {
+      stdio: ['inherit', 'inherit', 'inherit', 'pipe']
     })
+
+    gitLogWorker.once('close', () => {
+      resolve(writer.data)
+    })
+
+    gitLogWorker.once('error', reject)
+
+    gitLogWorker.stdio[3].pipe(writer)
   })
 
-  // return await new Promise(resolve => {
-  //   gitOpsWorker.once('message', body => {
-  //     console.log('GOT RESPONSE FROM WORKER')
-
-  //     const { error, log } = body
-  //     if (error) {
-  //       console.log('ERR:', e)
-  //     } else {
-  //       console.log('LOG:', log.commits.length)
-  //     }
-
-  //     resolve(body)
-  //   })
-  // })
+  const { commits, ...other } = gitLogResult
+  return { log: { ...other, commitsCount: commits.length } }
 })
 
 answerRenderer('repository:fetch', async (browserWindow, projectPath, remoteName, userName, password) => {

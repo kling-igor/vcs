@@ -1,93 +1,52 @@
 import { openRepository, log } from './gitops'
+import { createWriteStream } from 'fs'
+
+const sendCollection = (collection, stream, key) => {
+  return new Promise(resolve => {
+    let index = 0
+
+    const intervalHandler = setInterval(() => {
+      stream.write(JSON.stringify({ [key]: collection[index] }) + '\n')
+
+      if (index++ >= collection.length) {
+        clearInterval(intervalHandler)
+        resolve()
+      }
+    }, 0)
+  })
+}
+
 ;(async () => {
   const [repoPath] = process.argv.slice(2)
+
+  const stream = createWriteStream(null, { fd: 3 })
 
   try {
     const repo = await openRepository(repoPath)
 
     const gitlog = await log(repo)
 
-    // тут нужно отдать результат по частям
-    // не напрягая Event Loop
-
-    function setImmediatePromise() {
-      return new Promise(resolve => {
-        setImmediate(() => resolve())
-      })
-    }
-
     const { commits, refs, committers, ...other } = gitlog
 
-    console.log('SENDING MAIN BLOCK...')
-    process.send({ log: { ...other, commits: [], refs: [], committers: [] } })
+    // console.log('SENDING MAIN BLOCK...')
+    stream.write(JSON.stringify({ log: { ...other, commits: [], refs: [], committers: [] } }))
 
-    // await setImmediatePromise()
+    // console.log(`SENDING ${refs.length} REFS...`)
+    await sendCollection(refs, stream, 'ref')
 
-    console.log(`SENDING ${refs.length} REFS...`)
-    // for (const ref of refs) {
-    //   process.send({ ref })
-    //   await setImmediatePromise()
-    // }
+    // console.log(`SENDING ${committers.length} COMMITTERS...`)
+    await sendCollection(committers, stream, 'committer')
 
-    await new Promise(resolve => {
-      let counter = 0
-      const handler = setInterval(() => {
-        console.log(counter)
-        process.send({ ref: refs[counter] })
-        counter += 1
-        if (counter >= refs.length) {
-          console.log('REFS SENT')
-          clearInterval(handler)
-          resolve()
-        }
-      }, 0)
+    // console.log(`SENDING  ${commits.length} COMMITS...`)
+    await sendCollection(commits, stream, 'commit')
+
+    stream.end(() => {
+      // console.log('WORKER SENT ALL DATA')
     })
-
-    console.log(`SENDING ${committers.length} COMMITTERS...`)
-    // for (const committer of committers) {
-    //   process.send({ committer })
-    //   await setImmediatePromise()
-    // }
-
-    await new Promise(resolve => {
-      let counter = 0
-      const handler = setInterval(() => {
-        console.log(counter)
-        process.send({ committer: committers[counter] })
-        counter += 1
-        if (counter >= committers.length) {
-          console.log('COMMITTERS SENT')
-          clearInterval(handler)
-          resolve()
-        }
-      }, 0)
-    })
-
-    console.log(`SENDING  ${commits.length} COMMITS...`)
-    // for (const commit of commits.slice(0, 2000)) {
-    //   process.send({ commit })
-    //   await setImmediatePromise()
-    // }
-
-    await new Promise(resolve => {
-      console.log('DEBUG!!')
-      let counter = 0
-      const handler = setInterval(() => {
-        process.send({ commits: commits[counter] })
-        counter += 1
-        if (counter >= commits.length) {
-          console.log('COMMITS SENT')
-          clearInterval(handler)
-          resolve()
-        }
-      }, 10)
-    })
-
-    console.log('WORKER SENT ALL DATA')
   } catch (e) {
     console.log('WORKER ERROR:', e)
-    process.send({ error: e.message })
+    stream.write(JSON.stringify({ error: e.message }))
   }
 
-  // process.exit(0)
+  process.exit(0)
 })()
