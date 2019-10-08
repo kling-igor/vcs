@@ -1,25 +1,12 @@
 import React, { memo, useRef, useEffect, useMemo } from 'react'
 import styled from 'styled-components'
 import { ROW_HEIGHT, X_STEP, Y_STEP } from './constants'
+import colors from './colors'
 
 const LINE_WIDTH = 2
 const COMMIT_RADIUS = 5
 
 const NO_BRANCH_COLOR = '#a0a5a9'
-
-const colors = [
-  '#84b817',
-  '#e32017',
-  '#ee7c0e',
-  '#ffd300',
-  '#f3a9bb',
-  '#b36305',
-  '#00a4a7',
-  '#00782a',
-  '#003688',
-  '#9b0056',
-  '#95cdba'
-]
 
 const CanvasStyle = styled.canvas`
   z-index: 9999;
@@ -29,7 +16,7 @@ const CanvasStyle = styled.canvas`
   pointer-events: none;
 `
 
-const branchColor = branch => colors[branch % 11] || 'black'
+const branchColor = branch => colors[branch % colors.length] || 'red'
 
 const yPositionForIndex = yIndex => (yIndex + 0.5) * Y_STEP
 
@@ -72,7 +59,7 @@ const drawRoute = (ctx, topOffset, route, commit, yIndex) => {
   if (fromX === toX) {
     ctx.lineTo(toX, toY) // Draw a line to the finish point
   } else {
-    ctx.bezierCurveTo(fromX - X_STEP / 4, fromY + Y_STEP / 2, toX + X_STEP / 4, toY - Y_STEP / 2, toX, toY)
+    ctx.bezierCurveTo(fromX - X_STEP / 4, fromY + Y_STEP / 1.5, toX + X_STEP / 4, toY - Y_STEP / 1.5, toX, toY)
   }
 
   ctx.stroke()

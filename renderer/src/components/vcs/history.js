@@ -8,12 +8,16 @@ import CircularProgress from '@material-ui/core/CircularProgress'
 import { Tree } from './tree'
 import { ROW_HEIGHT, X_STEP } from './constants'
 
+import colors from './colors'
+
 moment.locale('en', {
   calendar: {
     lastDay: '[Yesterday at] H:mm',
     sameDay: '[Today at] H:mm'
   }
 })
+
+const branchColor = branch => colors[branch % colors.length] || 'red'
 
 const RowStyle = styled.div`
   padding-left: 20px;
@@ -70,6 +74,7 @@ const SvgStyle = styled.svg`
   top: 4px;
   left: 2px;
   margin-right: 4px;
+  width: 14px;
 `
 
 const TagIcon = ({ color = '#fff' }) => (
@@ -145,11 +150,16 @@ const BadgeStyle = styled.span`
 `
 
 const BranchStyle = styled.span`
-  background-color: greenyellow;
-  color: black;
-  padding-left: 2px;
-  padding-right: 2px;
-  border-color: ${({ theme: { type } }) => (type === 'dark' ? 'white' : 'black')};
+  /* background-color: greenyellow; */
+  /* color: black; */
+
+  background-color: #383838;
+  color: #dbdfff;
+
+  /* padding-left: 2px; */
+  padding-right: 4px;
+  /* border-color: ${({ theme: { type } }) => (type === 'dark' ? 'white' : 'black')}; */
+  border-color: #909090;
   border-width: 1px;
   border-radius: 3px;
   border-style: solid;
@@ -157,14 +167,26 @@ const BranchStyle = styled.span`
 `
 
 const TagStyle = styled.span`
-  background-color: #00adff;
-  color: white;
-  padding-left: 2px;
-  padding-right: 2px;
-  border-color: ${({ theme: { type } }) => (type === 'dark' ? 'white' : 'black')};
+  /* background-color: #00adff; */
+  background-color: #383838;
+  color: #dbdfff;
+  /* padding-left: 2px; */
+  padding-right: 4px;
+  /* border-color: ${({ theme: { type } }) => (type === 'dark' ? 'white' : 'black')}; */
+  border-color: #909090;
   border-width: 1px;
   border-radius: 3px;
   border-style: solid;
+  margin-right: 4px;
+`
+
+const BadgeIconContainer = styled.span`
+  background-color: ${({ color }) => color};
+  width: 16px;
+  height: 100%;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
   margin-right: 4px;
 `
 
@@ -218,7 +240,9 @@ export const History = memo(
 
       if (!rowData) return null
 
-      const { sha, message, routes, committer, date } = rowData //commits[index]
+      const { sha, message, routes, committer, date, branch } = rowData //commits[index]
+
+      const badgeColor = branchColor(branch)
 
       const offset = routes.length > 0 ? routes.length : 1
 
@@ -275,7 +299,9 @@ export const History = memo(
             {!!commitTags.length > 0 &&
               commitTags.map(item => (
                 <TagStyle key={item.name}>
-                  <TagIcon color="#fff" />
+                  <BadgeIconContainer color={badgeColor}>
+                    <TagIcon color="#000" />
+                  </BadgeIconContainer>
                   {item.name}
                 </TagStyle>
               ))}
@@ -290,7 +316,9 @@ export const History = memo(
                 }
                 return (
                   <BranchStyle key={item.name}>
-                    <BranchIcon color="#000" />
+                    <BadgeIconContainer color={badgeColor}>
+                      <BranchIcon color="#000" />
+                    </BadgeIconContainer>
                     {title}
                   </BranchStyle>
                 )
