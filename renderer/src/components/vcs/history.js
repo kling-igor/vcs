@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useRef, useMemo } from 'react'
+import React, { memo, useCallback, useEffect, useRef, useMemo, useState } from 'react'
 import styled from 'styled-components'
 import { List, AutoSizer, ScrollSync, InfiniteLoader } from 'react-virtualized'
 import moment from 'moment'
@@ -225,6 +225,8 @@ export const History = memo(
     // тут будут кешироваться все данные для отображения строк
     const rowsRef = useRef({ rows: [] })
 
+    const [cachedCommitsCount, setCachedCommitsCount] = useState(0)
+
     const isRowLoaded = ({ index }) => !!rowsRef.current.rows[index]
 
     const loadMoreRows = async ({ startIndex, stopIndex }) => {
@@ -233,6 +235,8 @@ export const History = memo(
       for (let i = startIndex; i < stopIndex; i++) {
         rows[i] = chunk[i - startIndex]
       }
+
+      setCachedCommitsCount(rows.length)
     }
 
     const rowRenderer = ({ index, isScrolling, key, style }) => {
@@ -245,18 +249,6 @@ export const History = memo(
       const badgeColor = branchColor(branch)
 
       const offset = routes.length > 0 ? routes.length : 1
-
-      // // подсчет кол-ва параллельных роутов
-      // let offset = routes.reduce((result, route) => {
-      //   const [from, to] = route
-      //   if (from === to) return result + 1
-
-      //   return result
-      // }, 0)
-
-      // if (offset === 0) {
-      //   offset = 1
-      // }
 
       const datetime = moment(date).isSame(moment(), 'day')
         ? moment().calendar(date)
@@ -359,7 +351,7 @@ export const History = memo(
                         scrollTop={scrollTop}
                         maxOffset={maxOffset}
                         commits={rowsRef.current.rows}
-                        commitsCount={rowsRef.current.rows.length}
+                        commitsCount={cachedCommitsCount}
                       />
                     </div>
                     <div className="RightColumn">
