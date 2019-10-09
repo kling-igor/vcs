@@ -232,7 +232,7 @@ export const History = memo(
     const loadMoreRows = async ({ startIndex, stopIndex }) => {
       const chunk = await getCommits(startIndex, stopIndex + 1)
       const { rows } = rowsRef.current
-      for (let i = startIndex; i < stopIndex; i++) {
+      for (let i = startIndex; i <= stopIndex; i++) {
         rows[i] = chunk[i - startIndex]
       }
 
