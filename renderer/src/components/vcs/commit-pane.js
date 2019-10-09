@@ -232,6 +232,8 @@ export default memo(
 
       const popoverClassName = useMemo(() => (theme.type === 'dark' ? 'popover bp3-dark' : 'popover'), theme)
 
+      const buttonContainerClassName = useMemo(() => (theme.type === 'dark' ? 'bp3-dark' : ''))
+
       return (
         <RootStyle>
           <HorizontalConatiner>
@@ -275,7 +277,7 @@ export default memo(
                 />
               </UpperHorizontalConatiner>
               <CommitAreaStyle onChange={onChange} value={text} />
-              <ButtonsContainerStyle>
+              <ButtonsContainerStyle className={buttonContainerClassName}>
                 <Button small style={cancelButtonStyle} onClick={onCancelCommit}>
                   Cancel
                 </Button>

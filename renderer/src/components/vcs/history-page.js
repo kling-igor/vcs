@@ -33,12 +33,16 @@ class HistoryPage extends Component {
       modifiedFile,
       onCommitSelect,
       selectedCommit,
-      isProcessingGitLog
+      isProcessingGitLog,
+      headCommit,
+      currentBranch,
+      changedFiles
     } = this.props.storage
 
     return (
       <SplitPane split="horizontal" allowResize resizersSize={0} onResizeEnd={this.setLayout}>
         <Pane size={upperSize} minSize="50px" maxSize="100%">
+          {/* TODO: передать напрямую storage!! */}
           <History
             getCommits={getCommits}
             commitsCount={commitsCount}
@@ -51,6 +55,9 @@ class HistoryPage extends Component {
             onContextMenu={this.props.onContextMenu}
             selectedCommit={selectedCommit}
             isProcessingGitLog={isProcessingGitLog}
+            headCommit={headCommit}
+            currentBranch={currentBranch}
+            changedFiles={changedFiles}
           />
         </Pane>
         <Pane size={lowerSize} minSize="50px" maxSize="100%">

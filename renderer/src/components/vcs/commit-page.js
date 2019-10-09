@@ -47,6 +47,7 @@ class CommitPage extends Component {
         previousCommits,
         originalFile,
         modifiedFile,
+        diffConflictedFile,
         onCommit,
         onCancelCommit,
         setAlterUserNameEmail,
@@ -58,7 +59,7 @@ class CommitPage extends Component {
     return (
       <SplitPane split="horizontal" allowResize resizersSize={0} onResizeEnd={this.setLayout}>
         <Pane size={upperSize} minSize="50px" maxSize="100%">
-          {(originalFile || modifiedFile) && (
+          {diffConflictedFile && (
             <div
               style={{
                 width: '100%',
@@ -72,13 +73,13 @@ class CommitPage extends Component {
               <div
                 style={{
                   width: '100%',
-                  height: 28,
-                  backgroundColor: 'yellow',
+                  height: 32,
                   display: 'flex',
                   justifyContent: 'flex-end',
                   alignItems: 'center',
-                  paddingRight: 2
+                  paddingRight: 4
                 }}
+                className="bp3-dark"
               >
                 <Button
                   text="Save"

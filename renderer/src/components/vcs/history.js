@@ -217,7 +217,10 @@ export const History = memo(
     onCommitSelect,
     onContextMenu,
     selectedCommit,
-    isProcessingGitLog
+    isProcessingGitLog,
+    headCommit,
+    currentBranch,
+    changedFiles
   }) => {
     const onClickHandler = useCallback(event => onCommitSelect(event.currentTarget.dataset.sha), [])
     const onContextMenuHandler = useCallback(event => onContextMenu(event.currentTarget.dataset.sha), [])
@@ -231,6 +234,7 @@ export const History = memo(
 
     const loadMoreRows = async ({ startIndex, stopIndex }) => {
       const chunk = await getCommits(startIndex, stopIndex + 1)
+
       const { rows } = rowsRef.current
       for (let i = startIndex; i <= stopIndex; i++) {
         rows[i] = chunk[i - startIndex]
@@ -352,6 +356,9 @@ export const History = memo(
                         maxOffset={maxOffset}
                         commits={rowsRef.current.rows}
                         commitsCount={cachedCommitsCount}
+                        headCommit={headCommit}
+                        currentBranch={currentBranch}
+                        changedFiles={changedFiles}
                       />
                     </div>
                     <div className="RightColumn">

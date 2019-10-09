@@ -58,6 +58,8 @@ export class VCS extends Emitter {
   @observable originalFile = ''
   @observable modifiedFile = ''
 
+  @observable diffConflictedFile = false
+
   // файл, для которого отображется diff
   @observable selectedFilePath = null
 
@@ -386,6 +388,7 @@ export class VCS extends Emitter {
         this.originalFile = mineContent
         this.modifiedFile = theirsContent
         this.selectedFilePath = filepath
+        this.diffConflictedFile = true
       })
     } else {
       const { originalContent = '', modifiedContent = '', details: errorDetails } = await callMain(
@@ -398,6 +401,7 @@ export class VCS extends Emitter {
         this.originalFile = originalContent
         this.modifiedFile = modifiedContent
         this.selectedFilePath = filepath
+        this.diffConflictedFile = false
       })
     }
   }
@@ -415,6 +419,7 @@ export class VCS extends Emitter {
       this.originalFile = originalContent
       this.modifiedFile = modifiedContent
       this.selectedFilePath = filepath
+      this.diffConflictedFile = false
     })
   }
 
@@ -542,6 +547,10 @@ export class VCS extends Emitter {
     )
 
     transaction(() => {
+
+      console.log('currentBranch:', currentBranch)
+      console.log('headCommit:', headCommit)
+
       this.commitsCount = commitsCount
       this.committers = committers
       this.heads = heads
@@ -558,7 +567,7 @@ export class VCS extends Emitter {
 
   @action.bound
   async onCommitSelect(sha) {
-    if (this.commitInfo && this.commitInfo.commit.slice(0, 8) === sha) return
+    if (this.commitInfo && this.commitInfo.commit === sha) return
 
     if (!sha) {
       this.commitMode()
@@ -571,6 +580,7 @@ export class VCS extends Emitter {
       this.originalFile = ''
       this.modifiedFile = ''
       this.commitSelectedFile = null
+      this.diffConflictedFile = false
       this.commitInfo = commitInfo
     })
   }
@@ -593,6 +603,7 @@ export class VCS extends Emitter {
       transaction(() => {
         this.originalFile = originalContent
         this.modifiedFile = modifiedContent
+        this.diffConflictedFile = false
       })
     } catch (e) {
       console.log('FILE DETAILS ERROR:', e)
@@ -658,6 +669,7 @@ export class VCS extends Emitter {
       this.modifiedFile = ''
       this.selectedFilePath = null
       this.commitSelectedFile = null
+      this.diffConflictedFile = false
 
       this.emit('mode:changed', 'commit')
     })
@@ -672,6 +684,7 @@ export class VCS extends Emitter {
       this.modifiedFile = ''
       this.selectedFilePath = null
       this.commitSelectedFile = null
+      this.diffConflictedFile = false
 
       this.emit('mode:changed', 'log')
     })
@@ -704,6 +717,7 @@ export class VCS extends Emitter {
           this.selectedFilePath = null
           this.originalFile = ''
           this.modifiedFile = ''
+          this.diffConflictedFile = false
         })
       }
 
@@ -724,6 +738,7 @@ export class VCS extends Emitter {
           this.selectedFilePath = null
           this.originalFile = ''
           this.modifiedFile = ''
+          this.diffConflictedFile = false
         })
       }
 
@@ -739,6 +754,7 @@ export class VCS extends Emitter {
         this.selectedFilePath = null
         this.originalFile = ''
         this.modifiedFile = ''
+        this.diffConflictedFile = false
       })
     }
 
@@ -764,6 +780,7 @@ export class VCS extends Emitter {
           this.selectedFilePath = null
           this.originalFile = ''
           this.modifiedFile = ''
+          this.diffConflictedFile = false
         })
       }
       await callMain('stage:remove', paths)
@@ -784,6 +801,7 @@ export class VCS extends Emitter {
           this.selectedFilePath = null
           this.originalFile = ''
           this.modifiedFile = ''
+          this.diffConflictedFile = false
         })
       }
 
@@ -799,6 +817,7 @@ export class VCS extends Emitter {
         this.selectedFilePath = null
         this.originalFile = ''
         this.modifiedFile = ''
+        this.diffConflictedFile = false
       })
     }
 
@@ -825,6 +844,7 @@ export class VCS extends Emitter {
           this.selectedFilePath = null
           this.originalFile = ''
           this.modifiedFile = ''
+          this.diffConflictedFile = false
         })
       }
       await callMain('repository:discard-local-changes', this.project.projectPath, paths)

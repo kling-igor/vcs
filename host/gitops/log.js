@@ -98,7 +98,6 @@ export async function log(repo) {
 
       commits.push({
         sha: null,
-        isHead: false,
         message: 'Merging...',
         committer: null,
         date: Date.now(),
@@ -224,7 +223,7 @@ export async function log(repo) {
 
     const record = {
       sha,
-      isHead: sha === headCommit.sha() && workDirStatus.length === 0,
+      // isHead: sha === headCommit.sha() && workDirStatus.length === 0,
       message,
       committer: getCommiterIndex(commit.author().name(), commit.author().email()),
       date: commit.timeMs(),
@@ -257,10 +256,10 @@ export async function log(repo) {
 
   return {
     // опционально добавляем HEAD ссылку
-    refs: !headOnBranchTop ? [{ name: 'HEAD', sha: headCommit.sha().slice(0, 8) }, ...repoRefs] : repoRefs,
+    refs: !headOnBranchTop ? [{ name: 'HEAD', sha: headCommit.sha() }, ...repoRefs] : repoRefs,
     commits,
     committers,
-    headCommit: (headCommit && headCommit.sha().slice(0, 8)) || undefined,
+    headCommit: (headCommit && headCommit.sha()) || undefined,
     currentBranch,
     maxOffset, // нужно чтобы знать максимальную ширину Canvas
     isMerging: repo.isMerging(),

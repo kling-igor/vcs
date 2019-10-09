@@ -22,8 +22,10 @@ const yPositionForIndex = yIndex => (yIndex + 0.5) * Y_STEP
 
 const xPositionForIndex = xIndex => (xIndex + 1) * X_STEP
 
-const drawCommit = (ctx, topOffset, commit, yIndex) => {
-  const { sha, offset, isHead, branch } = commit
+const drawCommit = (ctx, topOffset, commit, yIndex, headCommit) => {
+  const { sha, offset, branch } = commit
+
+  const isHead = sha === headCommit
 
   const x = xPositionForIndex(offset) // Positioning of commit circle
   const y = yPositionForIndex(yIndex) + topOffset
@@ -65,14 +67,14 @@ const drawRoute = (ctx, topOffset, route, commit, yIndex) => {
   ctx.stroke()
 }
 
-const drawGraph = (ctx, topOffset, nodes) => {
+const drawGraph = (ctx, topOffset, nodes, headCommit) => {
   nodes.forEach((node, yIndex) => {
     if (node) {
       // Draw the routes for this node
       node.routes.forEach(route => drawRoute(ctx, topOffset, route, node, yIndex))
 
       // Draw the commit on top of the routes
-      drawCommit(ctx, topOffset, node, yIndex)
+      drawCommit(ctx, topOffset, node, yIndex, headCommit)
     }
   })
 }
@@ -83,25 +85,27 @@ const drawGraph = (ctx, topOffset, nodes) => {
  * @param {Number} height - видимая высота рисования
  * @param {Array} commits - данные для отображения
  */
-export const Tree = memo(({ scrollTop, height, maxOffset, commits, commitsCount }) => {
-  const canvasRef = useRef(null)
+export const Tree = memo(
+  ({ scrollTop, height, maxOffset, commits, commitsCount, headCommit, currentBranch, changedFiles }) => {
+    const canvasRef = useRef(null)
 
-  const skip = useMemo(() => Math.floor(scrollTop / ROW_HEIGHT), [scrollTop])
-  const count = useMemo(() => Math.floor(height / ROW_HEIGHT) + 2, [height])
-  const topOffset = useMemo(() => -scrollTop % ROW_HEIGHT, [scrollTop])
+    const skip = useMemo(() => Math.floor(scrollTop / ROW_HEIGHT), [scrollTop])
+    const count = useMemo(() => Math.floor(height / ROW_HEIGHT) + 2, [height])
+    const topOffset = useMemo(() => -scrollTop % ROW_HEIGHT, [scrollTop])
 
-  const canvasWidth = useMemo(() => (2 + maxOffset) * X_STEP, [maxOffset])
+    const canvasWidth = useMemo(() => (2 + maxOffset) * X_STEP, [maxOffset])
 
-  useEffect(() => {
-    const canvas = canvasRef.current
-    const ctx = canvas.getContext('2d')
-    ctx.clearRect(0, 0, canvasWidth, height)
+    useEffect(() => {
+      const canvas = canvasRef.current
+      const ctx = canvas.getContext('2d')
+      ctx.clearRect(0, 0, canvasWidth, height)
 
-    const drawingCommits = commits.slice(skip, skip + count)
+      const drawingCommits = commits.slice(skip, skip + count)
 
-    drawGraph(ctx, topOffset, drawingCommits)
-  }, [height, skip, count, topOffset, commitsCount])
-  // commitsCount forces redraw tree on get new commits outside
+      drawGraph(ctx, topOffset, drawingCommits, headCommit)
+    }, [height, skip, count, topOffset, commitsCount, headCommit])
+    // commitsCount forces redraw tree on get new commits outside
 
-  return <CanvasStyle ref={canvasRef} width={canvasWidth} height={height} />
-})
+    return <CanvasStyle ref={canvasRef} width={canvasWidth} height={height} />
+  }
+)
