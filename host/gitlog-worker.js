@@ -5,12 +5,27 @@ const sendCollection = (collection, stream, key) => {
   return new Promise(resolve => {
     let index = 0
 
-    const intervalHandler = setInterval(() => {
-      stream.write(JSON.stringify({ [key]: collection[index] }) + '\n')
+    let canWrite = true
 
-      if (index++ >= collection.length) {
-        clearInterval(intervalHandler)
-        resolve()
+    const drainHandler = () => {
+      canWrite = true
+    }
+
+    stream.on('drain', drainHandler)
+
+    const intervalHandler = setInterval(() => {
+      if (canWrite) {
+        canWrite = stream.write(JSON.stringify({ [key]: collection[index] }) + '\n')
+
+        if (canWrite) {
+          if (index++ >= collection.length) {
+            clearInterval(intervalHandler)
+
+            stream.off('drain', drainHandler)
+
+            resolve()
+          }
+        }
       }
     }, 0)
   })
@@ -29,7 +44,7 @@ const sendCollection = (collection, stream, key) => {
     const { commits, refs, committers, ...other } = gitlog
 
     // console.log('SENDING MAIN BLOCK...')
-    stream.write(JSON.stringify({ log: { ...other, commits: [], refs: [], committers: [] } }))
+    stream.write(JSON.stringify({ log: { ...other, commits: [], refs: [], committers: [] } }) + '\n')
 
     // console.log(`SENDING ${refs.length} REFS...`)
     await sendCollection(refs, stream, 'ref')

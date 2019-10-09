@@ -363,16 +363,28 @@ answerRenderer('repository:log', async (browserWindow, projectPath) => {
       constructor(opts) {
         super(opts)
         this.data = {}
+        this.remain = ''
       }
 
       _write(chunk, encoding, next) {
         const str = chunk.toString()
 
         const splitted = str.split('\n')
+
+        if (this.remain && splitted.length > 0) {
+          splitted[0] = this.remain + splitted[0]
+          this.remain = ''
+        }
+
+        const last = splitted.pop()
+        // если нет завершающего '\n'
+        if (last) {
+          this.remain += last
+        }
         for (const item of splitted) {
-          try {
-            const trimmed = item.trim()
-            if (trimmed) {
+          const trimmed = item.trim()
+          if (trimmed) {
+            try {
               const obj = JSON.parse(trimmed)
 
               const { error, log, commit, ref, committer } = obj
@@ -388,10 +400,11 @@ answerRenderer('repository:log', async (browserWindow, projectPath) => {
               } else if (error) {
                 reject(error)
               }
+            } catch (e) {
+              console.log('TRIMMED:', trimmed)
+              console.log('ERR:', e)
+              reject(e)
             }
-          } catch (e) {
-            console.log('ERR:', e)
-            reject(e)
           }
         }
 
