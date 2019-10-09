@@ -560,6 +560,11 @@ export class VCS extends Emitter {
   async onCommitSelect(sha) {
     if (this.commitInfo && this.commitInfo.commit.slice(0, 8) === sha) return
 
+    if (!sha) {
+      this.commitMode()
+      return
+    }
+
     const commitInfo = await callMain('commit:get-info', sha)
 
     transaction(() => {
