@@ -9,9 +9,11 @@ export const DiffPane = memo(({ originalFile = '', modifiedFile = '' }) => {
     <ResizeDetector
       handleWidth
       handleHeight
-      render={({ width, height }) => {
-        return <DiffEditor width={width} height={height} originalFile={originalFile} modifiedFile={modifiedFile} />
-      }}
+      refreshMode="debounce"
+      refreshRate={500}
+      render={({ width, height }) => (
+        <DiffEditor width={width} height={height} originalFile={originalFile} modifiedFile={modifiedFile} />
+      )}
     />
   )
 })

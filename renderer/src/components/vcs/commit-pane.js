@@ -16,6 +16,12 @@ import {
 } from '@blueprintjs/core'
 import { IconNames } from '@blueprintjs/icons'
 
+const RootStyle = styled.div`
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+`
+
 const ButtonsContainerStyle = styled.div`
   display: flex;
   flex-direction: row;
@@ -227,57 +233,59 @@ export default memo(
       const popoverClassName = useMemo(() => (theme.type === 'dark' ? 'popover bp3-dark' : 'popover'), theme)
 
       return (
-        <HorizontalConatiner>
-          <Popover
-            popoverClassName={popoverClassName}
-            interactionKind={PopoverInteractionKind.CLICK}
-            content={
-              <UserDetails
-                hash={hash}
-                name={name}
-                email={email}
-                alterName={alterName}
-                alterEmail={alterEmail}
-                onClose={onPopupClose}
+        <RootStyle>
+          <HorizontalConatiner>
+            <Popover
+              popoverClassName={popoverClassName}
+              interactionKind={PopoverInteractionKind.CLICK}
+              content={
+                <UserDetails
+                  hash={hash}
+                  name={name}
+                  email={email}
+                  alterName={alterName}
+                  alterEmail={alterEmail}
+                  onClose={onPopupClose}
+                />
+              }
+              hasBackdrop={false}
+              inheritDarkTheme
+              position={PopoverPosition.top}
+              modifiers={{ arrow: { enabled: true } /*, offset: { offset: '0, 10' } */ }}
+            >
+              <GravatarStyle
+                src={`https://www.gravatar.com/avatar/${hash}?s=100&d=identicon`}
+                draggable="false"
+                width={50}
+                height={50}
               />
-            }
-            hasBackdrop={false}
-            inheritDarkTheme
-            position={PopoverPosition.top}
-            modifiers={{ arrow: { enabled: true } /*, offset: { offset: '0, 10' } */ }}
-          >
-            <GravatarStyle
-              src={`https://www.gravatar.com/avatar/${hash}?s=100&d=identicon`}
-              draggable="false"
-              width={50}
-              height={50}
-            />
-          </Popover>
-          <VerticalContainerStyle>
-            <UpperHorizontalConatiner>
-              <NameEmailStyle>{`${alterName || name} <${alterEmail || email}>`}</NameEmailStyle>
-              <Button
-                small
-                minimal
-                disabled={previousCommits.length === 0}
-                icon={IconNames.HISTORY}
-                onClick={onShowPreviousCommits}
-                intent={Intent.PRIMARY}
-                // disabled={!hasHistoryChanges}
-                style={historyButtonStyle}
-              />
-            </UpperHorizontalConatiner>
-            <CommitAreaStyle onChange={onChange} value={text} />
-            <ButtonsContainerStyle>
-              <Button small style={cancelButtonStyle} onClick={onCancelCommit}>
-                Cancel
-              </Button>
-              <Button small intent="primary" style={commitButtonStyle} disabled={!committable} onClick={onCommit}>
-                Commit
-              </Button>
-            </ButtonsContainerStyle>
-          </VerticalContainerStyle>
-        </HorizontalConatiner>
+            </Popover>
+            <VerticalContainerStyle>
+              <UpperHorizontalConatiner>
+                <NameEmailStyle>{`${alterName || name} <${alterEmail || email}>`}</NameEmailStyle>
+                <Button
+                  small
+                  minimal
+                  disabled={previousCommits.length === 0}
+                  icon={IconNames.HISTORY}
+                  onClick={onShowPreviousCommits}
+                  intent={Intent.PRIMARY}
+                  // disabled={!hasHistoryChanges}
+                  style={historyButtonStyle}
+                />
+              </UpperHorizontalConatiner>
+              <CommitAreaStyle onChange={onChange} value={text} />
+              <ButtonsContainerStyle>
+                <Button small style={cancelButtonStyle} onClick={onCancelCommit}>
+                  Cancel
+                </Button>
+                <Button small intent="primary" style={commitButtonStyle} disabled={!committable} onClick={onCommit}>
+                  Commit
+                </Button>
+              </ButtonsContainerStyle>
+            </VerticalContainerStyle>
+          </HorizontalConatiner>
+        </RootStyle>
       )
     }
   )
