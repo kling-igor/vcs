@@ -4,12 +4,14 @@ export default createGlobalStyle`
   @font-face {
     font-family: "Roboto";
     src: url("./assets/Roboto-Regular.ttf");
+    font-display: block;
   }
 
   @font-face {
     font-family: "Roboto";
     src: url("./assets/Roboto-Bold.ttf");
     font-weight: bold;
+    font-display: block;
   }
 
   html {
