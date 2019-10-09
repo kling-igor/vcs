@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
 import { observer, inject } from 'mobx-react'
+import { Button } from '@blueprintjs/core'
 import SplitPane, { Pane } from '../react-split'
 import { DiffPane } from './diff-pane'
 import CommitPane from './commit-pane'
@@ -57,7 +58,40 @@ class CommitPage extends Component {
     return (
       <SplitPane split="horizontal" allowResize resizersSize={0} onResizeEnd={this.setLayout}>
         <Pane size={upperSize} minSize="50px" maxSize="100%">
-          <DiffPane originalFile={originalFile} modifiedFile={modifiedFile} />
+          {(originalFile || modifiedFile) && (
+            <div
+              style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'flex-start',
+                alignItems: 'flex-start'
+              }}
+            >
+              <div
+                style={{
+                  width: '100%',
+                  height: 28,
+                  backgroundColor: 'yellow',
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  alignItems: 'center',
+                  paddingRight: 2
+                }}
+              >
+                <Button
+                  text="Save"
+                  onClick={() => {
+                    console.log('Save')
+                  }}
+                  small
+                  style={{ width: 100 }}
+                />
+              </div>
+              <DiffPane originalFile={originalFile} modifiedFile={modifiedFile} />
+            </div>
+          )}
         </Pane>
         <Pane size={lowerSize} minSize="50px" maxSize="100%">
           <CommitPane

@@ -90,7 +90,7 @@ export const Tree = memo(({ scrollTop, height, maxOffset, commits, commitsCount 
   const count = useMemo(() => Math.floor(height / ROW_HEIGHT) + 2, [height])
   const topOffset = useMemo(() => -scrollTop % ROW_HEIGHT, [scrollTop])
 
-  const canvasWidth = useMemo(() => (1 + maxOffset) * X_STEP, [maxOffset])
+  const canvasWidth = useMemo(() => (2 + maxOffset) * X_STEP, [maxOffset])
 
   useEffect(() => {
     const canvas = canvasRef.current
