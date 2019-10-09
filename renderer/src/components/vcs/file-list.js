@@ -58,6 +58,7 @@ const ListItemLeftGroupStyle = styled.div`
   flex-wrap: nowrap;
   justify-content: flex-start;
   align-items: baseline;
+  overflow: hidden;
 `
 
 const ListItemFilenameStyle = styled.span`
