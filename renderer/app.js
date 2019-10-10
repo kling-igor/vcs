@@ -41,6 +41,8 @@ import {
   onVcsContextMenu
 } from './src/components/vcs/context-menu'
 
+import { onGitLogSettingsMenu } from './src/components/vcs/header-menu'
+
 import {
   onStagedFilesHeaderMenu,
   onChangedFilesHeaderMenu,
@@ -291,6 +293,7 @@ export default class App extends Component {
                   storage={vcs}
                   workspace={workspace}
                   onGitLogContextMenu={onGitLogContextMenu({ vcs, workspace, Dialog })}
+                  onGitLogSettingsMenu={onGitLogSettingsMenu({ vcs, workspace, Dialog })}
                 />
               </Pane>
             </SplitPane>

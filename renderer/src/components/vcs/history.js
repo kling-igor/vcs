@@ -219,7 +219,11 @@ export const History = memo(
     selectedCommit,
     isProcessingGitLog,
     headCommit,
-    treeChanges
+    treeChanges,
+    showSHA,
+    showDate,
+    showAuthor,
+    showAuthorType
   }) => {
     const onClickHandler = useCallback(event => onCommitSelect(event.currentTarget.dataset.sha), [])
     const onContextMenuHandler = useCallback(event => onContextMenu(event.currentTarget.dataset.sha), [])
@@ -253,9 +257,13 @@ export const History = memo(
 
       const offset = routes.length > 0 ? routes.length : 1
 
-      const datetime = moment(date).isSame(moment(), 'day')
-        ? moment().calendar(date)
-        : moment(date).format('MMMM Do YYYY, H:mm')
+      let datetime
+
+      if (showDate) {
+        datetime = moment(date).isSame(moment(), 'day')
+          ? moment().calendar(date)
+          : moment(date).format('MMMM Do YYYY, H:mm')
+      }
 
       if (!sha) {
         return (
@@ -267,12 +275,24 @@ export const History = memo(
             onContextMenu={onContextMenuHandler}
           >
             <TextStyle offset={offset * X_STEP}>{message}</TextStyle>
-            <TimeStampStyle>{datetime}</TimeStampStyle>
+            {showDate && <TimeStampStyle>{datetime}</TimeStampStyle>}
           </RowStyle>
         )
       }
 
       const { name, email } = committers[committer]
+
+      let author = `${name} ${email}`
+
+      if (showAuthorType === 'ABBREVIATED') {
+        const parts = name.split(' ').filter(item => !!item)
+        author = parts.reduce((acc, item) => {
+          return acc + item.slice(0, 1)
+        }, '')
+      } else if (showAuthorType === 'FULL_NAME') {
+        author = `${name}`
+      }
+
       const commitRefs = [...heads.filter(item => item.sha === sha), ...remoteHeads.filter(item => item.sha === sha)]
       const commitTags = [...tags.filter(item => item.sha === sha)]
 
@@ -287,10 +307,7 @@ export const History = memo(
           selected={sha === selectedCommit}
         >
           <TextStyle offset={offset * X_STEP}>
-            <b className="bp3-monospace-text">{sha.slice(0, 8)}</b>{' '}
-            {/* <em>
-              {name} {email}
-            </em>{' '} */}
+            {showSHA && <b className="bp3-monospace-text">{sha.slice(0, 8) + '  '}</b>}
             {!!commitTags.length > 0 &&
               commitTags.map(item => (
                 <TagStyle key={item.name}>
@@ -321,12 +338,12 @@ export const History = memo(
             {message}
           </TextStyle>
           <RightContainerStyle>
-            <TextStyle>
-              <em>
-                {name} {email}
-              </em>
-            </TextStyle>{' '}
-            <TimeStampStyle>{datetime}</TimeStampStyle>
+            {showAuthor && (
+              <TextStyle>
+                <em>{author + '  '}</em>
+              </TextStyle>
+            )}
+            {showDate && <TimeStampStyle>{datetime}</TimeStampStyle>}
           </RightContainerStyle>
         </RowStyle>
       )
@@ -359,7 +376,7 @@ export const History = memo(
                         treeChanges={treeChanges}
                       />
                     </div>
-                    <div className="RightColumn">
+                    <div className="RightColumn" style={{ marginRight: 16 }}>
                       <List
                         ref={registerChild}
                         onRowsRendered={onRowsRendered}

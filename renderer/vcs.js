@@ -58,6 +58,12 @@ export class VCS extends Emitter {
   // array of previous commit messages
   @observable.ref previousCommits = []
 
+  @observable showSHA = true
+  @observable showDate = true
+  @observable showAuthor = true
+
+  @observable showAuthorType = 'FULL_NAME_WITH_EMAIL' // ABBREVIATED | FULL_NAME | FULL_NAME_WITH_EMAIL
+
   // diff editor
   @observable originalFile = ''
   @observable modifiedFile = ''
