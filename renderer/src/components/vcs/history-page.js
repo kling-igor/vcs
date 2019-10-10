@@ -22,27 +22,28 @@ class HistoryPage extends Component {
     const lowerSize = +this.state.layout[1] / 100
 
     const {
-      getCommits,
-      commitsCount,
-      committers,
-      heads,
-      maxOffset,
-      remoteHeads,
-      tags,
-      originalFile,
-      modifiedFile,
-      onCommitSelect,
-      selectedCommit,
-      isProcessingGitLog,
-      headCommit,
-      currentBranch,
-      changedFiles
-    } = this.props.storage
+      storage: {
+        getCommits,
+        commitsCount,
+        committers,
+        heads,
+        maxOffset,
+        remoteHeads,
+        tags,
+        originalFile,
+        modifiedFile,
+        onCommitSelect,
+        selectedCommit,
+        isProcessingGitLog,
+        headCommit,
+        treeChanges
+      },
+      workspace: { textEditorDidMount }
+    } = this.props
 
     return (
       <SplitPane split="horizontal" allowResize resizersSize={0} onResizeEnd={this.setLayout}>
         <Pane size={upperSize} minSize="50px" maxSize="100%">
-          {/* TODO: передать напрямую storage!! */}
           <History
             getCommits={getCommits}
             commitsCount={commitsCount}
@@ -56,12 +57,11 @@ class HistoryPage extends Component {
             selectedCommit={selectedCommit}
             isProcessingGitLog={isProcessingGitLog}
             headCommit={headCommit}
-            currentBranch={currentBranch}
-            changedFiles={changedFiles}
+            treeChanges={treeChanges}
           />
         </Pane>
         <Pane size={lowerSize} minSize="50px" maxSize="100%">
-          <DiffPane originalFile={originalFile} modifiedFile={modifiedFile} />
+          <DiffPane originalFile={originalFile} modifiedFile={modifiedFile} textEditorDidMount={textEditorDidMount} />
         </Pane>
       </SplitPane>
     )

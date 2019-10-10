@@ -85,28 +85,26 @@ const drawGraph = (ctx, topOffset, nodes, headCommit) => {
  * @param {Number} height - видимая высота рисования
  * @param {Array} commits - данные для отображения
  */
-export const Tree = memo(
-  ({ scrollTop, height, maxOffset, commits, commitsCount, headCommit, currentBranch, changedFiles }) => {
-    const canvasRef = useRef(null)
+export const Tree = memo(({ scrollTop, height, maxOffset, commits, commitsCount, headCommit, treeChanges }) => {
+  const canvasRef = useRef(null)
 
-    const skip = useMemo(() => Math.floor(scrollTop / ROW_HEIGHT), [scrollTop])
-    const count = useMemo(() => Math.floor(height / ROW_HEIGHT) + 2, [height])
-    const topOffset = useMemo(() => -scrollTop % ROW_HEIGHT, [scrollTop])
+  const skip = useMemo(() => Math.floor(scrollTop / ROW_HEIGHT), [scrollTop])
+  const count = useMemo(() => Math.floor(height / ROW_HEIGHT) + 2, [height])
+  const topOffset = useMemo(() => -scrollTop % ROW_HEIGHT, [scrollTop])
 
-    const canvasWidth = useMemo(() => (2 + maxOffset) * X_STEP, [maxOffset])
+  const canvasWidth = useMemo(() => (2 + maxOffset) * X_STEP, [maxOffset])
 
-    useEffect(() => {
-      const canvas = canvasRef.current
-      const ctx = canvas.getContext('2d')
-      ctx.clearRect(0, 0, canvasWidth, height)
+  useEffect(() => {
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext('2d')
+    ctx.clearRect(0, 0, canvasWidth, height)
 
-      const drawingCommits = commits.slice(skip, skip + count)
+    const drawingCommits = commits.slice(skip, skip + count)
 
-      drawGraph(ctx, topOffset, drawingCommits, headCommit)
-    }, [height, skip, count, topOffset, commitsCount, headCommit])
-    // commitsCount forces redraw tree on get new commits outside
-    // headCommit forces redraw tree on changing HEAD
+    drawGraph(ctx, topOffset, drawingCommits, headCommit)
+  }, [height, skip, count, topOffset, commitsCount, headCommit, treeChanges])
+  // commitsCount forces redraw tree on get new commits outside
+  // headCommit forces redraw tree on changing HEAD
 
-    return <CanvasStyle ref={canvasRef} width={canvasWidth} height={height} />
-  }
-)
+  return <CanvasStyle ref={canvasRef} width={canvasWidth} height={height} />
+})

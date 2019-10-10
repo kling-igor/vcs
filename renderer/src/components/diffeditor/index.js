@@ -7,7 +7,9 @@ const RootStyle = styled.div`
   height: 100%;
 `
 
-const DiffEditor = memo(({ originalFile = '', modifiedFile = '', width, height }) => {
+const noop = () => {}
+
+const DiffEditor = memo(({ originalFile = '', modifiedFile = '', width, height, textEditorDidMount = noop }) => {
   const editorRef = useRef(null)
 
   useEffect(() => {
@@ -20,6 +22,8 @@ const DiffEditor = memo(({ originalFile = '', modifiedFile = '', width, height }
       })
 
       editor.setModel(monaco.editor.createModel(originalFile || modifiedFile))
+
+      textEditorDidMount(editor, monaco)
 
       return () => {
         editor.dispose()
@@ -42,6 +46,8 @@ const DiffEditor = memo(({ originalFile = '', modifiedFile = '', width, height }
       original: monaco.editor.createModel(originalFile),
       modified: monaco.editor.createModel(modifiedFile)
     })
+
+    textEditorDidMount(diffEditor, monaco)
 
     return () => {
       diffEditor.dispose()

@@ -219,8 +219,7 @@ export const History = memo(
     selectedCommit,
     isProcessingGitLog,
     headCommit,
-    currentBranch,
-    changedFiles
+    treeChanges
   }) => {
     const onClickHandler = useCallback(event => onCommitSelect(event.currentTarget.dataset.sha), [])
     const onContextMenuHandler = useCallback(event => onContextMenu(event.currentTarget.dataset.sha), [])
@@ -357,8 +356,7 @@ export const History = memo(
                         commits={rowsRef.current.rows}
                         commitsCount={cachedCommitsCount}
                         headCommit={headCommit}
-                        currentBranch={currentBranch}
-                        changedFiles={changedFiles}
+                        treeChanges={treeChanges}
                       />
                     </div>
                     <div className="RightColumn">

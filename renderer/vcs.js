@@ -45,6 +45,7 @@ export class VCS extends Emitter {
   @observable name = ''
   @observable email = ''
 
+  // alternative committer info
   @observable alterName = ''
   @observable alterEmail = ''
 
@@ -54,13 +55,16 @@ export class VCS extends Emitter {
   @observable.ref changedFiles = []
   @observable.ref stagedFiles = []
 
+  // array of previous commit messages
+  @observable.ref previousCommits = []
+
   // diff editor
   @observable originalFile = ''
   @observable modifiedFile = ''
 
   @observable diffConflictedFile = false
 
-  // файл, для которого отображется diff
+  // file path of diff
   @observable selectedFilePath = null
 
   @computed get selectedChangedFile() {
@@ -77,7 +81,8 @@ export class VCS extends Emitter {
     return this.changedFiles.length > 0
   }
 
-  @observable.ref previousCommits = []
+  // allows to redraw git tree
+  @observable treeChanges = 0
 
   // git tree
   @observable commitsCount = 0
@@ -230,42 +235,55 @@ export class VCS extends Emitter {
     await callMain('branch:create', name, this.headCommit)
     await callMain('repository:checkout-branch', name, false)
     await this.getLog()
+
+    this.treeChanges += 1
   }
 
   @action.bound
   async deleteBranch(name) {
     await callMain('branch:delete', name)
     await this.getLog()
+
+    this.treeChanges += 1
   }
 
   @action.bound
   async createTag(target, name, message) {
     await callMain('tag:create', target, name, message)
     await this.getLog()
+    this.treeChanges += 1
   }
 
   @action.bound
   async deleteTag(name) {
     await callMain('tag:delete', name)
     await this.getLog()
+
+    this.treeChanges += 1
   }
 
   @action.bound
   async softResetCommit(sha) {
     await callMain('commit:reset-soft', sha)
     await this.getLog()
+
+    this.treeChanges += 1
   }
 
   @action.bound
   async mixedResetCommit(sha) {
     await callMain('commit:reset-mixed', sha)
     await this.getLog()
+
+    this.treeChanges += 1
   }
 
   @action.bound
   async hardResetCommit(sha) {
     await callMain('commit:reset-hard', sha)
     await this.getLog()
+
+    this.treeChanges += 1
   }
 
   @action.bound
@@ -273,6 +291,8 @@ export class VCS extends Emitter {
     await callMain('commit:revert', sha)
     await this.getLog()
     await this.status()
+
+    this.treeChanges += 1
   }
 
   @action.bound
@@ -609,6 +629,8 @@ export class VCS extends Emitter {
     await callMain('repository:checkout-branch', branch, discardLocalChanges)
     await this.getLog()
     await this.status()
+
+    this.treeChanges += 1
   }
 
   @action.bound
@@ -616,6 +638,8 @@ export class VCS extends Emitter {
     await callMain('repository:checkout-commit', sha, discardLocalChanges)
     await this.getLog()
     await this.status()
+
+    this.treeChanges += 1
   }
 
   @action.bound
@@ -646,6 +670,8 @@ export class VCS extends Emitter {
     })
 
     this.logMode()
+
+    this.treeChanges += 1
   }
 
   @action.bound
@@ -857,8 +883,6 @@ export class VCS extends Emitter {
     this.mergingSha = sha
 
     await callMain('repository:merge', sha)
-    await this.status()
-    await this.getLog()
 
     if (this.isMerging && commitOnSuccess) {
       await callMain('commit:create', 'Merge', sha, this.alterName || this.name, this.alterEmail || this.email)
@@ -870,7 +894,13 @@ export class VCS extends Emitter {
 
       this.logMode()
 
+      this.treeChanges += 1
+
       return
+    } else {
+      await this.status()
+      await this.getLog()
+      this.treeChanges += 1
     }
 
     // this.commitMessage = `Merge branch '${}' into branch ${}`
@@ -915,6 +945,7 @@ export class VCS extends Emitter {
 
     await this.status()
     await this.getLog()
+    this.treeChanges += 1
 
     this.emit('operation:finish', 'push')
   }
@@ -926,6 +957,7 @@ export class VCS extends Emitter {
 
     await this.status()
     await this.getLog()
+    this.treeChanges += 1
 
     this.emit('operation:finish', 'fetch')
   }
@@ -954,6 +986,7 @@ export class VCS extends Emitter {
 
     await this.status()
     await this.getLog()
+    this.treeChanges += 1
 
     this.emit('operation:finish', 'pull')
   }

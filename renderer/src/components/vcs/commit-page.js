@@ -54,7 +54,8 @@ class CommitPage extends Component {
         setAlterUserNameEmail,
         alterName,
         alterEmail
-      }
+      },
+      workspace: { textEditorDidMount }
     } = this.props
 
     const onSave = () => {
@@ -96,7 +97,7 @@ class CommitPage extends Component {
                 />
               </div>
             )}
-            <DiffPane originalFile={originalFile} modifiedFile={modifiedFile} />
+            <DiffPane originalFile={originalFile} modifiedFile={modifiedFile} textEditorDidMount={textEditorDidMount} />
           </div>
         </Pane>
         <Pane size={lowerSize} minSize="50px" maxSize="100%">

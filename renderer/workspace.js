@@ -1,13 +1,19 @@
 const { remote } = window.require('electron')
 import React from 'react'
 import os from 'os'
+import { Emitter, Disposable, CompositeDisposable } from 'event-kit'
 import { Input, QuickPick, InputUnique } from './src/components/quickpick'
-import { observable } from 'mobx'
+import { observable, autorun } from 'mobx'
+import editorThemes from './src/themes/editor'
+
 // STUB
+
 export class Workspace {
   @observable.ref customModalView = null
+  @observable.ref editorTheme = editorThemes[0]
 
   constructor({ project, applicationDelegate }) {
+    this.emitter = new Emitter()
     this.applicationDelegate = applicationDelegate
     this.project = project
   }
@@ -157,5 +163,18 @@ export class Workspace {
     if (Array.isArray(selectedPath)) {
       return selectedPath[0]
     }
+  }
+
+  textEditorDidMount = (editor, monaco) => {
+    console.log('textEditorDidMount')
+    this.textEditor = editor
+    this.emitter.emit('did-change-active-text-editor', editor)
+
+    this.textEditorThemeUpdateDisposer = autorun(() => {
+      const { name, theme } = this.editorTheme
+
+      monaco.editor.defineTheme(name, theme)
+      monaco.editor.setTheme(name)
+    })
   }
 }

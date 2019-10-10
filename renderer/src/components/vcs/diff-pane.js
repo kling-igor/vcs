@@ -2,7 +2,7 @@ import React, { memo } from 'react'
 import ResizeDetector from 'react-resize-detector'
 import DiffEditor from '../diffeditor'
 
-export const DiffPane = memo(({ originalFile = '', modifiedFile = '' }) => {
+export const DiffPane = memo(({ originalFile = '', modifiedFile = '', textEditorDidMount }) => {
   if (!originalFile && !modifiedFile) return null
 
   return (
@@ -12,7 +12,13 @@ export const DiffPane = memo(({ originalFile = '', modifiedFile = '' }) => {
       refreshMode="debounce"
       refreshRate={500}
       render={({ width, height }) => (
-        <DiffEditor width={width} height={height} originalFile={originalFile} modifiedFile={modifiedFile} />
+        <DiffEditor
+          width={width}
+          height={height}
+          originalFile={originalFile}
+          modifiedFile={modifiedFile}
+          textEditorDidMount={textEditorDidMount}
+        />
       )}
     />
   )
