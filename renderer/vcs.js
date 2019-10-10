@@ -408,8 +408,6 @@ export class VCS extends Emitter {
 
   @action.bound
   async onStagedFileSelect(filepath) {
-    console.log('CLICK ON STAGED FILE:', filepath)
-
     const { originalContent = '', modifiedContent = '', details: errorDetails } = await callMain(
       'commit:stagedfile-diff-to-head',
       cleanLeadingSlashes(filepath)
@@ -547,10 +545,6 @@ export class VCS extends Emitter {
     )
 
     transaction(() => {
-
-      console.log('currentBranch:', currentBranch)
-      console.log('headCommit:', headCommit)
-
       this.commitsCount = commitsCount
       this.committers = committers
       this.heads = heads
@@ -895,6 +889,12 @@ export class VCS extends Emitter {
     console.log('this.mergingSha:', this.mergingSha)
 
     await callMain('merge:resolve-using-theirs', this.project.projectPath, cleanLeadingSlashes(filePath))
+    await this.status()
+  }
+
+  @action.bound
+  async resolveAsIs(filePath, fileContent) {
+    await callMain('merge:resolve-as-is', this.project.projectPath, cleanLeadingSlashes(filePath), fileContent)
     await this.status()
   }
 

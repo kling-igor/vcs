@@ -575,6 +575,20 @@ answerRenderer('commit:revert', async (browserWindow, sha) => {
   return revertCommit(repo, sha)
 })
 
+answerRenderer('merge:resolve-as-is', async (browserWindow, projectPath, filePath, fileContent) => {
+  checkRepo()
+  try {
+    await fileOperations.saveFile(join(projectPath, filePath), fileContent)
+    await removeConflict(repo, filePath)
+
+    const index = await refreshIndex(repo)
+    await addToIndex(index, filePath)
+    await writeIndex(index)
+  } catch (e) {
+    console.log('RESOLVE AS IS ERROR:', e)
+  }
+})
+
 answerRenderer('merge:resolve-using-mine', async (browserWindow, projectPath, filePath) => {
   checkRepo()
   try {

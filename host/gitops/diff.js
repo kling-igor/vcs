@@ -73,17 +73,17 @@ export async function changedFileDiffToIndex(repo, projectPath, filePath) {
 }
 
 export async function stagedFileDiffToHead(repo, filePath) {
-  console.log('stagedFileDiffToHead:', filePath)
-
   let originalContent = ''
   let modifiedContent = ''
 
   try {
     try {
       const headCommit = await repo.getHeadCommit()
-      const originalEntry = await headCommit.getEntry(filePath)
-      if (originalEntry && originalEntry.isFile()) {
-        originalContent = (await originalEntry.getBlob()).toString()
+      if (headCommit) {
+        const originalEntry = await headCommit.getEntry(filePath)
+        if (originalEntry && originalEntry.isFile()) {
+          originalContent = (await originalEntry.getBlob()).toString()
+        }
       }
     } catch (e) {
       console.error('!!!!:', e)

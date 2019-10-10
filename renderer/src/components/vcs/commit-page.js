@@ -48,6 +48,7 @@ class CommitPage extends Component {
         originalFile,
         modifiedFile,
         diffConflictedFile,
+        selectedFilePath,
         onCommit,
         onCancelCommit,
         setAlterUserNameEmail,
@@ -56,20 +57,24 @@ class CommitPage extends Component {
       }
     } = this.props
 
+    const onSave = () => {
+      // selectedFilePath
+    }
+
     return (
       <SplitPane split="horizontal" allowResize resizersSize={0} onResizeEnd={this.setLayout}>
         <Pane size={upperSize} minSize="50px" maxSize="100%">
-          {diffConflictedFile && (
-            <div
-              style={{
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'flex-start',
-                alignItems: 'flex-start'
-              }}
-            >
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'flex-start',
+              alignItems: 'flex-start'
+            }}
+          >
+            {diffConflictedFile && (
               <div
                 style={{
                   width: '100%',
@@ -90,9 +95,9 @@ class CommitPage extends Component {
                   style={{ width: 100 }}
                 />
               </div>
-              <DiffPane originalFile={originalFile} modifiedFile={modifiedFile} />
-            </div>
-          )}
+            )}
+            <DiffPane originalFile={originalFile} modifiedFile={modifiedFile} />
+          </div>
         </Pane>
         <Pane size={lowerSize} minSize="50px" maxSize="100%">
           <CommitPane

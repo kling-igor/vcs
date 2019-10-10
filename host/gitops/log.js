@@ -11,6 +11,8 @@ const I = i => i
  * @returns {{refs:Array, commits:Array, committers:[]}}
  */
 export async function log(repo) {
+  const repoIsEmpty = repo.isEmpty()
+
   // для определения в каком столбце будет рисоваться ветка
   let branchIndex = 0
   const reserve = []
@@ -64,6 +66,7 @@ export async function log(repo) {
   let headCommit
   try {
     headCommit = await repo.getHeadCommit()
+    console.log('headCommit:', headCommit)
   } catch (e) {
     console.log('UNABLE TO GET HEAD, POSSIBLE REPO IS EMPTY:', e)
   }
@@ -71,6 +74,7 @@ export async function log(repo) {
   let currentBranch
   try {
     currentBranch = (await repo.getCurrentBranch()).shorthand()
+    console.log('currentBranch:', currentBranch)
   } catch (e) {
     console.log('NO HEAD BRANCH - POSSIBLE REPO IS EMPTY')
   }
@@ -81,7 +85,7 @@ export async function log(repo) {
   const commits = []
 
   // делаем искусственную запись
-  if (headCommit && (repo.isMerging() || repo.isRebasing())) {
+  if (headCommit && repo.isMerging() /* || repo.isRebasing()*/) {
     try {
       const mineCommit = headCommit.sha()
       const theirsCommit = (await repo.getBranchCommit('MERGE_HEAD')).sha()
@@ -117,18 +121,29 @@ export async function log(repo) {
     }
 
     commits.push({
-      // sha: undefined,
-      message: 'Uncommitted changes',
-      // committer: undefined,
+      sha: null,
+      message: `Uncommitted changes (${workDirStatus.length})`,
+      committer: null,
       date: Date.now(),
       offset,
       branch,
-      routes: [...fillRoutes(I, I, reserve)]
+      routes: repoIsEmpty ? [] : [...fillRoutes(I, I, reserve)]
     })
-  } /* // нельзя так делать !!! т.к. с этим связан массив reserve 
-  else {
-    branchIndex += 1 // пропускаем серую ветку ???
-  }*/
+  }
+
+  if (repoIsEmpty) {
+    return {
+      refs: repoRefs,
+      commits,
+      committers,
+      headCommit: undefined,
+      currentBranch: undefined,
+      maxOffset: 0, // нужно чтобы знать максимальную ширину Canvas
+      isMerging: false,
+      isRebasing: false,
+      hasConflicts: false
+    }
+  }
 
   const revWalk = repo.createRevWalk()
   revWalk.sorting(nodegit.Revwalk.SORT.TIME)
@@ -142,7 +157,6 @@ export async function log(repo) {
     oid = await revWalk.next()
   } catch (e) {
     console.log('REVWALK ERROR - POSSIBLE REPO IS EMPTY')
-    return // nothing to return
   }
 
   let maxOffset = 0

@@ -105,6 +105,7 @@ export const Tree = memo(
       drawGraph(ctx, topOffset, drawingCommits, headCommit)
     }, [height, skip, count, topOffset, commitsCount, headCommit])
     // commitsCount forces redraw tree on get new commits outside
+    // headCommit forces redraw tree on changing HEAD
 
     return <CanvasStyle ref={canvasRef} width={canvasWidth} height={height} />
   }
