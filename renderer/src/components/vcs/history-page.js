@@ -6,6 +6,9 @@ import { observer } from 'mobx-react'
 import styled, { withTheme } from 'styled-components'
 import { Button } from '@blueprintjs/core'
 import { IconNames } from '@blueprintjs/icons'
+
+import CircularProgress from '@material-ui/core/CircularProgress'
+
 import SplitPane, { Pane } from '../react-split'
 import { DiffPane } from './diff-pane'
 import { History } from './history'
@@ -32,6 +35,15 @@ const HistoryContainerWrapper = styled.div`
   width: 100%;
   height: 100%;
   overflow: hidden;
+`
+
+const ProgressRootStyle = styled.div`
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 10px;
 `
 
 const menuButtonStyle = { width: '30px', height: '30px', marginRight: '8px', outline: 'none' }
@@ -83,25 +95,31 @@ class HistoryPage extends Component {
               <Button small minimal icon={IconNames.MORE} onClick={onGitLogSettingsMenu} style={menuButtonStyle} />
             </ButtonContainer>
             <HistoryContainerWrapper>
-              <History
-                getCommits={getCommits}
-                commitsCount={commitsCount}
-                committers={committers}
-                heads={heads}
-                maxOffset={maxOffset}
-                remoteHeads={remoteHeads}
-                tags={tags}
-                onCommitSelect={onCommitSelect}
-                onContextMenu={this.props.onContextMenu}
-                selectedCommit={selectedCommit}
-                isProcessingGitLog={isProcessingGitLog}
-                headCommit={headCommit}
-                treeChanges={treeChanges}
-                showSHA={showSHA}
-                showDate={showDate}
-                showAuthor={showAuthor}
-                showAuthorType={showAuthorType}
-              />
+              {isProcessingGitLog && (
+                <ProgressRootStyle>
+                  <CircularProgress size={20} thickness={3} />
+                </ProgressRootStyle>
+              )}
+              {!isProcessingGitLog && (
+                <History
+                  getCommits={getCommits}
+                  commitsCount={commitsCount}
+                  committers={committers}
+                  heads={heads}
+                  maxOffset={maxOffset}
+                  remoteHeads={remoteHeads}
+                  tags={tags}
+                  onCommitSelect={onCommitSelect}
+                  onContextMenu={this.props.onContextMenu}
+                  selectedCommit={selectedCommit}
+                  headCommit={headCommit}
+                  treeChanges={treeChanges}
+                  showSHA={showSHA}
+                  showDate={showDate}
+                  showAuthor={showAuthor}
+                  showAuthorType={showAuthorType}
+                />
+              )}
             </HistoryContainerWrapper>
           </RootContainerStyle>
         </Pane>

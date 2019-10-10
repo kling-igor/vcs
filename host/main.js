@@ -348,7 +348,7 @@ answerRenderer('commit:conflictedfile-diff', async (browserWindow, filePath) => 
 
 // получение информации о коммите для отображения в списке
 answerRenderer('commit:digest-info', async (browserWindow, startIndex, endIndex) => {
-  return gitLogResult.commits.slice(startIndex, endIndex)
+  return gitLogResult.commits.slice(startIndex, endIndex + 1)
 })
 
 answerRenderer('repository:log', async (browserWindow, projectPath) => {

@@ -3,8 +3,6 @@ import styled from 'styled-components'
 import { List, AutoSizer, ScrollSync, InfiniteLoader } from 'react-virtualized'
 import moment from 'moment'
 
-import CircularProgress from '@material-ui/core/CircularProgress'
-
 import { Tree } from './tree'
 import { ROW_HEIGHT, X_STEP } from './constants'
 
@@ -196,15 +194,6 @@ const RightContainerStyle = styled.div`
   white-space: nowrap;
 `
 
-const ProgressRootStyle = styled.div`
-  height: 100%;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding-top: 10px;
-`
-
 export const History = memo(
   ({
     getCommits,
@@ -217,7 +206,6 @@ export const History = memo(
     onCommitSelect,
     onContextMenu,
     selectedCommit,
-    isProcessingGitLog,
     headCommit,
     treeChanges,
     showSHA,
@@ -231,14 +219,23 @@ export const History = memo(
     // тут будут кешироваться все данные для отображения строк
     const rowsRef = useRef({ rows: [] })
 
+    const listRef = useRef(null)
+
     const [cachedCommitsCount, setCachedCommitsCount] = useState(0)
+
+    // useEffect(() => {
+    //   if (listRef.current) {
+    //     listRef.current.forceUpdateGrid()
+    //   }
+    // }, [treeChanges])
 
     const isRowLoaded = ({ index }) => !!rowsRef.current.rows[index]
 
     const loadMoreRows = async ({ startIndex, stopIndex }) => {
-      const chunk = await getCommits(startIndex, stopIndex + 1)
+      const chunk = await getCommits(startIndex, stopIndex)
 
       const { rows } = rowsRef.current
+
       for (let i = startIndex; i <= stopIndex; i++) {
         rows[i] = chunk[i - startIndex]
       }
@@ -349,51 +346,48 @@ export const History = memo(
       )
     }
 
-    if (isProcessingGitLog) {
-      return (
-        <ProgressRootStyle>
-          <CircularProgress size={20} thickness={3} />
-        </ProgressRootStyle>
-      )
-    }
-
     return (
       <AutoSizer>
         {({ width, height }) => (
           <InfiniteLoader isRowLoaded={isRowLoaded} loadMoreRows={loadMoreRows} rowCount={commitsCount}>
-            {({ onRowsRendered, registerChild }) => (
-              <ScrollSync>
-                {({ clientHeight, clientWidth, onScroll, scrollHeight, scrollLeft, scrollTop, scrollWidth }) => (
-                  <div className="Table">
-                    <div className="LeftColumn">
-                      <Tree
-                        height={height}
-                        scrollTop={scrollTop}
-                        maxOffset={maxOffset}
-                        commits={rowsRef.current.rows}
-                        commitsCount={cachedCommitsCount}
-                        headCommit={headCommit}
-                        treeChanges={treeChanges}
-                      />
+            {({ onRowsRendered, registerChild }) => {
+              registerChild(listRef.current)
+
+              return (
+                <ScrollSync>
+                  {({ clientHeight, clientWidth, onScroll, scrollHeight, scrollLeft, scrollTop, scrollWidth }) => (
+                    <div className="Table">
+                      <div className="LeftColumn">
+                        <Tree
+                          height={height}
+                          scrollTop={scrollTop}
+                          maxOffset={maxOffset}
+                          commits={rowsRef.current.rows}
+                          commitsCount={cachedCommitsCount}
+                          headCommit={headCommit}
+                          treeChanges={treeChanges}
+                        />
+                      </div>
+                      <div className="RightColumn" style={{ marginRight: 16 }}>
+                        <List
+                          // ref={registerChild}
+                          ref={listRef}
+                          onRowsRendered={onRowsRendered}
+                          onScroll={onScroll}
+                          width={width}
+                          height={height}
+                          overscanRowCount={1}
+                          rowRenderer={rowRenderer}
+                          rowCount={commitsCount}
+                          rowHeight={ROW_HEIGHT}
+                          // scrollToIndex={scrollToIndex}
+                        />
+                      </div>
                     </div>
-                    <div className="RightColumn" style={{ marginRight: 16 }}>
-                      <List
-                        ref={registerChild}
-                        onRowsRendered={onRowsRendered}
-                        onScroll={onScroll}
-                        width={width}
-                        height={height}
-                        overscanRowCount={1}
-                        rowRenderer={rowRenderer}
-                        rowCount={commitsCount}
-                        rowHeight={ROW_HEIGHT}
-                        // scrollToIndex={scrollToIndex}
-                      />
-                    </div>
-                  </div>
-                )}
-              </ScrollSync>
-            )}
+                  )}
+                </ScrollSync>
+              )
+            }}
           </InfiniteLoader>
         )}
       </AutoSizer>
