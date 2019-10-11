@@ -1,13 +1,14 @@
 // const { ipcRenderer } = window.require('electron')
 // const { callMain } = require('./ipc').default(ipcRenderer)
 import { CompositeDisposable, Disposable, Emitter } from 'event-kit'
-import { join } from 'path'
+import path from 'path'
 import * as _ from 'lodash'
+import { observable, action, transaction, computed } from 'mobx'
 import { callMain } from './ipc'
 
-import { observable, action, transaction, computed } from 'mobx'
+import { FileWrapper } from './src/components/vcs/file-wrapper'
 
-const cleanLeadingSlashes = path => path.replace(/^[\.\/]*/, '')
+const cleanLeadingSlashes = filePath => filePath.replace(/^[\.\/]*/, '')
 
 /**
  * Convenient function
@@ -65,8 +66,8 @@ export class VCS extends Emitter {
   @observable showAuthorType = 'FULL_NAME_WITH_EMAIL' // ABBREVIATED | FULL_NAME | FULL_NAME_WITH_EMAIL
 
   // diff editor
-  @observable originalFile = ''
-  @observable modifiedFile = ''
+  @observable originalFile = null
+  @observable modifiedFile = null
 
   @observable diffConflictedFile = false
 
@@ -365,7 +366,7 @@ export class VCS extends Emitter {
 
         if (stagedStatus) {
           const foundInStaged = this.stagedFiles.find(
-            ({ path, filename }) => path === item.path && filename === item.filename
+            ({ path: filePath, filename }) => filePath === item.path && filename === item.filename
           )
           selected = (foundInStaged && foundInStaged.selected) || false
           acc[STAGED].push({ ...item, selected, status: stagedStatus })
@@ -375,7 +376,7 @@ export class VCS extends Emitter {
 
         if (workdirStatus) {
           const foundInChanged = this.changedFiles.find(
-            ({ path, filename }) => path === item.path && filename === item.filename
+            ({ path: filePath, filename }) => filePath === item.path && filename === item.filename
           )
           selected = (foundInChanged && foundInChanged.selected) || false
           acc[CHANGED].push({ ...item, selected, status: workdirStatus })
@@ -393,65 +394,104 @@ export class VCS extends Emitter {
   }
 
   @action.bound
-  async onChangedFileSelect(filepath) {
-    console.log('CLICK ON CHANGED FILE:', filepath)
+  async onChangedFileSelect(filePath) {
+    console.log('CLICK ON CHANGED FILE:', filePath)
 
     // TODO:  нужно проверить статус
     // если M C A то есть смысл читать локальную копию
     // если D то локальная копия отсутствует
 
-    // TODO: проверять статус и на базе статуса вызывать соответствующий diff
+    let mime
 
-    const { status } = this.changedFiles.find(item => `${item.path}/${item.filename}` === filepath)
+    const fileType = await callMain('get-file-type', path.resolve(this.project.projectPath, filePath))
+    if (fileType) {
+      mime = fileType.mime
+    }
+
+    const { status } = this.changedFiles.find(item => `${item.path}/${item.filename}` === filePath)
 
     if (status === 'C') {
-      const { mineContent = '', theirsContent = '' } = await callMain(
-        'commit:conflictedfile-diff',
-        cleanLeadingSlashes(filepath)
-      ) // remove leading slash)
+      if (mime === 'text/plain') {
+        const { mineContent = '', theirsContent = '' } = await callMain(
+          'commit:conflictedfile-diff',
+          cleanLeadingSlashes(filePath)
+        ) // remove leading slash)
 
-      transaction(() => {
-        this.originalFile = mineContent
-        this.modifiedFile = theirsContent
-        this.selectedFilePath = filepath
-        this.diffConflictedFile = true
-      })
+        transaction(() => {
+          this.originalFile = FileWrapper.createTextFile({ path: filePath, content: mineContent })
+          this.modifiedFile = FileWrapper.createTextFile({ path: filePath, content: theirsContent })
+          this.selectedFilePath = filePath
+          this.diffConflictedFile = true
+        })
+      } else {
+        transaction(() => {
+          this.originalFile = FileWrapper.createBinaryDataFile({ path: filePath })
+          this.modifiedFile = FileWrapper.createBinaryDataFile({ path: filePath })
+          this.selectedFilePath = filePath
+          this.diffConflictedFile = true
+        })
+      }
     } else {
+      if (mime === 'text/plain') {
+        const { originalContent = '', modifiedContent = '', details: errorDetails } = await callMain(
+          'commit:file-diff-to-index',
+          this.projectPath,
+          cleanLeadingSlashes(filePath)
+        )
+
+        transaction(() => {
+          this.originalFile = FileWrapper.createTextFile({ path: filePath, content: originalContent })
+          this.modifiedFile = FileWrapper.createTextFile({ path: filePath, content: modifiedContent })
+          this.selectedFilePath = filePath
+          this.diffConflictedFile = false
+        })
+      } else {
+        transaction(() => {
+          this.originalFile = FileWrapper.createBinaryDataFile({ path: filePath })
+          this.modifiedFile = FileWrapper.createBinaryDataFile({ path: filePath })
+          this.selectedFilePath = filePath
+          this.diffConflictedFile = false
+        })
+      }
+    }
+  }
+
+  @action.bound
+  async onStagedFileSelect(filePath) {
+    let mime
+
+    const fileType = await callMain('get-file-type', path.resolve(this.project.projectPath, filePath))
+    if (fileType) {
+      mime = fileType.mime
+    }
+
+    if (mime === 'text/plain') {
       const { originalContent = '', modifiedContent = '', details: errorDetails } = await callMain(
-        'commit:file-diff-to-index',
-        this.projectPath,
-        cleanLeadingSlashes(filepath)
+        'commit:stagedfile-diff-to-head',
+        cleanLeadingSlashes(filePath)
       )
 
       transaction(() => {
-        this.originalFile = originalContent
-        this.modifiedFile = modifiedContent
-        this.selectedFilePath = filepath
+        this.originalFile = FileWrapper.createTextFile({ path: filePath, content: originalContent })
+        this.modifiedFile = FileWrapper.createTextFile({ path: filePath, content: modifiedContent })
+        this.selectedFilePath = filePath
+        this.diffConflictedFile = false
+      })
+    } else {
+      transaction(() => {
+        this.originalFile = FileWrapper.createBinaryDataFile({ path: filePath })
+        this.modifiedFile = FileWrapper.createBinaryDataFile({ path: filePath })
+        this.selectedFilePath = filePath
         this.diffConflictedFile = false
       })
     }
   }
 
-  @action.bound
-  async onStagedFileSelect(filepath) {
-    const { originalContent = '', modifiedContent = '', details: errorDetails } = await callMain(
-      'commit:stagedfile-diff-to-head',
-      cleanLeadingSlashes(filepath)
-    )
-
-    transaction(() => {
-      this.originalFile = originalContent
-      this.modifiedFile = modifiedContent
-      this.selectedFilePath = filepath
-      this.diffConflictedFile = false
-    })
-  }
-
   @action
-  async open(path) {
-    this.projectPath = path
+  async open(projectPath) {
+    this.projectPath = projectPath
 
-    const { user, remotes } = await callMain('repository:open', path)
+    const { user, remotes } = await callMain('repository:open', projectPath)
 
     if (user) {
       const { name, email } = user
@@ -473,8 +513,8 @@ export class VCS extends Emitter {
         this.projectDisposables = new CompositeDisposable()
 
         this.projectDisposables.add(
-          this.applicationDelegate.onProjectFilePathAdd((sender, path) => {
-            console.log(`[VCS] added ${path.replace(this.project.projectPath, '')}`)
+          this.applicationDelegate.onProjectFilePathAdd((sender, filePath) => {
+            console.log(`[VCS] added ${filePath.replace(this.project.projectPath, '')}`)
 
             if (this.changedFiles.length === 0) {
               this.getLog()
@@ -483,8 +523,8 @@ export class VCS extends Emitter {
             this.debouncedStatus()
           }),
 
-          this.applicationDelegate.onProjectFilePathRemove((sender, path) => {
-            const relativePath = path.replace(this.project.projectPath, '')
+          this.applicationDelegate.onProjectFilePathRemove((sender, filePath) => {
+            const relativePath = filePath.replace(this.project.projectPath, '')
             console.log(`[VCS] removed ${relativePath}`)
             // this.fileTreeView.remove(relativePath)
 
@@ -514,8 +554,8 @@ export class VCS extends Emitter {
             // )
           }),
 
-          this.applicationDelegate.onProjectFilePathChange((sender, path) => {
-            console.log(`[VCS] changed outside of IDE ${path.replace(this.project.projectPath, '')}`)
+          this.applicationDelegate.onProjectFilePathChange((sender, filePath) => {
+            console.log(`[VCS] changed outside of IDE ${filePath.replace(this.project.projectPath, '')}`)
 
             if (this.changedFiles.length === 0) {
               this.getLog()
@@ -617,8 +657,8 @@ export class VCS extends Emitter {
     const commitInfo = await callMain('commit:get-info', sha)
 
     transaction(() => {
-      this.originalFile = ''
-      this.modifiedFile = ''
+      this.originalFile = null
+      this.modifiedFile = null
       this.commitSelectedFile = null
       this.diffConflictedFile = false
       this.commitInfo = commitInfo
@@ -626,27 +666,37 @@ export class VCS extends Emitter {
   }
 
   @action.bound
-  async onCommitFileSelect(path) {
+  async onCommitFileSelect(filePath) {
     if (!this.commitInfo) return
-    if (this.commitSelectedFile === path) return
+    if (this.commitSelectedFile === filePath) return
 
-    this.commitSelectedFile = path
+    this.commitSelectedFile = filePath
 
-    try {
-      // запрашиваем детальную информацию по файлу
-      const { originalContent = '', modifiedContent = '', details: errorDetails } = await callMain(
-        'commit:file-diff',
-        this.commitInfo.commit,
-        cleanLeadingSlashes(path)
-      )
+    let mime
 
-      transaction(() => {
-        this.originalFile = originalContent
-        this.modifiedFile = modifiedContent
-        this.diffConflictedFile = false
-      })
-    } catch (e) {
-      console.log('FILE DETAILS ERROR:', e)
+    const fileType = await callMain('get-file-type', path.resolve(this.project.projectPath, filePath))
+    if (fileType) {
+      mime = fileType.mime
+    }
+
+    if (mime === 'text/plain') {
+      try {
+        // запрашиваем детальную информацию по файлу
+        const { originalContent = '', modifiedContent = '', details: errorDetails } = await callMain(
+          'commit:file-diff',
+          this.commitInfo.commit,
+          cleanLeadingSlashes(filePath)
+        )
+
+        transaction(() => {
+          this.originalFile = FileWrapper.createTextFile({ path: filePath, content: originalContent })
+          this.modifiedFile = FileWrapper.createTextFile({ path: filePath, content: modifiedContent })
+          this.diffConflictedFile = false
+        })
+      } catch (e) {
+        console.log('FILE DETAILS ERROR:', e)
+      }
+    } else {
     }
   }
 
@@ -711,8 +761,8 @@ export class VCS extends Emitter {
 
     transaction(() => {
       this.mode = 'commit'
-      this.originalFile = ''
-      this.modifiedFile = ''
+      this.originalFile = null
+      this.modifiedFile = null
       this.selectedFilePath = null
       this.commitSelectedFile = null
       this.diffConflictedFile = false
@@ -726,8 +776,8 @@ export class VCS extends Emitter {
     if (this.mode === 'log') return
     transaction(() => {
       this.mode = 'log'
-      this.originalFile = ''
-      this.modifiedFile = ''
+      this.originalFile = null
+      this.modifiedFile = null
       this.selectedFilePath = null
       this.commitSelectedFile = null
       this.diffConflictedFile = false
@@ -761,8 +811,8 @@ export class VCS extends Emitter {
       if (this.selectedChangedFile && paths.includes(cleanLeadingSlashes(this.selectedChangedFile))) {
         transaction(() => {
           this.selectedFilePath = null
-          this.originalFile = ''
-          this.modifiedFile = ''
+          this.originalFile = null
+          this.modifiedFile = null
           this.diffConflictedFile = false
         })
       }
@@ -782,8 +832,8 @@ export class VCS extends Emitter {
       if (this.selectedChangedFile && paths.includes(cleanLeadingSlashes(this.selectedChangedFile))) {
         transaction(() => {
           this.selectedFilePath = null
-          this.originalFile = ''
-          this.modifiedFile = ''
+          this.originalFile = null
+          this.modifiedFile = null
           this.diffConflictedFile = false
         })
       }
@@ -794,20 +844,20 @@ export class VCS extends Emitter {
   }
 
   @action.bound
-  async stageFile(path) {
-    if (path === this.selectedChangedFile) {
+  async stageFile(filePath) {
+    if (filePath === this.selectedChangedFile) {
       transaction(() => {
         this.selectedFilePath = null
-        this.originalFile = ''
-        this.modifiedFile = ''
+        this.originalFile = null
+        this.modifiedFile = null
         this.diffConflictedFile = false
       })
     }
 
-    await callMain('stage:add', [cleanLeadingSlashes(path)])
+    await callMain('stage:add', [cleanLeadingSlashes(filePath)])
     await this.status()
 
-    console.log('STAGE FILE:', path, this.selectedChangedFile)
+    console.log('STAGE FILE:', filePath, this.selectedChangedFile)
   }
 
   @action.bound
@@ -824,8 +874,8 @@ export class VCS extends Emitter {
       if (this.selectedStagedFile && paths.includes(cleanLeadingSlashes(this.selectedStagedFile))) {
         transaction(() => {
           this.selectedFilePath = null
-          this.originalFile = ''
-          this.modifiedFile = ''
+          this.originalFile = null
+          this.modifiedFile = null
           this.diffConflictedFile = false
         })
       }
@@ -845,8 +895,8 @@ export class VCS extends Emitter {
       if (this.selectedStagedFile && paths.includes(cleanLeadingSlashes(this.selectedStagedFile))) {
         transaction(() => {
           this.selectedFilePath = null
-          this.originalFile = ''
-          this.modifiedFile = ''
+          this.originalFile = null
+          this.modifiedFile = null
           this.diffConflictedFile = false
         })
       }
@@ -857,23 +907,23 @@ export class VCS extends Emitter {
   }
 
   @action.bound
-  async unstageFile(path) {
-    if (path === this.selectedStagedFile) {
+  async unstageFile(filePath) {
+    if (filePath === this.selectedStagedFile) {
       transaction(() => {
         this.selectedFilePath = null
-        this.originalFile = ''
-        this.modifiedFile = ''
+        this.originalFile = null
+        this.modifiedFile = null
         this.diffConflictedFile = false
       })
     }
 
-    await callMain('stage:remove', [cleanLeadingSlashes(path)])
+    await callMain('stage:remove', [cleanLeadingSlashes(filePath)])
     await this.status()
   }
 
   @action.bound
-  async discardLocalChanges(path) {
-    await callMain('repository:discard-local-changes', this.project.projectPath, cleanLeadingSlashes(path))
+  async discardLocalChanges(filePath) {
+    await callMain('repository:discard-local-changes', this.project.projectPath, cleanLeadingSlashes(filePath))
     await this.status()
   }
 
@@ -888,8 +938,8 @@ export class VCS extends Emitter {
       if (this.selectedChangedFile && paths.includes(cleanLeadingSlashes(this.selectedChangedFile))) {
         transaction(() => {
           this.selectedFilePath = null
-          this.originalFile = ''
-          this.modifiedFile = ''
+          this.originalFile = null
+          this.modifiedFile = null
           this.diffConflictedFile = false
         })
       }
@@ -899,8 +949,8 @@ export class VCS extends Emitter {
   }
 
   @action.bound
-  async stopTracking(path) {
-    await callMain('stage:remove', [cleanLeadingSlashes(path)])
+  async stopTracking(filePath) {
+    await callMain('stage:remove', [cleanLeadingSlashes(filePath)])
     await this.status()
   }
 

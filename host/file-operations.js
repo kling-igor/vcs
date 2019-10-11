@@ -1,9 +1,17 @@
 import { readdir, stat, mkdirp, readFile, writeFile, rename, existsSync, remove, unlink } from 'fs-extra'
 import chokidar from 'chokidar'
+import readChunk from 'read-chunk'
+import fileType from 'file-type'
 import { join, extname } from 'path'
 import { Emitter } from 'event-kit'
 
 const IGNORED = ['.DS_Store', '.Trash', 'node_modules', '.git', '.hg', '.svn', 'controllers_compiled']
+
+const MIME = {
+  js: 'text/plain',
+  json: 'text/plain',
+  txt: 'text/plain'
+}
 
 export class FileSystemOperations {
   projectPath = null
@@ -303,6 +311,23 @@ export class FileSystemOperations {
     } catch (err) {
       console.error(err)
     }
+  }
+
+  /**
+   * @param {String} filePath
+   * @returns {ext:String, mime:String}
+   */
+  async getFileType(filePath) {
+    const ext = extname(filePath).slice(1)
+
+    const mime = MIME[ext]
+
+    if (mime) {
+      return { ext, mime }
+    }
+
+    const buffer = await readChunk(filePath, 0, fileType.minimumBytes)
+    return fileType(buffer)
   }
 
   openFile(filePath) {

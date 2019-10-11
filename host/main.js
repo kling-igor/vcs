@@ -12,58 +12,12 @@ import keytar from 'keytar'
 import dotenv from 'dotenv'
 dotenv.config()
 
-import {
-  findConfig,
-  openRepoConfig,
-  getUserNameEmail,
-  setUserNameEmail,
-  getRemotes,
-  openRepository,
-  getReferences,
-  status,
-  refreshIndex,
-  writeIndex,
-  addToIndex,
-  removeFromIndex,
-  log,
-  commit,
-  commitInfo,
-  fileDiffToParent,
-  changedFileDiffToIndex,
-  stagedFileDiffToHead,
-  getMineFileContent,
-  getTheirsFileContent,
-  softResetToCommit,
-  mixedResetToCommit,
-  hardResetToCommit,
-  revertCommit,
-  discardLocalChanges,
-  discardIndexedChanges,
-  checkoutBranch,
-  checkoutToCommit,
-  createBranch,
-  deleteBranch,
-  createTag,
-  deleteTagByName,
-  headCommit,
-  cloneRepository,
-  createRepository,
-  // pull,
-  // push,
-  // fetch,
-  merge,
-  mergeBranches,
-  removeConflict,
-  addRemote,
-  deleteRemote,
-  getRemote
-} from './gitops'
+import * as gitops from './gitops'
 
 // FAKE FROM APPLICATION
-const fileOperations = new FileSystemOperations()
+const fileops = new FileSystemOperations()
 
 let repo
-let emptyRepo = false
 let user
 let remotes = []
 
@@ -113,21 +67,21 @@ app.on('window-all-closed', () => {
 
 answerRenderer('repository:open', async (browserWindow, path) => {
   try {
-    repo = await openRepository(path)
+    repo = await gitops.openRepository(path)
     if (repo) {
       console.log('repo is opened')
     }
 
     const result = {}
 
-    let config = await findConfig()
+    let config = await gitops.findConfig()
     if (!config) {
-      config = await openRepoConfig(repo)
+      config = await gitops.openRepoConfig(repo)
     }
 
     if (config) {
       try {
-        const { name, email } = (await getUserNameEmail(config)) || {}
+        const { name, email } = (await gitops.getUserNameEmail(config)) || {}
         if (name && email) {
           user = { name, email }
 
@@ -140,7 +94,7 @@ answerRenderer('repository:open', async (browserWindow, path) => {
       }
 
       try {
-        remotes = await getRemotes(repo)
+        remotes = await gitops.getRemotes(repo)
         result.remotes = remotes
       } catch (e) {
         console.log('UNABLE TO GET REMOTES INFO', e)
@@ -167,19 +121,19 @@ const checkRepo = () => {
 answerRenderer('repository:get-status', async browserWindow => {
   checkRepo()
 
-  return await status(repo)
+  return await gitops.status(repo)
 })
 
 answerRenderer('repository:get-head', async browserWindow => {
   checkRepo()
 
-  return await headCommit(repo)
+  return await gitops.headCommit(repo)
 })
 
 answerRenderer('repository:get-references', async browserWindow => {
   checkRepo()
 
-  return await getReferences(repo)
+  return await gitops.getReferences(repo)
 })
 
 answerRenderer('commit:get-info', async (browserWindow, sha) => {
@@ -190,7 +144,7 @@ answerRenderer('commit:get-info', async (browserWindow, sha) => {
     return null
   }
 
-  return commitInfo(repo, sha)
+  return gitops.commitInfo(repo, sha)
 })
 
 answerRenderer('commit:create', async (browserWindow, message, mergingCommitSha, name, email) => {
@@ -198,8 +152,8 @@ answerRenderer('commit:create', async (browserWindow, message, mergingCommitSha,
 
   try {
     const index = await repo.index()
-    await writeIndex(index)
-    await commit(repo, message, name, email, mergingCommitSha)
+    await gitops.writeIndex(index)
+    await gitops.commit(repo, message, name, email, mergingCommitSha)
   } catch (e) {
     console.log('COMMIT ERROR:', e)
   }
@@ -209,12 +163,12 @@ answerRenderer('stage:add', async (browserWindow, paths) => {
   checkRepo()
 
   try {
-    const index = await refreshIndex(repo)
+    const index = await gitops.refreshIndex(repo)
     for (const path of paths) {
-      await addToIndex(index, path)
+      await gitops.addToIndex(index, path)
     }
 
-    await writeIndex(index)
+    await gitops.writeIndex(index)
   } catch (e) {
     console.log('ERROR ON ADDING TO INDEX', e)
   }
@@ -224,12 +178,12 @@ answerRenderer('stage:remove', async (browserWindow, paths) => {
   checkRepo()
 
   try {
-    const index = await refreshIndex(repo)
+    const index = await gitops.refreshIndex(repo)
     for (const path of paths) {
-      await removeFromIndex(index, path)
+      await gitops.removeFromIndex(index, path)
     }
 
-    await writeIndex(index)
+    await gitops.writeIndex(index)
   } catch (e) {
     console.log('ERROR ON REMOVING FROM INDEX', e)
   }
@@ -238,17 +192,17 @@ answerRenderer('stage:remove', async (browserWindow, paths) => {
 answerRenderer('repository:checkout-branch', async (browserWindow, branch, discardLocalChanges) => {
   checkRepo()
   console.log('CHECKOUT TO BRANCH:', branch, discardLocalChanges)
-  return checkoutBranch(repo, branch, discardLocalChanges)
+  return gitops.checkoutBranch(repo, branch, discardLocalChanges)
 })
 
 answerRenderer('repository:checkout-commit', async (browserWindow, sha, discardLocalChanges) => {
   checkRepo()
-  return checkoutToCommit(repo, sha, discardLocalChanges)
+  return gitops.checkoutToCommit(repo, sha, discardLocalChanges)
 })
 
 answerRenderer('repository:discard-local-changes', async (browserWindow, projectRoot, path) => {
   checkRepo()
-  await discardLocalChanges(repo, path)
+  await gitops.discardLocalChanges(repo, path)
 
   // const statuses = await status(repo)
 
@@ -273,7 +227,7 @@ answerRenderer('repository:discard-local-changes', async (browserWindow, project
   // for (const path of removingFiles) {
   //   console.log('REMOVE NEW FILE:', path)
   //   try {
-  //     await fileOperations.removeFile(path)
+  //     await fileops.removeFile(path)
   //   } catch (e) {
   //     console.log('ERROR REMOVING FILE', path, e)
   //   }
@@ -292,8 +246,8 @@ answerRenderer('repository:merge', async (browserWindow, theirSha) => {
   console.log('MERGE WITH:', theirSha)
   checkRepo()
   try {
-    await merge(repo, theirSha)
-    await refreshIndex(repo)
+    await gitops.merge(repo, theirSha)
+    await gitops.refreshIndex(repo)
   } catch (e) {
     console.log('MERGE ERROR:', e)
   }
@@ -303,8 +257,8 @@ answerRenderer('repository:merge-branches', async (browserWindow, ourBranchName,
   console.log(`MERGE ${ourBranchName} WITH ${theirBranchName}:`)
   checkRepo()
   try {
-    const indexOrCommit = await mergeBranches(repo, ourBranchName, theirBranchName)
-    await refreshIndex(repo)
+    const indexOrCommit = await gitops.mergeBranches(repo, ourBranchName, theirBranchName)
+    await gitops.refreshIndex(repo)
   } catch (e) {
     console.log('MERGE ERROR:', e)
   }
@@ -318,27 +272,29 @@ answerRenderer('commit:file-diff', async (browserWindow, sha, filePath) => {
     return null
   }
 
-  return fileDiffToParent(repo, sha, filePath)
+  return gitops.fileDiffToParent(repo, sha, filePath)
 })
 
 answerRenderer('commit:file-diff-to-index', async (browserWindow, projectPath, filePath) => {
   checkRepo()
 
-  return changedFileDiffToIndex(repo, projectPath, filePath)
+  return gitops.changedFileDiffToIndex(repo, projectPath, filePath)
 })
 
 answerRenderer('commit:stagedfile-diff-to-head', async (browserWindow, filePath) => {
   checkRepo()
 
-  return stagedFileDiffToHead(repo, filePath)
+  return gitops.stagedFileDiffToHead(repo, filePath)
 })
 
 answerRenderer('commit:conflictedfile-diff', async (browserWindow, filePath) => {
   checkRepo()
 
-  const mineContent = await getMineFileContent(repo, filePath)
+  // TODO: нужно проверить тип файлов!!!
 
-  const theirsContent = await getTheirsFileContent(repo, filePath)
+  const mineContent = await gitops.getMineFileContent(repo, filePath)
+
+  const theirsContent = await gitops.getTheirsFileContent(repo, filePath)
 
   return {
     mineContent,
@@ -432,7 +388,7 @@ answerRenderer('repository:log', async (browserWindow, projectPath) => {
 answerRenderer('repository:fetch', async (browserWindow, projectPath, remoteName, userName, password) => {
   checkRepo()
 
-  const remote = await getRemote(repo, remoteName)
+  const remote = await gitops.getRemote(repo, remoteName)
 
   let name
   let pass
@@ -464,7 +420,7 @@ answerRenderer('repository:fetch', async (browserWindow, projectPath, remoteName
 answerRenderer('repository:push', async (browserWindow, projectPath, remoteName, branch, userName, password) => {
   checkRepo()
 
-  const remote = await getRemote(repo, remoteName)
+  const remote = await gitops.getRemote(repo, remoteName)
 
   let name
   let pass
@@ -496,7 +452,7 @@ answerRenderer('repository:push', async (browserWindow, projectPath, remoteName,
 answerRenderer('repository:pull', async (browserWindow, projectPath, remoteName, userName, password) => {
   checkRepo()
 
-  const remote = await getRemote(repo, remoteName)
+  const remote = await gitops.getRemote(repo, remoteName)
 
   let name
   let pass
@@ -530,60 +486,60 @@ answerRenderer('repository:pull', async (browserWindow, projectPath, remoteName,
 answerRenderer('branch:create', async (browserWindow, name, commit) => {
   checkRepo()
 
-  return createBranch(repo, name, commit)
+  return gitops.createBranch(repo, name, commit)
 })
 
 answerRenderer('branch:delete', async (browserWindow, name) => {
   checkRepo()
 
-  return deleteBranch(repo, name)
+  return gitops.deleteBranch(repo, name)
 })
 
 answerRenderer('tag:create', async (browserWindow, target, name, message) => {
   checkRepo()
 
-  return createTag(repo, target, name, user.name, user.email, message)
+  return gitops.createTag(repo, target, name, user.name, user.email, message)
 })
 
 answerRenderer('tag:delete', async (browserWindow, name) => {
   checkRepo()
 
-  return deleteTagByName(repo, name)
+  return gitops.deleteTagByName(repo, name)
 })
 
 answerRenderer('commit:reset-soft', async (browserWindow, sha) => {
   checkRepo()
 
-  return softResetToCommit(repo, sha)
+  return gitops.softResetToCommit(repo, sha)
 })
 
 answerRenderer('commit:reset-mixed', async (browserWindow, sha) => {
   checkRepo()
 
-  return mixedResetToCommit(repo, sha)
+  return gitops.mixedResetToCommit(repo, sha)
 })
 
 answerRenderer('commit:reset-hard', async (browserWindow, sha) => {
   checkRepo()
 
-  return hardResetToCommit(repo, sha)
+  return gitops.hardResetToCommit(repo, sha)
 })
 
 answerRenderer('commit:revert', async (browserWindow, sha) => {
   checkRepo()
 
-  return revertCommit(repo, sha)
+  return gitops.revertCommit(repo, sha)
 })
 
 answerRenderer('merge:resolve-as-is', async (browserWindow, projectPath, filePath, fileContent) => {
   checkRepo()
   try {
-    await fileOperations.saveFile(join(projectPath, filePath), fileContent)
-    await removeConflict(repo, filePath)
+    await fileops.saveFile(join(projectPath, filePath), fileContent)
+    await gitops.removeConflict(repo, filePath)
 
-    const index = await refreshIndex(repo)
-    await addToIndex(index, filePath)
-    await writeIndex(index)
+    const index = await gitops.refreshIndex(repo)
+    await gitops.addToIndex(index, filePath)
+    await gitops.writeIndex(index)
   } catch (e) {
     console.log('RESOLVE AS IS ERROR:', e)
   }
@@ -592,13 +548,13 @@ answerRenderer('merge:resolve-as-is', async (browserWindow, projectPath, filePat
 answerRenderer('merge:resolve-using-mine', async (browserWindow, projectPath, filePath) => {
   checkRepo()
   try {
-    const fileContent = await getMineFileContent(repo, filePath)
-    await fileOperations.saveFile(join(projectPath, filePath), fileContent)
-    await removeConflict(repo, filePath)
+    const fileContent = await gitops.getMineFileContent(repo, filePath)
+    await fileops.saveFile(join(projectPath, filePath), fileContent)
+    await gitops.removeConflict(repo, filePath)
 
-    const index = await refreshIndex(repo)
-    await addToIndex(index, filePath)
-    await writeIndex(index)
+    const index = await gitops.refreshIndex(repo)
+    await gitops.addToIndex(index, filePath)
+    await gitops.writeIndex(index)
   } catch (e) {
     console.log('RESOLVE USING MINE ERROR:', e)
   }
@@ -607,13 +563,13 @@ answerRenderer('merge:resolve-using-mine', async (browserWindow, projectPath, fi
 answerRenderer('merge:resolve-using-theirs', async (browserWindow, projectPath, filePath) => {
   checkRepo()
   try {
-    const fileContent = await getTheirsFileContent(repo, filePath)
-    await fileOperations.saveFile(join(projectPath, filePath), fileContent)
-    await removeConflict(repo, filePath)
+    const fileContent = await gitops.getTheirsFileContent(repo, filePath)
+    await fileops.saveFile(join(projectPath, filePath), fileContent)
+    await gitops.removeConflict(repo, filePath)
 
-    const index = await refreshIndex(repo)
-    await addToIndex(index, filePath)
-    await writeIndex(index)
+    const index = await gitops.refreshIndex(repo)
+    await gitops.addToIndex(index, filePath)
+    await gitops.writeIndex(index)
   } catch (e) {
     console.log('RESOLVE USING THEIRS ERROR:', e)
   }
@@ -622,52 +578,52 @@ answerRenderer('merge:resolve-using-theirs', async (browserWindow, projectPath, 
 answerRenderer('repository:add-remote', async (browserWindow, name, url) => {
   checkRepo()
   try {
-    await addRemote(repo, name, url)
-    return await getRemotes(repo)
+    await gitops.addRemote(repo, name, url)
+    return await gitops.getRemotes(repo)
   } catch (e) {}
 })
 
 answerRenderer('repository:delete-remote', async (browserWindow, name) => {
   checkRepo()
   try {
-    await deleteRemote(repo, name)
-    return await getRemotes(repo)
+    await gitops.deleteRemote(repo, name)
+    return await gitops.getRemotes(repo)
   } catch (e) {}
 })
 
 answerRenderer('repository:set-user-details', async (browserWindow, userName, email, useForAllRepositories) => {
   let config
   if (useForAllRepositories) {
-    config = await findConfig()
+    config = await gitops.findConfig()
   }
   if (!config && !useForAllRepositories) {
-    config = await openRepoConfig(repo)
+    config = await gitops.openRepoConfig(repo)
   }
 
   if (!config) return
 
-  await setUserNameEmail(config, userName, email)
+  await gitops.setUserNameEmail(config, userName, email)
 })
 
 answerRenderer('repository:clone', async (browserWindow, remoteUrl, targetFolder, userName, password) => {
-  await cloneRepository(remoteUrl, targetFolder, userName, password)
+  await gitops.cloneRepository(remoteUrl, targetFolder, userName, password)
 })
 
 answerRenderer('repository:init', async (browserWindow, folder) => {
-  await createRepository(folder)
+  await gitops.createRepository(folder)
 })
 
 /* FAKE APPLICATION (from editor) */
 
 answerRenderer('remove-file', (browserWindow, path) => {
   console.log('MAIN: remove-file ', path)
-  return fileOperations.removeFile(path)
+  return fileops.removeFile(path)
 })
 
 answerRenderer('open-project', (browserWindow, projectPath) => {
   // return Promise.resolve()
   return new Promise((resolve, reject) => {
-    fileOperations
+    fileops
       .openProject(projectPath)
       .then(notifier => {
         notifier.on('ready', fileTree => {
@@ -695,29 +651,33 @@ answerRenderer('open-project', (browserWindow, projectPath) => {
 })
 
 ipcMain.on('close-project', event => {
-  // fileOperations.closeProject()
+  // fileops.closeProject()
+})
+
+answerRenderer('get-file-type', (browserWindow, filePath) => {
+  return fileops.getFileType(filePath)
 })
 
 answerRenderer('folder-create', (browserWindow, folderPath) => {
-  return fileOperations.createFolder(folderPath)
+  return fileops.createFolder(folderPath)
 })
 
 answerRenderer('open-file', (browserWindow, filePath) => {
-  return fileOperations.openFile(filePath)
+  return fileops.openFile(filePath)
 })
 
 answerRenderer('save-file', (browserWindow, filePath, buffer) => {
-  return fileOperations.saveFile(filePath, buffer)
+  return fileops.saveFile(filePath, buffer)
 })
 
 answerRenderer('rename-file', (browserWindow, src, dst) => {
-  return fileOperations.rename(src, dst)
+  return fileops.rename(src, dst)
 })
 
 answerRenderer('remove-file', (browserWindow, path) => {
-  return fileOperations.removeFile(path)
+  return fileops.removeFile(path)
 })
 
 answerRenderer('remove-folder', (browserWindow, path) => {
-  return fileOperations.removeFolder(path)
+  return fileops.removeFolder(path)
 })
