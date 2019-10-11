@@ -13,8 +13,8 @@ export class FileWrapper {
   }
 
   constructor({ path, content = '', type }) {
-    this.type = type
-    this.path = path
+    this._type = type
+    this._path = path
     if (type === 'text') {
       this.monacoModel = monaco.editor.createModel(content)
     }
@@ -23,5 +23,13 @@ export class FileWrapper {
   get content() {
     if (this.type === 'text') return this.monacoModel
     if (this.type === 'image') return this.path
+  }
+
+  get type() {
+    return this._type
+  }
+
+  get path() {
+    return this._path
   }
 }

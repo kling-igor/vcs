@@ -1,5 +1,6 @@
-import React, { Component } from 'react'
-import { observer, inject } from 'mobx-react'
+import React, { useState, memo, useCallback, useMemo, useEffect } from 'react'
+// import { observer } from 'mobx-react'
+import { observer, useObservable, useObserver } from 'mobx-react-lite'
 import { Button } from '@blueprintjs/core'
 import styled, { withTheme } from 'styled-components'
 import SplitPane, { Pane } from '../react-split'
@@ -21,23 +22,97 @@ const ButtonContainer = styled.div`
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  padding-right: 4px;
 `
 
-@observer
-class CommitPage extends Component {
-  state = {
-    layout: ['20000', '20000']
-  }
+const buttonStyle = { width: 100, marginRight: 8 }
 
-  setLayout = layout => {
-    this.setState({ layout })
-  }
+const DiffPaneContainer = withTheme(
+  ({ theme, originalFile, modifiedFile, diffConflictedFile, textEditorDidMount, onSave, onUseOurs, onUseTheirs }) => {
+    const [saveButtonDisabled, setSaveButtonDisabled] = useState(false)
+    const [oursButtonDisabled, setOursButtonDisabled] = useState(true)
+    const [theirsButtonDisabled, setTheirsButtonDisabled] = useState(false)
 
-  showPreviousCommits = () => {
+    useEffect(() => {
+      let disposable
+      if (modifiedFile && modifiedFile.content && modifiedFile.content.onDidChangeContent) {
+        console.log('SUBSCRIBING TO EVENTS')
+        disposable = modifiedFile.content.onDidChangeContent(() => {
+          setSaveButtonDisabled(false)
+          setOursButtonDisabled(false)
+          setTheirsButtonDisabled(false)
+        })
+      }
+
+      return () => {
+        if (disposable) {
+          console.log('UNSUBSCRIBING FROM EVENTS')
+          disposable.dispose()
+        }
+      }
+    }, [modifiedFile])
+
+    const onSaveClick = useCallback(() => {
+      setSaveButtonDisabled(true)
+      setOursButtonDisabled(true)
+      setTheirsButtonDisabled(true)
+
+      onSave()
+    }, [])
+
+    const onUseOursClick = useCallback(() => {
+      setSaveButtonDisabled(false)
+      setOursButtonDisabled(true)
+      setTheirsButtonDisabled(false)
+
+      onUseOurs()
+    }, [])
+
+    const onUseTheirsClick = useCallback(() => {
+      setSaveButtonDisabled(false)
+      setOursButtonDisabled(false)
+      setTheirsButtonDisabled(true)
+
+      onUseTheirs()
+    }, [])
+
+    const buttonContainerClassName = theme.type === 'dark' ? 'bp3-dark' : ''
+
+    return useObserver(() => (
+      <RootContainerStyle>
+        {diffConflictedFile && (
+          <ButtonContainer className={buttonContainerClassName}>
+            <Button
+              text="Theirs"
+              disabled={theirsButtonDisabled}
+              onClick={onUseTheirsClick}
+              small
+              style={buttonStyle}
+            />
+            <Button text="Ours" disabled={oursButtonDisabled} onClick={onUseOursClick} small style={buttonStyle} />
+            <Button
+              text="Save"
+              disabled={saveButtonDisabled}
+              intent="primary"
+              onClick={onSaveClick}
+              small
+              style={buttonStyle}
+            />
+          </ButtonContainer>
+        )}
+        <DiffPane originalFile={originalFile} modifiedFile={modifiedFile} textEditorDidMount={textEditorDidMount} />
+      </RootContainerStyle>
+    ))
+  }
+)
+
+const CommitPage = withTheme(({ theme, storage, workspace }) => {
+  const [layout, setLayout] = useState(['20000', '20000'])
+
+  const showPreviousCommits = useCallback(() => {
     const {
+      workspace,
       storage: { previousCommits, setCommitMessage }
-    } = this.props
+    } = props
 
     const items = previousCommits.map(item => ({
       label: item,
@@ -50,55 +125,44 @@ class CommitPage extends Component {
       }
     }))
 
-    this.props.workspace.showContextMenu({ items })
-  }
+    workspace.showContextMenu({ items })
+  })
 
-  render() {
-    const upperSize = +this.state.layout[0] / 100
-    const lowerSize = +this.state.layout[1] / 100
+  const upperSize = +layout[0] / 100
+  const lowerSize = +layout[1] / 100
 
+  return useObserver(() => {
     const {
-      storage: {
-        name,
-        email,
-        commitMessage,
-        setCommitMessage,
-        previousCommits,
-        originalFile,
-        modifiedFile,
-        diffConflictedFile,
-        selectedFilePath,
-        onCommit,
-        onCancelCommit,
-        setAlterUserNameEmail,
-        alterName,
-        alterEmail
-      },
-      workspace: { textEditorDidMount }
-    } = this.props
+      name,
+      email,
+      commitMessage,
+      setCommitMessage,
+      previousCommits,
+      originalFile,
+      modifiedFile,
+      diffConflictedFile,
+      selectedFilePath,
+      onCommit,
+      onCancelCommit,
+      setAlterUserNameEmail,
+      alterName,
+      alterEmail
+    } = storage
 
-    const onSave = () => {
-      // selectedFilePath
-    }
+    const { textEditorDidMount } = workspace
 
     return (
-      <SplitPane split="horizontal" allowResize resizersSize={0} onResizeEnd={this.setLayout}>
+      <SplitPane split="horizontal" allowResize resizersSize={0} onResizeEnd={setLayout}>
         <Pane size={upperSize} minSize="50px" maxSize="100%">
-          <RootContainerStyle>
-            {diffConflictedFile && (
-              <ButtonContainer>
-                <Button
-                  text="Save"
-                  onClick={() => {
-                    console.log('Save')
-                  }}
-                  small
-                  style={{ width: 100 }}
-                />
-              </ButtonContainer>
-            )}
-            <DiffPane originalFile={originalFile} modifiedFile={modifiedFile} textEditorDidMount={textEditorDidMount} />
-          </RootContainerStyle>
+          <DiffPaneContainer
+            originalFile={originalFile}
+            modifiedFile={modifiedFile}
+            diffConflictedFile={diffConflictedFile}
+            textEditorDidMount={textEditorDidMount}
+            onSave={() => {}}
+            onUseOurs={() => {}}
+            onUseTheirs={() => {}}
+          />
         </Pane>
         <Pane size={lowerSize} minSize="50px" maxSize="100%">
           <CommitPane
@@ -107,7 +171,7 @@ class CommitPage extends Component {
             onChange={setCommitMessage}
             text={commitMessage}
             previousCommits={previousCommits}
-            onShowPreviousCommits={this.showPreviousCommits}
+            onShowPreviousCommits={showPreviousCommits}
             onCommit={onCommit}
             onCancelCommit={onCancelCommit}
             setAlterUserNameEmail={setAlterUserNameEmail}
@@ -117,7 +181,7 @@ class CommitPage extends Component {
         </Pane>
       </SplitPane>
     )
-  }
-}
+  })
+})
 
-export default withTheme(CommitPage)
+export default CommitPage
