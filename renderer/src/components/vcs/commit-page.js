@@ -146,7 +146,8 @@ const CommitPage = ({ storage, workspace }) => {
       onCancelCommit,
       setAlterUserNameEmail,
       alterName,
-      alterEmail
+      alterEmail,
+      stagedFiles
     } = storage
 
     const { textEditorDidMount } = workspace
@@ -166,6 +167,7 @@ const CommitPage = ({ storage, workspace }) => {
         </Pane>
         <Pane size={lowerSize} minSize="50px" maxSize="100%">
           <CommitPane
+            enabled={stagedFiles.length > 0}
             name={name}
             email={email}
             onChange={setCommitMessage}

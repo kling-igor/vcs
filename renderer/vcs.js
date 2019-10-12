@@ -988,6 +988,13 @@ export class VCS extends Emitter {
     if (this.selectedFilePath) {
       await callMain('merge:resolve-using-mine', this.project.projectPath, cleanLeadingSlashes(this.selectedFilePath))
       await this.status()
+
+      transaction(() => {
+        this.originalFile = null
+        this.modifiedFile = null
+        this.selectedFilePath = null
+        this.diffConflictedFile = false
+      })
     }
   }
 
@@ -996,14 +1003,33 @@ export class VCS extends Emitter {
     if (this.selectedFilePath) {
       await callMain('merge:resolve-using-theirs', this.project.projectPath, cleanLeadingSlashes(this.selectedFilePath))
       await this.status()
+
+      transaction(() => {
+        this.originalFile = null
+        this.modifiedFile = null
+        this.selectedFilePath = null
+        this.diffConflictedFile = false
+      })
     }
   }
 
   @action.bound
   async resolveAsIs() {
     if (this.selectedFilePath && this.modifiedFile && this.modifiedFile.type === 'text') {
-      await callMain('merge:resolve-as-is', this.project.projectPath, cleanLeadingSlashes(this.selectedFilePath), this.modifiedFile.content.getValue())
+      await callMain(
+        'merge:resolve-as-is',
+        this.project.projectPath,
+        cleanLeadingSlashes(this.selectedFilePath),
+        this.modifiedFile.content.getValue()
+      )
       await this.status()
+
+      transaction(() => {
+        this.originalFile = null
+        this.modifiedFile = null
+        this.selectedFilePath = null
+        this.diffConflictedFile = false
+      })
     }
   }
 

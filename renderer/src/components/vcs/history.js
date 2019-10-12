@@ -248,7 +248,7 @@ export const History = memo(
 
       if (!rowData) return null
 
-      const { sha, message, routes, committer, date, branch } = rowData //commits[index]
+      const { sha, message, routes, committer, date, branch } = rowData
 
       const badgeColor = branchColor(branch)
 
@@ -258,7 +258,7 @@ export const History = memo(
 
       if (showDate) {
         datetime = moment(date).isSame(moment(), 'day')
-          ? moment().calendar(date)
+          ? `${moment.duration(moment().diff(date)).humanize()} ago`
           : moment(date).format('MMMM Do YYYY, H:mm')
       }
 
@@ -279,7 +279,7 @@ export const History = memo(
 
       const { name, email } = committers[committer]
 
-      let author = `${name} ${email}`
+      let author = `${name} <${email}>`
 
       if (showAuthorType === 'ABBREVIATED') {
         const parts = name.split(' ').filter(item => !!item)
@@ -335,11 +335,7 @@ export const History = memo(
             {message}
           </TextStyle>
           <RightContainerStyle>
-            {showAuthor && (
-              <TextStyle>
-                <em>{author + '  '}</em>
-              </TextStyle>
-            )}
+            {showAuthor && <TextStyle>{author + '  '}</TextStyle>}
             {showDate && <TimeStampStyle>{datetime}</TimeStampStyle>}
           </RightContainerStyle>
         </RowStyle>

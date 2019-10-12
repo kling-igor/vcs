@@ -58,7 +58,7 @@ const VerticalContainerStyle = styled.div`
   height: 100%;
 `
 
-const HorizontalConatiner = styled.div`
+const HorizontalContainer = styled.div`
   display: flex;
   flex-direction: row;
   justify-content: flex-start;
@@ -68,7 +68,7 @@ const HorizontalConatiner = styled.div`
   background-color: ${({ theme: { type } }) => (type === 'dark' ? '#293742' : '#ebf1f5')};
 `
 
-const UpperHorizontalConatiner = styled.div`
+const UpperHorizontalContainer = styled.div`
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -203,6 +203,7 @@ export default memo(
   withTheme(
     ({
       theme,
+      enabled,
       name,
       email,
       onChange,
@@ -236,7 +237,7 @@ export default memo(
 
       return (
         <RootStyle>
-          <HorizontalConatiner>
+          <HorizontalContainer>
             <Popover
               popoverClassName={popoverClassName}
               interactionKind={PopoverInteractionKind.CLICK}
@@ -263,7 +264,7 @@ export default memo(
               />
             </Popover>
             <VerticalContainerStyle>
-              <UpperHorizontalConatiner>
+              <UpperHorizontalContainer>
                 <NameEmailStyle>{`${alterName || name} <${alterEmail || email}>`}</NameEmailStyle>
                 <Button
                   small
@@ -275,18 +276,25 @@ export default memo(
                   // disabled={!hasHistoryChanges}
                   style={historyButtonStyle}
                 />
-              </UpperHorizontalConatiner>
-              <CommitAreaStyle onChange={onChange} value={text} />
+              </UpperHorizontalContainer>
+              <CommitAreaStyle onChange={onChange} value={text} disabled={!enabled} />
               <ButtonsContainerStyle className={buttonContainerClassName}>
-                <Button small style={cancelButtonStyle} onClick={onCancelCommit}>
+                <Button small style={cancelButtonStyle} onClick={onCancelCommit} disabled={!enabled}>
                   Cancel
                 </Button>
-                <Button small intent="primary" style={commitButtonStyle} disabled={!committable} onClick={onCommit}>
+                <Button
+                  small
+                  intent="primary"
+                  style={commitButtonStyle}
+                  disabled={!committable}
+                  onClick={onCommit}
+                  disabled={!enabled}
+                >
                   Commit
                 </Button>
               </ButtonsContainerStyle>
             </VerticalContainerStyle>
-          </HorizontalConatiner>
+          </HorizontalContainer>
         </RootStyle>
       )
     }
