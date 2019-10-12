@@ -35,7 +35,6 @@ const DiffPaneContainer = withTheme(
     useEffect(() => {
       let disposable
       if (modifiedFile && modifiedFile.content && modifiedFile.content.onDidChangeContent) {
-        console.log('SUBSCRIBING TO EVENTS')
         disposable = modifiedFile.content.onDidChangeContent(() => {
           setSaveButtonDisabled(false)
           setOursButtonDisabled(false)
@@ -45,7 +44,6 @@ const DiffPaneContainer = withTheme(
 
       return () => {
         if (disposable) {
-          console.log('UNSUBSCRIBING FROM EVENTS')
           disposable.dispose()
         }
       }
@@ -105,7 +103,7 @@ const DiffPaneContainer = withTheme(
   }
 )
 
-const CommitPage = withTheme(({ theme, storage, workspace }) => {
+const CommitPage = ({ storage, workspace }) => {
   const [layout, setLayout] = useState(['20000', '20000'])
 
   const showPreviousCommits = useCallback(() => {
@@ -141,7 +139,9 @@ const CommitPage = withTheme(({ theme, storage, workspace }) => {
       originalFile,
       modifiedFile,
       diffConflictedFile,
-      selectedFilePath,
+      resolveUsingMine,
+      resolveUsingTheirs,
+      resolveAsIs,
       onCommit,
       onCancelCommit,
       setAlterUserNameEmail,
@@ -159,9 +159,9 @@ const CommitPage = withTheme(({ theme, storage, workspace }) => {
             modifiedFile={modifiedFile}
             diffConflictedFile={diffConflictedFile}
             textEditorDidMount={textEditorDidMount}
-            onSave={() => {}}
-            onUseOurs={() => {}}
-            onUseTheirs={() => {}}
+            onSave={resolveAsIs}
+            onUseOurs={resolveUsingMine}
+            onUseTheirs={resolveUsingTheirs}
           />
         </Pane>
         <Pane size={lowerSize} minSize="50px" maxSize="100%">
@@ -182,6 +182,6 @@ const CommitPage = withTheme(({ theme, storage, workspace }) => {
       </SplitPane>
     )
   })
-})
+}
 
 export default CommitPage

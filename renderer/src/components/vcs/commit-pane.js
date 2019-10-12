@@ -230,9 +230,9 @@ export default memo(
         }
       })
 
-      const popoverClassName = useMemo(() => (theme.type === 'dark' ? 'popover bp3-dark' : 'popover'), theme)
+      const popoverClassName = useMemo(() => (theme.type === 'dark' ? 'popover bp3-dark' : 'popover'), [theme])
 
-      const buttonContainerClassName = useMemo(() => (theme.type === 'dark' ? 'bp3-dark' : ''))
+      const buttonContainerClassName = useMemo(() => (theme.type === 'dark' ? 'bp3-dark' : ''), [theme])
 
       return (
         <RootStyle>

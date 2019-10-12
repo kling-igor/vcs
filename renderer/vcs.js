@@ -984,24 +984,27 @@ export class VCS extends Emitter {
   }
 
   @action.bound
-  async resolveUsingMine(filePath) {
-    console.log('this.mergingSha:', this.mergingSha)
-    await callMain('merge:resolve-using-mine', this.project.projectPath, cleanLeadingSlashes(filePath))
-    await this.status()
+  async resolveUsingMine() {
+    if (this.selectedFilePath) {
+      await callMain('merge:resolve-using-mine', this.project.projectPath, cleanLeadingSlashes(this.selectedFilePath))
+      await this.status()
+    }
   }
 
   @action.bound
-  async resolveUsingTheirs(filePath) {
-    console.log('this.mergingSha:', this.mergingSha)
-
-    await callMain('merge:resolve-using-theirs', this.project.projectPath, cleanLeadingSlashes(filePath))
-    await this.status()
+  async resolveUsingTheirs() {
+    if (this.selectedFilePath) {
+      await callMain('merge:resolve-using-theirs', this.project.projectPath, cleanLeadingSlashes(this.selectedFilePath))
+      await this.status()
+    }
   }
 
   @action.bound
-  async resolveAsIs(filePath, fileContent) {
-    await callMain('merge:resolve-as-is', this.project.projectPath, cleanLeadingSlashes(filePath), fileContent)
-    await this.status()
+  async resolveAsIs() {
+    if (this.selectedFilePath && this.modifiedFile && this.modifiedFile.type === 'text') {
+      await callMain('merge:resolve-as-is', this.project.projectPath, cleanLeadingSlashes(this.selectedFilePath), this.modifiedFile.content.getValue())
+      await this.status()
+    }
   }
 
   @action.bound
