@@ -88,9 +88,6 @@ export class VCS extends Emitter {
     return this.changedFiles.length > 0
   }
 
-  // allows to redraw git tree
-  @observable treeChanges = 0
-
   // git tree
   @observable commitsCount = 0
   @observable.ref committers = []
@@ -108,6 +105,14 @@ export class VCS extends Emitter {
   @observable isRebasing = false
 
   @observable.ref commitInfo = null
+
+  @computed get canCommit() {
+    if (this.isMerging) {
+      return this.changedFiles.length === 0
+    }
+
+    return this.stagedFiles.length > 0
+  }
 
   @computed get selectedCommit() {
     if (!this.commitInfo) return null
@@ -242,55 +247,42 @@ export class VCS extends Emitter {
     await callMain('branch:create', name, this.headCommit)
     await callMain('repository:checkout-branch', name, false)
     await this.getLog()
-
-    this.treeChanges += 1
   }
 
   @action.bound
   async deleteBranch(name) {
     await callMain('branch:delete', name)
     await this.getLog()
-
-    this.treeChanges += 1
   }
 
   @action.bound
   async createTag(target, name, message) {
     await callMain('tag:create', target, name, message)
     await this.getLog()
-    this.treeChanges += 1
   }
 
   @action.bound
   async deleteTag(name) {
     await callMain('tag:delete', name)
     await this.getLog()
-
-    this.treeChanges += 1
   }
 
   @action.bound
   async softResetCommit(sha) {
     await callMain('commit:reset-soft', sha)
     await this.getLog()
-
-    this.treeChanges += 1
   }
 
   @action.bound
   async mixedResetCommit(sha) {
     await callMain('commit:reset-mixed', sha)
     await this.getLog()
-
-    this.treeChanges += 1
   }
 
   @action.bound
   async hardResetCommit(sha) {
     await callMain('commit:reset-hard', sha)
     await this.getLog()
-
-    this.treeChanges += 1
   }
 
   @action.bound
@@ -298,8 +290,6 @@ export class VCS extends Emitter {
     await callMain('commit:revert', sha)
     await this.getLog()
     await this.status()
-
-    this.treeChanges += 1
   }
 
   @action.bound
@@ -705,8 +695,6 @@ export class VCS extends Emitter {
     await callMain('repository:checkout-branch', branch, discardLocalChanges)
     await this.getLog()
     await this.status()
-
-    this.treeChanges += 1
   }
 
   @action.bound
@@ -714,8 +702,6 @@ export class VCS extends Emitter {
     await callMain('repository:checkout-commit', sha, discardLocalChanges)
     await this.getLog()
     await this.status()
-
-    this.treeChanges += 1
   }
 
   @action.bound
@@ -746,8 +732,6 @@ export class VCS extends Emitter {
     })
 
     this.logMode()
-
-    this.treeChanges += 1
   }
 
   @action.bound
@@ -970,13 +954,10 @@ export class VCS extends Emitter {
 
       this.logMode()
 
-      this.treeChanges += 1
-
       return
     } else {
       await this.status()
       await this.getLog()
-      this.treeChanges += 1
     }
 
     // this.commitMessage = `Merge branch '${}' into branch ${}`
@@ -1050,7 +1031,6 @@ export class VCS extends Emitter {
 
     await this.status()
     await this.getLog()
-    this.treeChanges += 1
 
     this.emit('operation:finish', 'push')
   }
@@ -1062,7 +1042,6 @@ export class VCS extends Emitter {
 
     await this.status()
     await this.getLog()
-    this.treeChanges += 1
 
     this.emit('operation:finish', 'fetch')
   }
@@ -1091,7 +1070,6 @@ export class VCS extends Emitter {
 
     await this.status()
     await this.getLog()
-    this.treeChanges += 1
 
     this.emit('operation:finish', 'pull')
   }

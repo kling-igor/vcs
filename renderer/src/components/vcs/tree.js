@@ -85,7 +85,7 @@ const drawGraph = (ctx, topOffset, nodes, headCommit) => {
  * @param {Number} height - видимая высота рисования
  * @param {Array} commits - данные для отображения
  */
-export const Tree = memo(({ scrollTop, height, maxOffset, commits, commitsCount, headCommit, treeChanges }) => {
+export const Tree = memo(({ scrollTop, height, maxOffset, commits, commitsCount, headCommit }) => {
   const canvasRef = useRef(null)
 
   const skip = useMemo(() => Math.floor(scrollTop / ROW_HEIGHT), [scrollTop])
@@ -102,7 +102,7 @@ export const Tree = memo(({ scrollTop, height, maxOffset, commits, commitsCount,
     const drawingCommits = commits.slice(skip, skip + count)
 
     drawGraph(ctx, topOffset, drawingCommits, headCommit)
-  }, [height, skip, count, topOffset, commitsCount, headCommit, treeChanges])
+  }, [height, skip, count, topOffset, commitsCount, headCommit])
   // commitsCount forces redraw tree on get new commits outside
   // headCommit forces redraw tree on changing HEAD
 

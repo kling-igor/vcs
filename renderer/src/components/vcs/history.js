@@ -207,7 +207,6 @@ export const History = memo(
     onContextMenu,
     selectedCommit,
     headCommit,
-    treeChanges,
     showSHA,
     showDate,
     showAuthor,
@@ -222,12 +221,6 @@ export const History = memo(
     const listRef = useRef(null)
 
     const [cachedCommitsCount, setCachedCommitsCount] = useState(0)
-
-    // useEffect(() => {
-    //   if (listRef.current) {
-    //     listRef.current.forceUpdateGrid()
-    //   }
-    // }, [treeChanges])
 
     const isRowLoaded = ({ index }) => !!rowsRef.current.rows[index]
 
@@ -361,7 +354,6 @@ export const History = memo(
                           commits={rowsRef.current.rows}
                           commitsCount={cachedCommitsCount}
                           headCommit={headCommit}
-                          treeChanges={treeChanges}
                         />
                       </div>
                       <div className="RightColumn" style={{ marginRight: 16 }}>

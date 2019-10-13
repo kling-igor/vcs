@@ -78,7 +78,6 @@ class HistoryPage extends Component {
         selectedCommit,
         isProcessingGitLog,
         headCommit,
-        treeChanges,
         showSHA,
         showDate,
         showAuthor,
@@ -113,7 +112,6 @@ class HistoryPage extends Component {
                   onContextMenu={this.props.onContextMenu}
                   selectedCommit={selectedCommit}
                   headCommit={headCommit}
-                  treeChanges={treeChanges}
                   showSHA={showSHA}
                   showDate={showDate}
                   showAuthor={showAuthor}
