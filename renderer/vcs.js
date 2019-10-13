@@ -40,6 +40,8 @@ const sort = array =>
   })
 
 export class VCS extends Emitter {
+  @observable logUpdateTime = null
+
   @observable mode = 'log' // log | commit
 
   // committer info
@@ -632,6 +634,8 @@ export class VCS extends Emitter {
       this.isMerging = isMerging
       this.isRebasing = isRebasing
       this.hasConflicts = hasConflicts
+
+      this.logUpdateTime = Date.now()
     })
   }
 

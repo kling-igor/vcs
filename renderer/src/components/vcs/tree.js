@@ -9,7 +9,7 @@ const COMMIT_RADIUS = 5
 const NO_BRANCH_COLOR = '#a0a5a9'
 
 const CanvasStyle = styled.canvas`
-  z-index: 9999;
+  z-index: 9000;
   position: absolute;
   left: 0px;
   top: 0px;
@@ -85,7 +85,7 @@ const drawGraph = (ctx, topOffset, nodes, headCommit) => {
  * @param {Number} height - видимая высота рисования
  * @param {Array} commits - данные для отображения
  */
-export const Tree = memo(({ scrollTop, height, maxOffset, commits, commitsCount, headCommit }) => {
+export const Tree = memo(({ scrollTop, height, maxOffset, commits, commitsCount, headCommit, logUpdateTime }) => {
   const canvasRef = useRef(null)
 
   const skip = useMemo(() => Math.floor(scrollTop / ROW_HEIGHT), [scrollTop])
@@ -102,7 +102,7 @@ export const Tree = memo(({ scrollTop, height, maxOffset, commits, commitsCount,
     const drawingCommits = commits.slice(skip, skip + count)
 
     drawGraph(ctx, topOffset, drawingCommits, headCommit)
-  }, [height, skip, count, topOffset, commitsCount, headCommit])
+  }, [logUpdateTime, height, skip, count, topOffset, commitsCount, headCommit])
   // commitsCount forces redraw tree on get new commits outside
   // headCommit forces redraw tree on changing HEAD
 

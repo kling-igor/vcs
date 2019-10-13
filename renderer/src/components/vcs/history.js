@@ -196,6 +196,7 @@ const RightContainerStyle = styled.div`
 
 export const History = memo(
   ({
+    logUpdateTime,
     getCommits,
     commitsCount,
     committers,
@@ -219,6 +220,13 @@ export const History = memo(
     const rowsRef = useRef({ rows: [] })
 
     const listRef = useRef(null)
+
+    useEffect(() => {
+      if (listRef.current) {
+        rowsRef.current.rows = []
+        listRef.current.forceUpdateGrid()
+      }
+    }, [logUpdateTime])
 
     const [cachedCommitsCount, setCachedCommitsCount] = useState(0)
 
@@ -336,7 +344,7 @@ export const History = memo(
     }
 
     return (
-      <AutoSizer>
+      <AutoSizer key={`${logUpdateTime}`}>
         {({ width, height }) => (
           <InfiniteLoader isRowLoaded={isRowLoaded} loadMoreRows={loadMoreRows} rowCount={commitsCount}>
             {({ onRowsRendered, registerChild }) => {
@@ -354,11 +362,11 @@ export const History = memo(
                           commits={rowsRef.current.rows}
                           commitsCount={cachedCommitsCount}
                           headCommit={headCommit}
+                          logUpdateTime={logUpdateTime}
                         />
                       </div>
                       <div className="RightColumn" style={{ marginRight: 16 }}>
                         <List
-                          // ref={registerChild}
                           ref={listRef}
                           onRowsRendered={onRowsRendered}
                           onScroll={onScroll}

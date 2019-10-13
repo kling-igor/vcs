@@ -35,6 +35,7 @@ const HistoryContainerWrapper = styled.div`
   width: 100%;
   height: 100%;
   overflow: hidden;
+  position: relative;
 `
 
 const ProgressRootStyle = styled.div`
@@ -42,8 +43,12 @@ const ProgressRootStyle = styled.div`
   width: 100%;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  padding-top: 10px;
+  align-items: center;
+  position: absolute;
+  left: 0;
+  top: 0;
+  background-color: #00000080;
+  z-index: 9999;
 `
 
 const menuButtonStyle = { width: '30px', height: '30px', marginRight: '8px', outline: 'none' }
@@ -65,6 +70,7 @@ class HistoryPage extends Component {
     const {
       onGitLogSettingsMenu,
       storage: {
+        logUpdateTime,
         getCommits,
         commitsCount,
         committers,
@@ -96,28 +102,27 @@ class HistoryPage extends Component {
             <HistoryContainerWrapper>
               {isProcessingGitLog && (
                 <ProgressRootStyle>
-                  <CircularProgress size={20} thickness={3} />
+                  <CircularProgress size={30} thickness={3} style={{ color: '#137cbd' }} />
                 </ProgressRootStyle>
               )}
-              {!isProcessingGitLog && (
-                <History
-                  getCommits={getCommits}
-                  commitsCount={commitsCount}
-                  committers={committers}
-                  heads={heads}
-                  maxOffset={maxOffset}
-                  remoteHeads={remoteHeads}
-                  tags={tags}
-                  onCommitSelect={onCommitSelect}
-                  onContextMenu={this.props.onContextMenu}
-                  selectedCommit={selectedCommit}
-                  headCommit={headCommit}
-                  showSHA={showSHA}
-                  showDate={showDate}
-                  showAuthor={showAuthor}
-                  showAuthorType={showAuthorType}
-                />
-              )}
+              <History
+                logUpdateTime={logUpdateTime}
+                getCommits={getCommits}
+                commitsCount={commitsCount}
+                committers={committers}
+                heads={heads}
+                maxOffset={maxOffset}
+                remoteHeads={remoteHeads}
+                tags={tags}
+                onCommitSelect={onCommitSelect}
+                onContextMenu={this.props.onContextMenu}
+                selectedCommit={selectedCommit}
+                headCommit={headCommit}
+                showSHA={showSHA}
+                showDate={showDate}
+                showAuthor={showAuthor}
+                showAuthorType={showAuthorType}
+              />
             </HistoryContainerWrapper>
           </RootContainerStyle>
         </Pane>
