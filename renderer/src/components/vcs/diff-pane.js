@@ -1,10 +1,10 @@
 import React, { memo } from 'react'
 import ResizeDetector from 'react-resize-detector'
 import styled, { withTheme } from 'styled-components'
-
+import { ImageViewer } from '../imageviewer'
 import DiffEditor from '../diffeditor'
 
-const BinaryDataRootContainerStyle = styled.div`
+const RootContainerStyle = styled.div`
   width: 100%;
   height: 100%;
   display: flex;
@@ -22,7 +22,7 @@ const BinaryDataPaneStyle = styled.div`
   user-select: none;
 `
 
-const BinaryDataSplitter = styled.div`
+const PaneSplitter = styled.div`
   width: 2px;
   height: 100%;
   display: flex;
@@ -32,19 +32,29 @@ const BinaryDataSplitter = styled.div`
 const BinaryDataDiff = memo(
   withTheme(() => {
     return (
-      <BinaryDataRootContainerStyle>
+      <RootContainerStyle>
         <BinaryDataPaneStyle>Binary Data</BinaryDataPaneStyle>
-        <BinaryDataSplitter />
+        <PaneSplitter />
         <BinaryDataPaneStyle>Binary Data</BinaryDataPaneStyle>
-      </BinaryDataRootContainerStyle>
+      </RootContainerStyle>
     )
   })
 )
 
+const ImageDiff = memo(({ original, modified }) => {
+  return (
+    <RootContainerStyle>
+      <ImageViewer src={original.content} />
+      <PaneSplitter />
+      <ImageViewer src={modified.content} />
+    </RootContainerStyle>
+  )
+})
+
 export const DiffPane = memo(({ originalFile, modifiedFile, textEditorDidMount }) => {
   if (!originalFile && !modifiedFile) return null
 
-  if (originalFile.type === 'text' || modifiedFile.type === 'text') {
+  if (originalFile.type === 'text' && modifiedFile.type === 'text') {
     return (
       <ResizeDetector
         handleWidth
@@ -62,6 +72,8 @@ export const DiffPane = memo(({ originalFile, modifiedFile, textEditorDidMount }
         )}
       />
     )
+  } else if (originalFile.type === 'image' && modifiedFile.type === 'image') {
+    return <ImageDiff original={originalFile.path} modified={modifiedFile.path} />
   }
 
   return <BinaryDataDiff />

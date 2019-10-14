@@ -4,17 +4,25 @@ export class FileWrapper {
   static createTextFile({ path, content }) {
     return new FileWrapper({ path, content, type: 'text' })
   }
-  static createImageFile({ path }) {
-    return new FileWrapper({ path, type: 'image' })
+  static createImageFile({ path, tmpPath }) {
+    return new FileWrapper({ path, tmpPath, type: 'image' })
   }
 
-  static createBinaryDataFile({ path }) {
-    return new FileWrapper({ path, type: 'binary' })
+  static createBinaryDataFile({ path, tmpPath }) {
+    return new FileWrapper({ path, tmpPath, type: 'binary' })
   }
 
-  constructor({ path, content = '', type }) {
+  /**
+   *
+   * @param {String} path - path inside project
+   * @param {String} tmpPath - path of temporal file (used in diff)
+   * @param {String} content - textual content
+   * @param {String} type - one of: text | image | binary
+   */
+  constructor({ path, tmpPath, content = '', type }) {
     this._type = type
     this._path = path
+    this._tmpPath = tmpPath
     if (type === 'text') {
       this.monacoModel = monaco.editor.createModel(content)
     }
@@ -22,7 +30,7 @@ export class FileWrapper {
 
   get content() {
     if (this.type === 'text') return this.monacoModel
-    if (this.type === 'image') return this.path
+    if (this.type === 'image') return this._tmpPath
   }
 
   get type() {
