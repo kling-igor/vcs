@@ -575,6 +575,27 @@ answerRenderer('merge:resolve-using-theirs', async (browserWindow, projectPath, 
   }
 })
 
+answerRenderer('diff:create-mine-temp-file', async (browserWindow, filePath) => {
+  const fileContent = await gitops.getMineFileContent(repo, filePath)
+  const tempPath = join('/tmp', filePath)
+  await fileops.saveFile(join('/tmp', filePath), fileContent)
+
+  return tempPath
+})
+
+answerRenderer('diff:create-theirs-temp-file', async (browserWindow, filePath) => {
+  const fileContent = await gitops.getTheirsFileContent(repo, filePath)
+  const tempPath = join('/tmp', filePath)
+  await fileops.saveFile(tempPath, fileContent)
+
+  return tempPath
+})
+
+// WIP!!!!
+answerRenderer('diff:create-indexed-temp-file', async (browserWindow, projectPath, filePath) => {
+  const fileContent = await gitops.changedFileDiffToIndex(repo, projectPath, filePath)
+})
+
 answerRenderer('repository:add-remote', async (browserWindow, name, url) => {
   checkRepo()
   try {

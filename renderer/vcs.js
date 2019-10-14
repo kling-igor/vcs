@@ -415,6 +415,15 @@ export class VCS extends Emitter {
           this.selectedFilePath = filePath
           this.diffConflictedFile = true
         })
+      } else if (mime.includes('image/')) {
+        const mineTmpPath = callMain('diff:create-mine-temp-file', filePath)
+        const theirsTmpPath = callMain('diff:create-theirs-temp-file', filePath)
+        // todo очищать файлы как только развыделяется файл
+
+        this.originalFile = FileWrapper.createImageFile({ path: filePath, tmpPath: mineTmpPath })
+        this.modifiedFile = FileWrapper.createImageFile({ path: filePath, tmpPath: theirsTmpPath })
+        this.selectedFilePath = filePath
+        this.diffConflictedFile = true
       } else {
         transaction(() => {
           this.originalFile = FileWrapper.createBinaryDataFile({ path: filePath })
@@ -437,6 +446,15 @@ export class VCS extends Emitter {
           this.selectedFilePath = filePath
           this.diffConflictedFile = false
         })
+      } else if (mime.includes('image/')) {
+        const mineTmpPath = callMain('diff:create-mine-temp-file', filePath)
+        const indexedTmpPath = callMain('diff:create-indexed-temp-file', this.projectPath, filePath)
+        // todo очищать файлы как только развыделяется файл
+
+        this.originalFile = FileWrapper.createImageFile({ path: filePath, tmpPath: mineTmpPath })
+        this.modifiedFile = FileWrapper.createImageFile({ path: filePath, tmpPath: indexedTmpPath })
+        this.selectedFilePath = filePath
+        this.diffConflictedFile = true
       } else {
         transaction(() => {
           this.originalFile = FileWrapper.createBinaryDataFile({ path: filePath })
