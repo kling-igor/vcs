@@ -246,57 +246,57 @@ export class VCS extends Emitter {
 
   @action.bound
   async createBranch(name) {
-    await callMain('branch:create', name, this.headCommit)
-    await callMain('repository:checkout-branch', name, false)
+    await callMain(MESSAGES.VCS_CREATE_BRANCH, name, this.headCommit)
+    await callMain(MESSAGES.VCS_CHECKOUT_BRANCH, name, false)
     await this.getLog()
   }
 
   @action.bound
   async deleteBranch(name) {
-    await callMain('branch:delete', name)
+    await callMain(MESSAGES.VCS_DELETE_BRANCH, name)
     await this.getLog()
   }
 
   @action.bound
   async createTag(target, name, message) {
-    await callMain('tag:create', target, name, message)
+    await callMain(MESSAGES.VCS_CREATE_TAG, target, name, message)
     await this.getLog()
   }
 
   @action.bound
   async deleteTag(name) {
-    await callMain('tag:delete', name)
+    await callMain(MESSAGES.VCS_DELETE_TAG, name)
     await this.getLog()
   }
 
   @action.bound
   async softResetCommit(sha) {
-    await callMain('commit:reset-soft', sha)
+    await callMain(MESSAGES.VCS_RESET_COMMIT_SOFT, sha)
     await this.getLog()
   }
 
   @action.bound
   async mixedResetCommit(sha) {
-    await callMain('commit:reset-mixed', sha)
+    await callMain(MESSAGES.VCS_RESET_COMMIT_MIXED, sha)
     await this.getLog()
   }
 
   @action.bound
   async hardResetCommit(sha) {
-    await callMain('commit:reset-hard', sha)
+    await callMain(MESSAGES.VCS_RESET_COMMIT_HARD, sha)
     await this.getLog()
   }
 
   @action.bound
   async revertCommit(sha) {
-    await callMain('commit:revert', sha)
+    await callMain(MESSAGES.VCS_REVERT_COMMIT, sha)
     await this.getLog()
     await this.status()
   }
 
   @action.bound
   async status() {
-    const statuses = await callMain('repository:get-status')
+    const statuses = await callMain(MESSAGES.VCS_GET_REPOSITORY_STATUS)
     console.log('STATUSES:', statuses)
 
     const STAGED = 0
@@ -395,7 +395,7 @@ export class VCS extends Emitter {
 
     let mime
 
-    const fileType = await callMain('get-file-type', path.resolve(this.project.projectPath, filePath))
+    const fileType = await callMain(MESSAGES.CORE_GET_FILE_TYPE, path.resolve(this.project.projectPath, filePath))
     if (fileType) {
       mime = fileType.mime
     }
@@ -405,7 +405,7 @@ export class VCS extends Emitter {
     if (status === 'C') {
       if (mime === 'text/plain') {
         const { mineContent = '', theirsContent = '' } = await callMain(
-          'commit:conflictedfile-diff',
+          MESSAGES.VCS_DIFF_CONFLICTED,
           cleanLeadingSlashes(filePath)
         ) // remove leading slash)
 
@@ -416,8 +416,8 @@ export class VCS extends Emitter {
           this.diffConflictedFile = true
         })
       } else if (mime.includes('image/')) {
-        const mineTmpPath = callMain('diff:create-mine-temp-file', filePath)
-        const theirsTmpPath = callMain('diff:create-theirs-temp-file', filePath)
+        const mineTmpPath = callMain(MESSAGES.VCS_CREATE_OUR_TMP_FILE, filePath)
+        const theirsTmpPath = callMain(MESSAGES.VCS_CREATE_THEIR_TMP_FILE, filePath)
         // todo очищать файлы как только развыделяется файл
 
         this.originalFile = FileWrapper.createImageFile({ path: filePath, tmpPath: mineTmpPath })
@@ -435,7 +435,7 @@ export class VCS extends Emitter {
     } else {
       if (mime === 'text/plain') {
         const { originalContent = '', modifiedContent = '', details: errorDetails } = await callMain(
-          'commit:file-diff-to-index',
+          MESSAGES.VCS_DIFF_TO_INDEX,
           this.projectPath,
           cleanLeadingSlashes(filePath)
         )
@@ -447,8 +447,8 @@ export class VCS extends Emitter {
           this.diffConflictedFile = false
         })
       } else if (mime.includes('image/')) {
-        const mineTmpPath = callMain('diff:create-mine-temp-file', filePath)
-        const indexedTmpPath = callMain('diff:create-indexed-temp-file', this.projectPath, filePath)
+        const mineTmpPath = callMain(MESSAGES.VCS_CREATE_OUR_TMP_FILE, filePath)
+        const indexedTmpPath = callMain(MESSAGES.VCS_CREATE_INDEXED_TMP_FILE, this.projectPath, filePath)
         // todo очищать файлы как только развыделяется файл
 
         this.originalFile = FileWrapper.createImageFile({ path: filePath, tmpPath: mineTmpPath })
@@ -470,14 +470,14 @@ export class VCS extends Emitter {
   async onStagedFileSelect(filePath) {
     let mime
 
-    const fileType = await callMain('get-file-type', path.resolve(this.project.projectPath, filePath))
+    const fileType = await callMain(MESSAGES.CORE_GET_FILE_TYPE, path.resolve(this.project.projectPath, filePath))
     if (fileType) {
       mime = fileType.mime
     }
 
     if (mime === 'text/plain') {
       const { originalContent = '', modifiedContent = '', details: errorDetails } = await callMain(
-        'commit:stagedfile-diff-to-head',
+        MESSAGES.VCS_DIFF_STAGED_TO_HEAD,
         cleanLeadingSlashes(filePath)
       )
 
@@ -595,7 +595,7 @@ export class VCS extends Emitter {
     let error
 
     try {
-      ;({ log, error } = await callMain('repository:log', this.project.projectPath))
+      ;({ log, error } = await callMain(MESSAGES.VCS_GET_LOG, this.project.projectPath))
 
       if (error) {
         console.log('GITLOG ERROR:', error)
@@ -666,7 +666,7 @@ export class VCS extends Emitter {
       return
     }
 
-    const commitInfo = await callMain('commit:get-info', sha)
+    const commitInfo = await callMain(MESSAGES.VCS_GET_COMMIT_DETAILS, sha)
 
     transaction(() => {
       this.originalFile = null
@@ -686,7 +686,7 @@ export class VCS extends Emitter {
 
     let mime
 
-    const fileType = await callMain('get-file-type', path.resolve(this.project.projectPath, filePath))
+    const fileType = await callMain(MESSAGES.CORE_GET_FILE_TYPE, path.resolve(this.project.projectPath, filePath))
     if (fileType) {
       mime = fileType.mime
     }
@@ -695,7 +695,7 @@ export class VCS extends Emitter {
       try {
         // запрашиваем детальную информацию по файлу
         const { originalContent = '', modifiedContent = '', details: errorDetails } = await callMain(
-          'commit:file-diff',
+          MESSAGES.VCS_DIFF_TO_PARENT,
           this.commitInfo.commit,
           cleanLeadingSlashes(filePath)
         )
@@ -714,14 +714,14 @@ export class VCS extends Emitter {
 
   @action.bound
   async onBranchCheckout(branch, discardLocalChanges) {
-    await callMain('repository:checkout-branch', branch, discardLocalChanges)
+    await callMain(MESSAGES.VCS_CHECKOUT_BRANCH, branch, discardLocalChanges)
     await this.getLog()
     await this.status()
   }
 
   @action.bound
   async onCheckoutToCommit(sha, discardLocalChanges) {
-    await callMain('repository:checkout-commit', sha, discardLocalChanges)
+    await callMain(MESSAGES.VCS_CHECKOUT_COMMIT, sha, discardLocalChanges)
     await this.getLog()
     await this.status()
   }
@@ -731,7 +731,7 @@ export class VCS extends Emitter {
     if (this.stagedFiles.length === 0 && !this.isMerging) return
 
     await callMain(
-      'commit:create',
+      MESSAGES.VCS_CREATE_COMMIT,
       this.commitMessage,
       this.mergingSha,
       this.alterName || this.name,
@@ -823,7 +823,7 @@ export class VCS extends Emitter {
         })
       }
 
-      await callMain('stage:add', paths)
+      await callMain(MESSAGES.VCS_ADD_TO_STAGE, paths)
       await this.status()
     }
   }
@@ -844,7 +844,7 @@ export class VCS extends Emitter {
         })
       }
 
-      await callMain('stage:add', paths)
+      await callMain(MESSAGES.VCS_ADD_TO_STAGE, paths)
       await this.status()
     }
   }
@@ -860,7 +860,7 @@ export class VCS extends Emitter {
       })
     }
 
-    await callMain('stage:add', [cleanLeadingSlashes(filePath)])
+    await callMain(MESSAGES.VCS_ADD_TO_STAGE, [cleanLeadingSlashes(filePath)])
     await this.status()
 
     console.log('STAGE FILE:', filePath, this.selectedChangedFile)
@@ -885,7 +885,7 @@ export class VCS extends Emitter {
           this.diffConflictedFile = false
         })
       }
-      await callMain('stage:remove', paths)
+      await callMain(MESSAGES.VCS_REMOVE_FROM_STAGE, paths)
       await this.status()
     }
   }
@@ -907,7 +907,7 @@ export class VCS extends Emitter {
         })
       }
 
-      await callMain('stage:remove', paths)
+      await callMain(MESSAGES.VCS_REMOVE_FROM_STAGE, paths)
       await this.status()
     }
   }
@@ -923,13 +923,13 @@ export class VCS extends Emitter {
       })
     }
 
-    await callMain('stage:remove', [cleanLeadingSlashes(filePath)])
+    await callMain(MESSAGES.VCS_REMOVE_FROM_STAGE, [cleanLeadingSlashes(filePath)])
     await this.status()
   }
 
   @action.bound
   async discardLocalChanges(filePath) {
-    await callMain('repository:discard-local-changes', this.project.projectPath, cleanLeadingSlashes(filePath))
+    await callMain(MESSAGES.VCS_DISCARD_LOCAL_CHANGES, this.project.projectPath, cleanLeadingSlashes(filePath))
     await this.status()
   }
 
@@ -949,14 +949,14 @@ export class VCS extends Emitter {
           this.diffConflictedFile = false
         })
       }
-      await callMain('repository:discard-local-changes', this.project.projectPath, paths)
+      await callMain(MESSAGES.VCS_DISCARD_LOCAL_CHANGES, this.project.projectPath, paths)
       await this.status()
     }
   }
 
   @action.bound
   async stopTracking(filePath) {
-    await callMain('stage:remove', [cleanLeadingSlashes(filePath)])
+    await callMain(MESSAGES.VCS_REMOVE_FROM_STAGE, [cleanLeadingSlashes(filePath)])
     await this.status()
   }
 
@@ -964,10 +964,16 @@ export class VCS extends Emitter {
   async merge(sha, commitOnSuccess) {
     this.mergingSha = sha
 
-    await callMain('repository:merge', sha)
+    await callMain(MESSAGES.VCS_MERGE, sha)
 
     if (this.isMerging && commitOnSuccess) {
-      await callMain('commit:create', 'Merge', sha, this.alterName || this.name, this.alterEmail || this.email)
+      await callMain(
+        MESSAGES.VCS_CREATE_COMMIT,
+        'Merge',
+        sha,
+        this.alterName || this.name,
+        this.alterEmail || this.email
+      )
 
       this.mergingSha = null
 
@@ -989,7 +995,7 @@ export class VCS extends Emitter {
   @action.bound
   async resolveUsingMine() {
     if (this.selectedFilePath) {
-      await callMain('merge:resolve-using-mine', this.project.projectPath, cleanLeadingSlashes(this.selectedFilePath))
+      await callMain(MESSAGES.VCS_RESOLE_USING_OUR, this.project.projectPath, cleanLeadingSlashes(this.selectedFilePath))
       await this.status()
 
       transaction(() => {
@@ -1004,7 +1010,7 @@ export class VCS extends Emitter {
   @action.bound
   async resolveUsingTheirs() {
     if (this.selectedFilePath) {
-      await callMain('merge:resolve-using-theirs', this.project.projectPath, cleanLeadingSlashes(this.selectedFilePath))
+      await callMain(MESSAGES.VCS_RESOLE_USING_THEIR, this.project.projectPath, cleanLeadingSlashes(this.selectedFilePath))
       await this.status()
 
       transaction(() => {
@@ -1020,7 +1026,7 @@ export class VCS extends Emitter {
   async resolveAsIs() {
     if (this.selectedFilePath && this.modifiedFile && this.modifiedFile.type === 'text') {
       await callMain(
-        'merge:resolve-as-is',
+        MESSAGES.VCS_RESOLE_AS_IS,
         this.project.projectPath,
         cleanLeadingSlashes(this.selectedFilePath),
         this.modifiedFile.content.getValue()
@@ -1038,18 +1044,18 @@ export class VCS extends Emitter {
 
   @action.bound
   async addRemote(name, url) {
-    this.remotes = await callMain('repository:add-remote', name, url)
+    this.remotes = await callMain(MESSAGES.VCS_ADD_REMOTE, name, url)
   }
 
   @action.bound
   async deleteRemote(name) {
-    this.remotes = await callMain('repository:delete-remote', name)
+    this.remotes = await callMain(MESSAGES.VCS_DELETE_REMOTE, name)
   }
 
   @action.bound
   async push(remoteName, branch, userName, password) {
     this.emit('operation:begin', 'push')
-    await callMain('repository:push', this.project.projectPath, remoteName, branch, userName, password)
+    await callMain(MESSAGES.VCS_PUSH, this.project.projectPath, remoteName, branch, userName, password)
 
     await this.status()
     await this.getLog()
@@ -1060,7 +1066,7 @@ export class VCS extends Emitter {
   @action.bound
   async fetch(remoteName, userName, password) {
     this.emit('operation:begin', 'fetch')
-    await callMain('repository:fetch', this.project.projectPath, remoteName, userName, password)
+    await callMain(MESSAGES.VCS_FETCH, this.project.projectPath, remoteName, userName, password)
 
     await this.status()
     await this.getLog()
@@ -1072,7 +1078,7 @@ export class VCS extends Emitter {
   async pull(remoteName, userName, password) {
     this.emit('operation:begin', 'pull')
 
-    await callMain('repository:pull', this.project.projectPath, remoteName, userName, password)
+    await callMain(MESSAGES.VCS_PULL, this.project.projectPath, remoteName, userName, password)
 
     const mergingBranches = this.heads.reduce((acc, item) => {
       const { name, upstream, ahead, behind } = item
@@ -1087,7 +1093,7 @@ export class VCS extends Emitter {
     console.log('MERGING PAIRS:', mergingBranches)
 
     for (const [ourBranchName, theirBranchName] of mergingBranches) {
-      await callMain('repository:merge-branches', ourBranchName, theirBranchName)
+      await callMain(MESSAGES.VCS_MERGE_BRANCHES, ourBranchName, theirBranchName)
     }
 
     await this.status()
@@ -1103,23 +1109,23 @@ export class VCS extends Emitter {
       this.email = email
     })
 
-    await callMain('repository:set-user-details', userName, email, useForAllRepositories)
+    await callMain(MESSAGES.VCS_SET_USER_DEFAULTS, userName, email, useForAllRepositories)
   }
 
   @action.bound
   async clone(remoteUrl, targetFolder, userName, password) {
     this.emit('operation:begin', 'clone')
-    await callMain('repository:clone', remoteUrl, targetFolder, userName, password)
+    await callMain(MESSAGES.VCS_CLONE_REPOSITORY, remoteUrl, targetFolder, userName, password)
     this.emit('operation:finish', 'clone')
   }
 
   @action.bound
   async init(folder) {
-    await callMain('repository:init', folder)
+    await callMain(MESSAGES.VCS_INIT_REPOSITORY, folder)
   }
 
   @action.bound
   async getCommits(startIndex, endIndex) {
-    return callMain('commit:digest-info', startIndex, endIndex)
+    return callMain(MESSAGES.VCS_GET_COMMIT_DIGEST, startIndex, endIndex)
   }
 }

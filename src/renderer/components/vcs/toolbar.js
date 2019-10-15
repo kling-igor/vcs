@@ -6,6 +6,8 @@ import styled from 'styled-components'
 
 import { CommitIcon, MergeIcon, AddBranchIcon, RepoIcon, CompareIcon, PullIcon, PushIcon } from './icons'
 
+import * as MESSAGES from '../../../common/messages'
+
 const ButtonStyle = styled.div`
   display: block;
   margin-left: 8px;
@@ -87,14 +89,14 @@ const Toolbar = () => {
         <CommitButton
           onClick={async () => {
             console.log('COMMIT')
-            await callMain('commit:create', 'commit message...')
+            await callMain(MESSAGES.VCS_CREATE_COMMIT, 'commit message...')
           }}
         />
         <PullButton
           onClick={async () => {
             console.log('PULL')
             try {
-              await callMain('repository:pull', 'kling-igor' /* username, password*/)
+              await callMain(MESSAGES.VCS_PULL, 'kling-igor' /* username, password*/)
             } catch (e) {
               console.log(e)
             }
@@ -104,7 +106,7 @@ const Toolbar = () => {
           onClick={async () => {
             console.log('PUSH')
             try {
-              await callMain('repository:push', 'kling-igor' /* username, password*/)
+              await callMain(MESSAGES.VCS_PUSH, 'kling-igor' /* username, password*/)
             } catch (e) {
               console.log(e)
             }

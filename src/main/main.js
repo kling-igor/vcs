@@ -109,7 +109,7 @@ answerRenderer(MESSAGES.VCS_OPEN_REPOSITORY, async (browserWindow, path) => {
   }
 })
 
-answerRenderer('repository:close', async (browserWindow, path) => {
+answerRenderer(MESSAGES.VCS_CLOSE_REPOSITORY, async (browserWindow, path) => {
   repo = null
 })
 
@@ -120,25 +120,25 @@ const checkRepo = () => {
 }
 
 // TODO add codes for state rebase and merge
-answerRenderer('repository:get-status', async browserWindow => {
+answerRenderer(MESSAGES.VCS_GET_REPOSITORY_STATUS, async browserWindow => {
   checkRepo()
 
   return await gitops.status(repo)
 })
 
-answerRenderer('repository:get-head', async browserWindow => {
+answerRenderer(MESSAGES.VCS_GET_HEAD_BRANCH, async browserWindow => {
   checkRepo()
 
   return await gitops.headCommit(repo)
 })
 
-answerRenderer('repository:get-references', async browserWindow => {
+answerRenderer(MESSAGES.VCS_GET_REPOSITORY_REFS, async browserWindow => {
   checkRepo()
 
   return await gitops.getReferences(repo)
 })
 
-answerRenderer('commit:get-info', async (browserWindow, sha) => {
+answerRenderer(MESSAGES.VCS_GET_COMMIT_DETAILS, async (browserWindow, sha) => {
   checkRepo()
 
   if (!sha) {
@@ -149,7 +149,7 @@ answerRenderer('commit:get-info', async (browserWindow, sha) => {
   return gitops.commitInfo(repo, sha)
 })
 
-answerRenderer('commit:create', async (browserWindow, message, mergingCommitSha, name, email) => {
+answerRenderer(MESSAGES.VCS_CREATE_COMMIT, async (browserWindow, message, mergingCommitSha, name, email) => {
   checkRepo()
 
   try {
@@ -161,7 +161,7 @@ answerRenderer('commit:create', async (browserWindow, message, mergingCommitSha,
   }
 })
 
-answerRenderer('stage:add', async (browserWindow, paths) => {
+answerRenderer(MESSAGES.VCS_ADD_TO_STAGE, async (browserWindow, paths) => {
   checkRepo()
 
   try {
@@ -176,7 +176,7 @@ answerRenderer('stage:add', async (browserWindow, paths) => {
   }
 })
 
-answerRenderer('stage:remove', async (browserWindow, paths) => {
+answerRenderer(MESSAGES.VCS_REMOVE_FROM_STAGE, async (browserWindow, paths) => {
   checkRepo()
 
   try {
@@ -191,18 +191,18 @@ answerRenderer('stage:remove', async (browserWindow, paths) => {
   }
 })
 
-answerRenderer('repository:checkout-branch', async (browserWindow, branch, discardLocalChanges) => {
+answerRenderer(MESSAGES.VCS_CHECKOUT_BRANCH, async (browserWindow, branch, discardLocalChanges) => {
   checkRepo()
   console.log('CHECKOUT TO BRANCH:', branch, discardLocalChanges)
   return gitops.checkoutBranch(repo, branch, discardLocalChanges)
 })
 
-answerRenderer('repository:checkout-commit', async (browserWindow, sha, discardLocalChanges) => {
+answerRenderer(MESSAGES.VCS_CHECKOUT_COMMIT, async (browserWindow, sha, discardLocalChanges) => {
   checkRepo()
   return gitops.checkoutToCommit(repo, sha, discardLocalChanges)
 })
 
-answerRenderer('repository:discard-local-changes', async (browserWindow, projectRoot, path) => {
+answerRenderer(MESSAGES.VCS_DISCARD_LOCAL_CHANGES, async (browserWindow, projectRoot, path) => {
   checkRepo()
   await gitops.discardLocalChanges(repo, path)
 
@@ -244,7 +244,7 @@ answerRenderer('repository:discard-local-changes', async (browserWindow, project
   // await index.clear()
 })
 
-answerRenderer('repository:merge', async (browserWindow, theirSha) => {
+answerRenderer(MESSAGES.VCS_MERGE, async (browserWindow, theirSha) => {
   console.log('MERGE WITH:', theirSha)
   checkRepo()
   try {
@@ -255,7 +255,7 @@ answerRenderer('repository:merge', async (browserWindow, theirSha) => {
   }
 })
 
-answerRenderer('repository:merge-branches', async (browserWindow, ourBranchName, theirBranchName) => {
+answerRenderer(MESSAGES.VCS_MERGE_BRANCHES, async (browserWindow, ourBranchName, theirBranchName) => {
   console.log(`MERGE ${ourBranchName} WITH ${theirBranchName}:`)
   checkRepo()
   try {
@@ -266,7 +266,7 @@ answerRenderer('repository:merge-branches', async (browserWindow, ourBranchName,
   }
 })
 
-answerRenderer('commit:file-diff', async (browserWindow, sha, filePath) => {
+answerRenderer(MESSAGES.VCS_DIFF_TO_PARENT, async (browserWindow, sha, filePath) => {
   checkRepo()
 
   if (!sha) {
@@ -277,19 +277,19 @@ answerRenderer('commit:file-diff', async (browserWindow, sha, filePath) => {
   return gitops.fileDiffToParent(repo, sha, filePath)
 })
 
-answerRenderer('commit:file-diff-to-index', async (browserWindow, projectPath, filePath) => {
+answerRenderer(MESSAGES.VCS_DIFF_TO_INDEX, async (browserWindow, projectPath, filePath) => {
   checkRepo()
 
   return gitops.changedFileDiffToIndex(repo, projectPath, filePath)
 })
 
-answerRenderer('commit:stagedfile-diff-to-head', async (browserWindow, filePath) => {
+answerRenderer(MESSAGES.VCS_DIFF_STAGED_TO_HEAD, async (browserWindow, filePath) => {
   checkRepo()
 
   return gitops.stagedFileDiffToHead(repo, filePath)
 })
 
-answerRenderer('commit:conflictedfile-diff', async (browserWindow, filePath) => {
+answerRenderer(MESSAGES.VCS_DIFF_CONFLICTED, async (browserWindow, filePath) => {
   checkRepo()
 
   // TODO: нужно проверить тип файлов!!!
@@ -305,11 +305,11 @@ answerRenderer('commit:conflictedfile-diff', async (browserWindow, filePath) => 
 })
 
 // получение информации о коммите для отображения в списке
-answerRenderer('commit:digest-info', async (browserWindow, startIndex, endIndex) => {
+answerRenderer(MESSAGES.VCS_GET_COMMIT_DIGEST, async (browserWindow, startIndex, endIndex) => {
   return gitLogResult.commits.slice(startIndex, endIndex + 1)
 })
 
-answerRenderer('repository:log', async (browserWindow, projectPath) => {
+answerRenderer(MESSAGES.VCS_GET_LOG, async (browserWindow, projectPath) => {
   checkRepo()
 
   // результат gitlog будет храниться в main
@@ -387,7 +387,7 @@ answerRenderer('repository:log', async (browserWindow, projectPath) => {
   return { log: { ...other, commitsCount: commits.length } }
 })
 
-answerRenderer('repository:fetch', async (browserWindow, projectPath, remoteName, userName, password) => {
+answerRenderer(MESSAGES.VCS_FETCH, async (browserWindow, projectPath, remoteName, userName, password) => {
   checkRepo()
 
   const remote = await gitops.getRemote(repo, remoteName)
@@ -419,7 +419,7 @@ answerRenderer('repository:fetch', async (browserWindow, projectPath, remoteName
   })
 })
 
-answerRenderer('repository:push', async (browserWindow, projectPath, remoteName, branch, userName, password) => {
+answerRenderer(MESSAGES.VCS_PUSH, async (browserWindow, projectPath, remoteName, branch, userName, password) => {
   checkRepo()
 
   const remote = await gitops.getRemote(repo, remoteName)
@@ -451,7 +451,7 @@ answerRenderer('repository:push', async (browserWindow, projectPath, remoteName,
   })
 })
 
-answerRenderer('repository:pull', async (browserWindow, projectPath, remoteName, userName, password) => {
+answerRenderer(MESSAGES.VCS_PULL, async (browserWindow, projectPath, remoteName, userName, password) => {
   checkRepo()
 
   const remote = await gitops.getRemote(repo, remoteName)
@@ -480,60 +480,60 @@ answerRenderer('repository:pull', async (browserWindow, projectPath, remoteName,
     gitOpsWorker = fork(join(__dirname, 'gitops-worker.js'), ['fetch', projectPath, remoteName, name, pass])
 
     gitOpsWorker.once('message', () => {
-      browserWindow.webContents.send('repository:pull')
+      browserWindow.webContents.send(MESSAGES.VCS_PULL)
     })
   }
 })
 
-answerRenderer('branch:create', async (browserWindow, name, commit) => {
+answerRenderer(MESSAGES.VCS_CREATE_BRANCH, async (browserWindow, name, commit) => {
   checkRepo()
 
   return gitops.createBranch(repo, name, commit)
 })
 
-answerRenderer('branch:delete', async (browserWindow, name) => {
+answerRenderer(MESSAGES.VCS_DELETE_BRANCH, async (browserWindow, name) => {
   checkRepo()
 
   return gitops.deleteBranch(repo, name)
 })
 
-answerRenderer('tag:create', async (browserWindow, target, name, message) => {
+answerRenderer(MESSAGES.VCS_CREATE_TAG, async (browserWindow, target, name, message) => {
   checkRepo()
 
   return gitops.createTag(repo, target, name, user.name, user.email, message)
 })
 
-answerRenderer('tag:delete', async (browserWindow, name) => {
+answerRenderer(MESSAGES.VCS_DELETE_TAG, async (browserWindow, name) => {
   checkRepo()
 
   return gitops.deleteTagByName(repo, name)
 })
 
-answerRenderer('commit:reset-soft', async (browserWindow, sha) => {
+answerRenderer(MESSAGES.VCS_RESET_COMMIT_SOFT, async (browserWindow, sha) => {
   checkRepo()
 
   return gitops.softResetToCommit(repo, sha)
 })
 
-answerRenderer('commit:reset-mixed', async (browserWindow, sha) => {
+answerRenderer(MESSAGES.VCS_RESET_COMMIT_MIXED, async (browserWindow, sha) => {
   checkRepo()
 
   return gitops.mixedResetToCommit(repo, sha)
 })
 
-answerRenderer('commit:reset-hard', async (browserWindow, sha) => {
+answerRenderer(MESSAGES.VCS_RESET_COMMIT_HARD, async (browserWindow, sha) => {
   checkRepo()
 
   return gitops.hardResetToCommit(repo, sha)
 })
 
-answerRenderer('commit:revert', async (browserWindow, sha) => {
+answerRenderer(MESSAGES.VCS_REVERT_COMMIT, async (browserWindow, sha) => {
   checkRepo()
 
   return gitops.revertCommit(repo, sha)
 })
 
-answerRenderer('merge:resolve-as-is', async (browserWindow, projectPath, filePath, fileContent) => {
+answerRenderer(MESSAGES.VCS_RESOLE_AS_IS, async (browserWindow, projectPath, filePath, fileContent) => {
   checkRepo()
   try {
     await fileops.saveFile(join(projectPath, filePath), fileContent)
@@ -547,7 +547,7 @@ answerRenderer('merge:resolve-as-is', async (browserWindow, projectPath, filePat
   }
 })
 
-answerRenderer('merge:resolve-using-mine', async (browserWindow, projectPath, filePath) => {
+answerRenderer(MESSAGES.VCS_RESOLE_USING_OUR, async (browserWindow, projectPath, filePath) => {
   checkRepo()
   try {
     const fileContent = await gitops.getMineFileContent(repo, filePath)
@@ -562,7 +562,7 @@ answerRenderer('merge:resolve-using-mine', async (browserWindow, projectPath, fi
   }
 })
 
-answerRenderer('merge:resolve-using-theirs', async (browserWindow, projectPath, filePath) => {
+answerRenderer(MESSAGES.VCS_RESOLE_USING_THEIR, async (browserWindow, projectPath, filePath) => {
   checkRepo()
   try {
     const fileContent = await gitops.getTheirsFileContent(repo, filePath)
@@ -577,7 +577,7 @@ answerRenderer('merge:resolve-using-theirs', async (browserWindow, projectPath, 
   }
 })
 
-answerRenderer('diff:create-mine-temp-file', async (browserWindow, filePath) => {
+answerRenderer(MESSAGES.VCS_CREATE_OUR_TMP_FILE, async (browserWindow, filePath) => {
   const fileContent = await gitops.getMineFileContent(repo, filePath)
   const tempPath = join('/tmp', filePath)
   await fileops.saveFile(join('/tmp', filePath), fileContent)
@@ -585,7 +585,7 @@ answerRenderer('diff:create-mine-temp-file', async (browserWindow, filePath) => 
   return tempPath
 })
 
-answerRenderer('diff:create-theirs-temp-file', async (browserWindow, filePath) => {
+answerRenderer(MESSAGES.VCS_CREATE_THEIR_TMP_FILE, async (browserWindow, filePath) => {
   const fileContent = await gitops.getTheirsFileContent(repo, filePath)
   const tempPath = join('/tmp', filePath)
   await fileops.saveFile(tempPath, fileContent)
@@ -594,11 +594,11 @@ answerRenderer('diff:create-theirs-temp-file', async (browserWindow, filePath) =
 })
 
 // WIP!!!!
-answerRenderer('diff:create-indexed-temp-file', async (browserWindow, projectPath, filePath) => {
+answerRenderer(MESSAGES.VCS_CREATE_INDEXED_TMP_FILE, async (browserWindow, projectPath, filePath) => {
   const fileContent = await gitops.changedFileDiffToIndex(repo, projectPath, filePath)
 })
 
-answerRenderer('repository:add-remote', async (browserWindow, name, url) => {
+answerRenderer(MESSAGES.VCS_ADD_REMOTE, async (browserWindow, name, url) => {
   checkRepo()
   try {
     await gitops.addRemote(repo, name, url)
@@ -606,7 +606,7 @@ answerRenderer('repository:add-remote', async (browserWindow, name, url) => {
   } catch (e) {}
 })
 
-answerRenderer('repository:delete-remote', async (browserWindow, name) => {
+answerRenderer(MESSAGES.VCS_DELETE_REMOTE, async (browserWindow, name) => {
   checkRepo()
   try {
     await gitops.deleteRemote(repo, name)
@@ -614,7 +614,7 @@ answerRenderer('repository:delete-remote', async (browserWindow, name) => {
   } catch (e) {}
 })
 
-answerRenderer('repository:set-user-details', async (browserWindow, userName, email, useForAllRepositories) => {
+answerRenderer(MESSAGES.VCS_SET_USER_DEFAULTS, async (browserWindow, userName, email, useForAllRepositories) => {
   let config
   if (useForAllRepositories) {
     config = await gitops.findConfig()
@@ -628,22 +628,22 @@ answerRenderer('repository:set-user-details', async (browserWindow, userName, em
   await gitops.setUserNameEmail(config, userName, email)
 })
 
-answerRenderer('repository:clone', async (browserWindow, remoteUrl, targetFolder, userName, password) => {
+answerRenderer(MESSAGES.VCS_CLONE_REPOSITORY, async (browserWindow, remoteUrl, targetFolder, userName, password) => {
   await gitops.cloneRepository(remoteUrl, targetFolder, userName, password)
 })
 
-answerRenderer('repository:init', async (browserWindow, folder) => {
+answerRenderer(MESSAGES.VCS_INIT_REPOSITORY, async (browserWindow, folder) => {
   await gitops.createRepository(folder)
 })
 
 /* FAKE APPLICATION (from editor) */
 
-answerRenderer('remove-file', (browserWindow, path) => {
+answerRenderer(MESSAGES.CORE_REMOVE_FILE, (browserWindow, path) => {
   console.log('MAIN: remove-file ', path)
   return fileops.removeFile(path)
 })
 
-answerRenderer('open-project', (browserWindow, projectPath) => {
+answerRenderer(MESSAGES.CORE_OPEN_PROJECT, (browserWindow, projectPath) => {
   // return Promise.resolve()
   return new Promise((resolve, reject) => {
     fileops
@@ -673,34 +673,34 @@ answerRenderer('open-project', (browserWindow, projectPath) => {
   })
 })
 
-ipcMain.on('close-project', event => {
+ipcMain.on(MESSAGES.CORE_CLOSE_PROJECT, event => {
   // fileops.closeProject()
 })
 
-answerRenderer('get-file-type', (browserWindow, filePath) => {
+answerRenderer(MESSAGES.CORE_GET_FILE_TYPE, (browserWindow, filePath) => {
   return fileops.getFileType(filePath)
 })
 
-answerRenderer('folder-create', (browserWindow, folderPath) => {
+answerRenderer(MESSAGES.CORE_CREATE_FOLDER, (browserWindow, folderPath) => {
   return fileops.createFolder(folderPath)
 })
 
-answerRenderer('open-file', (browserWindow, filePath) => {
+answerRenderer(MESSAGES.CORE_SAVE_FILE, (browserWindow, filePath) => {
   return fileops.openFile(filePath)
 })
 
-answerRenderer('save-file', (browserWindow, filePath, buffer) => {
+answerRenderer(MESSAGES.CORE_SAVE_FILE, (browserWindow, filePath, buffer) => {
   return fileops.saveFile(filePath, buffer)
 })
 
-answerRenderer('rename-file', (browserWindow, src, dst) => {
+answerRenderer(MESSAGES.CORE_RENAME_FILE, (browserWindow, src, dst) => {
   return fileops.rename(src, dst)
 })
 
-answerRenderer('remove-file', (browserWindow, path) => {
+answerRenderer(MESSAGES.CORE_REMOVE_FILE, (browserWindow, path) => {
   return fileops.removeFile(path)
 })
 
-answerRenderer('remove-folder', (browserWindow, path) => {
+answerRenderer(MESSAGES.CORE_REMOVE_FOLDER, (browserWindow, path) => {
   return fileops.removeFolder(path)
 })
