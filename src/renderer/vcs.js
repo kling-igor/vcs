@@ -5,7 +5,7 @@ import path from 'path'
 import * as _ from 'lodash'
 import { observable, action, transaction, computed } from 'mobx'
 import { callMain } from './ipc'
-
+import * as MESSAGES from '../common/messages'
 import { FileWrapper } from './components/vcs/file-wrapper'
 
 const cleanLeadingSlashes = filePath => filePath.replace(/^[\.\/]*/, '')
@@ -501,7 +501,7 @@ export class VCS extends Emitter {
   async open(projectPath) {
     this.projectPath = projectPath
 
-    const { user, remotes } = await callMain('repository:open', projectPath)
+    const { user, remotes } = await callMain(MESSAGES.VCS_OPEN_REPOSITORY, projectPath)
 
     if (user) {
       const { name, email } = user

@@ -9,6 +9,8 @@ import { FileSystemOperations } from './file-operations'
 import * as URL from 'url'
 import keytar from 'keytar'
 
+import * as MESSAGES from '../common/messages'
+
 import dotenv from 'dotenv'
 dotenv.config()
 
@@ -65,7 +67,7 @@ app.on('window-all-closed', () => {
   }
 })
 
-answerRenderer('repository:open', async (browserWindow, path) => {
+answerRenderer(MESSAGES.VCS_OPEN_REPOSITORY, async (browserWindow, path) => {
   try {
     repo = await gitops.openRepository(path)
     if (repo) {
