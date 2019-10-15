@@ -42,7 +42,7 @@ app.on('ready', async () => {
 
   window.loadURL(
     URL.format({
-      pathname: join(__dirname, 'index.html'),
+      pathname: resolve(__dirname, '..', 'index.html'),
       protocol: 'file',
       slashes: true
       // hash

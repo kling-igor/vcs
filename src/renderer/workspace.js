@@ -2,9 +2,9 @@ const { remote } = window.require('electron')
 import React from 'react'
 import os from 'os'
 import { Emitter, Disposable, CompositeDisposable } from 'event-kit'
-import { Input, QuickPick, InputUnique } from './src/components/quickpick'
+import { Input, QuickPick, InputUnique } from './components/quickpick'
 import { observable, autorun } from 'mobx'
-import editorThemes from './src/themes/editor'
+import editorThemes from './themes/editor'
 
 // STUB
 

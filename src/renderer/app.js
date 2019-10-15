@@ -7,9 +7,9 @@ import { resolve, join } from 'path'
 
 import { observer } from 'mobx-react'
 
-import SplitPane, { Pane } from './src/components/react-split'
+import SplitPane, { Pane } from './components/react-split'
 
-import theme from './src/themes/ui/dark'
+import theme from './themes/ui/dark'
 // import theme from './src/themes/ui/light'
 
 import { Project } from './project'
@@ -17,17 +17,17 @@ import { ApplicationDelegate } from './application-delegate'
 import { Workspace } from './workspace'
 import { VCS } from './vcs'
 
-import { Dock } from './src/components/dock'
+import { Dock } from './components/dock'
 
-import { VCSView } from './src/components/vcs'
-import ChangesFileList from './src/components/vcs/changedfiles-list'
-import CommitInfo from './src/components/vcs/commit-info'
-import ChangedFiles from './src/components/vcs/changed-files'
-import StagedFiles from './src/components/vcs/staged-files'
+import { VCSView } from './components/vcs'
+import ChangesFileList from './components/vcs/changedfiles-list'
+import CommitInfo from './components/vcs/commit-info'
+import ChangedFiles from './components/vcs/changed-files'
+import StagedFiles from './components/vcs/staged-files'
 
-import BranchesList from './src/components/vcs/branches-list.js'
-import TagsList from './src/components/vcs/tags-list.js'
-import RemotesList from './src/components/vcs/remotes-list.js'
+import BranchesList from './components/vcs/branches-list.js'
+import TagsList from './components/vcs/tags-list.js'
+import RemotesList from './components/vcs/remotes-list.js'
 
 import * as Dialog from './dialogs'
 
@@ -39,15 +39,11 @@ import {
   onStagedFileContextMenu,
   onRemoteContextMenu,
   onVcsContextMenu
-} from './src/components/vcs/context-menu'
+} from './components/vcs/context-menu'
 
-import { onGitLogSettingsMenu } from './src/components/vcs/header-menu'
+import { onGitLogSettingsMenu } from './components/vcs/header-menu'
 
-import {
-  onStagedFilesHeaderMenu,
-  onChangedFilesHeaderMenu,
-  onRemotesHeaderMenu
-} from './src/components/vcs/header-menu'
+import { onStagedFilesHeaderMenu, onChangedFilesHeaderMenu, onRemotesHeaderMenu } from './components/vcs/header-menu'
 
 const applicationDelegate = new ApplicationDelegate()
 const project = new Project({ applicationDelegate })
@@ -60,7 +56,7 @@ const dock = new Dock()
 // потом нужно все пути сделать через vision.
 
 // ДОЛЖНО БЫТЬ В package
-import { CloneProjectPane } from './src/components/vcs/stub'
+import { CloneProjectPane } from './components/vcs/stub'
 
 const noop = () => {}
 
@@ -251,7 +247,7 @@ export default class App extends Component {
     // ЭТО ДЕЛАТЬ В ОТВЕТ НА СОБЫТИЕ ОТКРЫТИЯ ПРОЕКТА
     replacePanes(vcs.mode)
 
-    const PROJECT_PATH = '/Users/user/Projects/client' //resolve(__dirname, '../test-repo')
+    const PROJECT_PATH = '/Users/user/Projects/testrepo' //resolve(__dirname, '../test-repo')
 
     await vcs.open(PROJECT_PATH)
     await project.open({ projectPath: PROJECT_PATH })

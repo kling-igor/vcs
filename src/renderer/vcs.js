@@ -6,7 +6,7 @@ import * as _ from 'lodash'
 import { observable, action, transaction, computed } from 'mobx'
 import { callMain } from './ipc'
 
-import { FileWrapper } from './src/components/vcs/file-wrapper'
+import { FileWrapper } from './components/vcs/file-wrapper'
 
 const cleanLeadingSlashes = filePath => filePath.replace(/^[\.\/]*/, '')
 

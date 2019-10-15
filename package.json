@@ -2,12 +2,13 @@
   "name": "vcs",
   "version": "0.0.1",
   "description": "VCS for Vision",
-  "main": "app/main.js",
+  "main": "app/main/main.js",
   "scripts": {
     "postinstall": "electron-rebuild",
     "start": "electron .",
-    "build:main": "babel -w host -d app --copy-files",
-    "build:renderer": "webpack --mode development --env.dev --config renderer/webpack.config.babel.js --watch --hot",
+    "build:main": "babel -w src/main -d app/main --copy-files",
+    "build:common": "babel -w src/common -d app/common --copy-files",
+    "build:renderer": "webpack --mode development --env.dev --config webpack.config.babel.js --watch --hot",
     "rebuild": "electron-rebuild -f -w nodegit",
     "treetest": "node -r @babel/register host/maketree.js",
     "test": "mocha --require @babel/register --recursive test/*.spec.js"

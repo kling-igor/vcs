@@ -1,50 +1,53 @@
+const webpack = require('webpack')
 const HTMLWebpackPlugin = require('html-webpack-plugin')
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin')
-const MomentLocalesPlugin = require('moment-locales-webpack-plugin')
+
+// const { readdirSync } = require('fs')
 const { resolve, join } = require('path')
 
+const APP_DIR = resolve(__dirname, './src')
 const MONACO_DIR = resolve(__dirname, './node_modules/monaco-editor')
 const BLUEPRINT_DIR = resolve(__dirname, './node_modules/@blueprintjs')
 
+// const platformModulesFolder = join('node_modules', '@platform')
+// const platformModules = readdirSync(resolve(__dirname, platformModulesFolder)).map(dir =>
+//   resolve(platformModulesFolder, dir, 'src')
+// )
+
 module.exports = env => ({
-  entry: join(__dirname, 'index.js'),
+  target: 'electron-renderer',
+
+  entry: join(__dirname, 'src', 'renderer', 'index.js'),
+
   output: {
     filename: 'bundle.js',
-    path: join(__dirname, '../app'),
+    path: join(__dirname, 'app'),
     globalObject: 'this'
   },
 
-  devServer: {
-    port: 8080,
-    host: '0.0.0.0',
-    hot: true
-  },
-
-  target: 'electron-renderer',
-
-  watch: true,
-
-  watchOptions: {
-    aggregateTimeout: 100
-  },
+  watch: !!env.dev,
 
   node: {
     fs: 'empty',
     __dirname: false
   },
 
-  devtool: 'source-map',
+  devtool: env.dev ? 'inline-source-map' : false,
 
   resolve: {
-    modules: [__dirname]
+    modules: [join(__dirname, '.'), join(__dirname, 'src', 'renderer'), join(__dirname, 'src', 'common')]
   },
 
   plugins: [
     new HTMLWebpackPlugin({
       filename: 'index.html',
-      template: join(__dirname, 'index.html'),
+      template: join(__dirname, 'src', 'renderer', 'index.html'),
       inject: 'body',
       hash: false
+    }),
+
+    new webpack.ProvidePlugin({
+      vision: [join(__dirname, 'src', 'renderer', 'environment'), 'default']
     }),
 
     new MonacoWebpackPlugin({
@@ -58,10 +61,7 @@ module.exports = env => ({
         '!quickCommand'
         // "!quickOutline"
       ]
-    }),
-
-    // To strip all locales except “en”
-    new MomentLocalesPlugin()
+    })
   ],
 
   module: {
@@ -69,7 +69,7 @@ module.exports = env => ({
       {
         test: /.jsx?$/,
         exclude: /node_modules\/(?![react\-monaco\-editor]\/).*/,
-        include: [__dirname],
+        include: [join(__dirname, 'src', 'renderer'), join(__dirname, 'src', 'common')],
         use: {
           loader: 'babel-loader'
         }
@@ -88,12 +88,17 @@ module.exports = env => ({
       },
       {
         test: /\.css$/,
-        include: BLUEPRINT_DIR,
+        include: APP_DIR,
         use: ['style-loader', 'css-loader']
       },
       {
         test: /\.css$/,
+        include: BLUEPRINT_DIR,
         use: ['style-loader', 'css-loader']
+      },
+      {
+        test: /\.(png|svg|jpg|gif)$/,
+        use: ['file-loader']
       }
     ]
   },
