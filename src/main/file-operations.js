@@ -404,7 +404,7 @@ export class FileSystemOperations {
   }
 
   async openFile(filePath) {
-    return readFile(filePath, { encoding: 'utf-8' })
+    return readFile(filePath, { encoding: 'utf8' })
   }
 
   // https://stackoverflow.com/questions/16316330/how-to-write-file-if-parent-folder-doesnt-exist
@@ -412,7 +412,7 @@ export class FileSystemOperations {
     this.awaitPathOperations(filePath, 'add', 'change')
 
     return new Promise((resolve, reject) => {
-      return writeFile(filePath, buffer, { encoding: 'utf-8' })
+      return writeFile(filePath, buffer)
         .then(() => {
           this.forgetPathOpeartions(filePath, 'add', 'change')
           resolve()

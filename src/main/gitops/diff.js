@@ -159,6 +159,11 @@ export async function changedFileDiffToIndex(repo, projectPath, filePath) {
     //   originalContent = buffer.toString()
     // }
 
+    const originalContentBuffer = await getIndexedFileContent(repo, filePath)
+    if (originalContentBuffer) {
+      originalContent = originalContentBuffer.toString()
+    }
+
     originalContent = (await getIndexedFileContent(repo, filePath)).toString()
 
     modifiedContent = await readFile(resolve(projectPath, filePath), { encoding: 'utf-8' })

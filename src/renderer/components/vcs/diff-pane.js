@@ -46,7 +46,11 @@ const BinaryDataDiff = memo(
           <BinaryDataPaneStyle>Binary Data ({original.mime})</BinaryDataPaneStyle>
         )}
         <PaneSplitter />
-        <BinaryDataPaneStyle>Binary Data ({modified.mime})</BinaryDataPaneStyle>
+        {modified.type == null ? (
+          <EmptyPane />
+        ) : (
+          <BinaryDataPaneStyle>Binary Data ({modified.mime})</BinaryDataPaneStyle>
+        )}
       </RootContainerStyle>
     )
   })
@@ -57,7 +61,7 @@ const ImageDiff = memo(({ original, modified }) => {
     <RootContainerStyle>
       {original.type == null ? <EmptyPane /> : <ImageViewer src={original.content} />}
       <PaneSplitter />
-      <ImageViewer src={modified.content} />
+      {modified.type == null ? <EmptyPane /> : <ImageViewer src={modified.content} />}
     </RootContainerStyle>
   )
 })

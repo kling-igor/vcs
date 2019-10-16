@@ -389,17 +389,16 @@ export class VCS extends Emitter {
   async onChangedFileSelect(filePath) {
     console.log('CLICK ON CHANGED FILE:', filePath)
 
-    // TODO:  нужно проверить статус
-    // если M C A то есть смысл читать локальную копию
-    // если D то локальная копия отсутствует
-
     let mime
 
-    const fileType = await callMain(MESSAGES.CORE_GET_FILE_TYPE, filePath)
+    const fileType = await callMain(MESSAGES.PROJECT_GET_FILE_TYPE, filePath)
     if (fileType) {
       mime = fileType.mime
     }
 
+    // TODO:  нужно проверить статус
+    // если M C A то есть смысл читать локальную копию
+    // если D то локальная копия отсутствует
     const { status } = this.changedFiles.find(item => `${item.path}/${item.filename}` === filePath)
 
     if (status === 'C') {
@@ -420,10 +419,12 @@ export class VCS extends Emitter {
         const theirsTmpPath = callMain(MESSAGES.VCS_CREATE_THEIR_TMP_FILE, filePath)
         // todo очищать файлы как только развыделяется файл
 
-        this.originalFile = FileWrapper.createImageFile({ path: filePath, tmpPath: mineTmpPath })
-        this.modifiedFile = FileWrapper.createImageFile({ path: filePath, tmpPath: theirsTmpPath })
-        this.selectedFilePath = filePath
-        this.diffConflictedFile = true
+        transaction(() => {
+          this.originalFile = FileWrapper.createImageFile({ path: filePath, tmpPath: mineTmpPath })
+          this.modifiedFile = FileWrapper.createImageFile({ path: filePath, tmpPath: theirsTmpPath })
+          this.selectedFilePath = filePath
+          this.diffConflictedFile = true
+        })
       } else {
         transaction(() => {
           this.originalFile = FileWrapper.createBinaryDataFile({ path: filePath })
@@ -435,7 +436,7 @@ export class VCS extends Emitter {
     } else if (status === 'A') {
       if (mime === 'text/plain') {
         // получить реальный контент файла
-        const content = await callMain(MESSAGES.CORE_OPEN_FILE, filePath)
+        const content = await callMain(MESSAGES.PROJECT_OPEN_FILE, filePath)
         transaction(() => {
           this.originalFile = FileWrapper.createTextFile({ path: filePath, content: '' })
           this.modifiedFile = FileWrapper.createTextFile({ path: filePath, content })
@@ -460,6 +461,18 @@ export class VCS extends Emitter {
           this.diffConflictedFile = false
         })
       }
+    }
+    if (status === 'D') {
+      if (mime === 'text/plain') {
+      } else if (mime.includes('image/')) {
+      } else {
+        transaction(() => {
+          this.originalFile = FileWrapper.createBinaryDataFile({ path: filePath, mime })
+          this.modifiedFile = FileWrapper.createEmpty({ path: filePath })
+          this.selectedFilePath = filePath
+          this.diffConflictedFile = false
+        })
+      }
     } else {
       if (mime === 'text/plain') {
         const { originalContent = '', modifiedContent = '', details: errorDetails } = await callMain(
@@ -479,10 +492,12 @@ export class VCS extends Emitter {
         const indexedTmpPath = callMain(MESSAGES.VCS_CREATE_INDEXED_TMP_FILE, this.projectPath, filePath)
         // todo очищать файлы как только развыделяется файл
 
-        this.originalFile = FileWrapper.createImageFile({ path: filePath, tmpPath: mineTmpPath })
-        this.modifiedFile = FileWrapper.createImageFile({ path: filePath, tmpPath: indexedTmpPath })
-        this.selectedFilePath = filePath
-        this.diffConflictedFile = true
+        transaction(() => {
+          this.originalFile = FileWrapper.createImageFile({ path: filePath, tmpPath: mineTmpPath })
+          this.modifiedFile = FileWrapper.createImageFile({ path: filePath, tmpPath: indexedTmpPath })
+          this.selectedFilePath = filePath
+          this.diffConflictedFile = true
+        })
       } else {
         transaction(() => {
           this.originalFile = FileWrapper.createBinaryDataFile({ path: filePath })
@@ -494,35 +509,92 @@ export class VCS extends Emitter {
     }
   }
 
+  // контент из staged - нужно формировать временные файлы с содержимым из staged
+  // т.к. после помещения в staged  содержимое в WT может уже быть изменено
   @action.bound
   async onStagedFileSelect(filePath) {
     let mime
 
-    const fileType = await callMain(MESSAGES.CORE_GET_FILE_TYPE, filePath)
+    const fileType = await callMain(MESSAGES.PROJECT_GET_FILE_TYPE, filePath)
     if (fileType) {
       mime = fileType.mime
     }
 
-    if (mime === 'text/plain') {
-      const { originalContent = '', modifiedContent = '', details: errorDetails } = await callMain(
-        MESSAGES.VCS_DIFF_STAGED_TO_HEAD,
-        cleanLeadingSlashes(filePath)
-      )
+    const { status } = this.stagedFiles.find(item => `${item.path}/${item.filename}` === filePath)
 
-      transaction(() => {
-        this.originalFile = FileWrapper.createTextFile({ path: filePath, content: originalContent })
-        this.modifiedFile = FileWrapper.createTextFile({ path: filePath, content: modifiedContent })
-        this.selectedFilePath = filePath
-        this.diffConflictedFile = false
-      })
-    } else {
-      transaction(() => {
-        this.originalFile = FileWrapper.createBinaryDataFile({ path: filePath })
-        this.modifiedFile = FileWrapper.createBinaryDataFile({ path: filePath })
-        this.selectedFilePath = filePath
-        this.diffConflictedFile = false
-      })
+    if (status === 'A') {
+      if (mime === 'text/plain') {
+        const tmpFilePath = await callMain(MESSAGES.VCS_CREATE_INDEXED_TMP_FILE, this.projectPath, filePath)
+        console.log('TMP:', tmpFilePath)
+
+        const content = await callMain(MESSAGES.CORE_OPEN_FILE, tmpFilePath)
+        transaction(() => {
+          this.originalFile = FileWrapper.createEmpty({ path: filePath })
+          this.modifiedFile = FileWrapper.createTextFile({ path: filePath, content })
+          this.selectedFilePath = filePath
+          this.diffConflictedFile = false
+        })
+      } else if (mime.includes('image/')) {
+        const tmpFilePath = await callMain(MESSAGES.VCS_CREATE_INDEXED_TMP_FILE, this.projectPath, filePath)
+        transaction(() => {
+          this.originalFile = FileWrapper.createEmpty({ path: filePath })
+          this.modifiedFile = FileWrapper.createImageFile({ path: filePath, tmpPath: tmpFilePath })
+          this.selectedFilePath = filePath
+          this.diffConflictedFile = false
+        })
+      } else {
+        transaction(() => {
+          this.originalFile = FileWrapper.createEmpty({ path: filePath })
+          this.modifiedFile = FileWrapper.createBinaryDataFile({ path: filePath, mime })
+          this.selectedFilePath = filePath
+          this.diffConflictedFile = false
+        })
+      }
     }
+    if (status === 'D') {
+      if (mime === 'text/plain') {
+      } else if (mime.includes('image/')) {
+      } else {
+        transaction(() => {
+          this.originalFile = FileWrapper.createBinaryDataFile({ path: filePath, mime })
+          this.modifiedFile = FileWrapper.createEmpty({ path: filePath })
+          this.selectedFilePath = filePath
+          this.diffConflictedFile = false
+        })
+      }
+    } else {
+      if (mime === 'text/plain') {
+      } else if (mime.includes('image/')) {
+      } else {
+        transaction(() => {
+          this.originalFile = FileWrapper.createBinaryDataFile({ path: filePath, mime })
+          this.modifiedFile = FileWrapper.createBinaryDataFile({ path: filePath, mime })
+          this.selectedFilePath = filePath
+          this.diffConflictedFile = false
+        })
+      }
+    }
+
+    // if (mime === 'text/plain') {
+    //   const { originalContent = '', modifiedContent = '', details: errorDetails } = await callMain(
+    //     MESSAGES.VCS_DIFF_STAGED_TO_HEAD,
+    //     cleanLeadingSlashes(filePath)
+    //   )
+
+    //   transaction(() => {
+    //     this.originalFile = FileWrapper.createTextFile({ path: filePath, content: originalContent })
+    //     this.modifiedFile = FileWrapper.createTextFile({ path: filePath, content: modifiedContent })
+    //     this.selectedFilePath = filePath
+    //     this.diffConflictedFile = false
+    //   })
+    // } else {
+    //   transaction(() => {
+    //     this.originalFile = FileWrapper.createBinaryDataFile({ path: filePath })
+    //     this.modifiedFile = FileWrapper.createBinaryDataFile({ path: filePath })
+    //     this.selectedFilePath = filePath
+    //     this.diffConflictedFile = false
+    //   })
+    // }
   }
 
   @action
@@ -714,7 +786,7 @@ export class VCS extends Emitter {
 
     let mime
 
-    const fileType = await callMain(MESSAGES.CORE_GET_FILE_TYPE, filePath)
+    const fileType = await callMain(MESSAGES.PROJECT_GET_FILE_TYPE, filePath)
     if (fileType) {
       mime = fileType.mime
     }

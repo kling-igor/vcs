@@ -6,16 +6,16 @@ import * as MESSAGES from '../common/messages'
 
 export class ApplicationDelegate {
   async openProject(projectPath, whiteList = []) {
-    return callMain(MESSAGES.CORE_OPEN_PROJECT, projectPath, ...whiteList)
+    return callMain(MESSAGES.PROJECT_OPEN, projectPath, ...whiteList)
   }
 
   async removeFile(path) {
     console.log('APP DELEGATE REMOVE:', path)
-    return callMain(MESSAGES.CORE_REMOVE_FILE, path)
+    return callMain(MESSAGES.PROJECT_REMOVE_FILE, path)
   }
 
   closeProject() {
-    return ipcRenderer.send(MESSAGES.CORE_CLOSE_PROJECT)
+    return ipcRenderer.send(MESSAGES.PROJECT_CLOSE)
   }
 
   onProjectFilePathAdd(handler) {

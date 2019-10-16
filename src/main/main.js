@@ -593,9 +593,12 @@ answerRenderer(MESSAGES.VCS_CREATE_THEIR_TMP_FILE, async (browserWindow, filePat
   return tempPath
 })
 
-// WIP!!!!
 answerRenderer(MESSAGES.VCS_CREATE_INDEXED_TMP_FILE, async (browserWindow, projectPath, filePath) => {
   const fileContent = await gitops.changedFileDiffToIndex(repo, projectPath, filePath)
+  const tempPath = join('/tmp', filePath)
+  await fileops.saveFile(tempPath, fileContent)
+
+  return tempPath
 })
 
 answerRenderer(MESSAGES.VCS_ADD_REMOTE, async (browserWindow, name, url) => {
@@ -638,12 +641,7 @@ answerRenderer(MESSAGES.VCS_INIT_REPOSITORY, async (browserWindow, folder) => {
 
 /* FAKE APPLICATION (from editor) */
 
-answerRenderer(MESSAGES.CORE_REMOVE_FILE, (browserWindow, path) => {
-  console.log('MAIN: remove-file ', path)
-  return fileops.project.removeFile(path)
-})
-
-answerRenderer(MESSAGES.CORE_OPEN_PROJECT, (browserWindow, projectPath, ...whiteList) => {
+answerRenderer(MESSAGES.PROJECT_OPEN, (browserWindow, projectPath, ...whiteList) => {
   return new Promise((resolve, reject) => {
     fileops.project
       .open(projectPath, whiteList)
@@ -672,34 +670,46 @@ answerRenderer(MESSAGES.CORE_OPEN_PROJECT, (browserWindow, projectPath, ...white
   })
 })
 
-ipcMain.on(MESSAGES.CORE_CLOSE_PROJECT, event => {
+ipcMain.on(MESSAGES.PROJECT_CLOSE, event => {
   fileops.project.close()
 })
 
-answerRenderer(MESSAGES.CORE_GET_FILE_TYPE, (browserWindow, filePath) => {
+answerRenderer(MESSAGES.PROJECT_GET_FILE_TYPE, (browserWindow, filePath) => {
   return fileops.project.getFileType(filePath)
 })
 
-answerRenderer(MESSAGES.CORE_CREATE_FOLDER, (browserWindow, folderPath) => {
+answerRenderer(MESSAGES.PROJECT_CREATE_FOLDER, (browserWindow, folderPath) => {
   return fileops.project.createFolder(folderPath)
 })
 
-answerRenderer(MESSAGES.CORE_OPEN_FILE, (browserWindow, filePath) => {
+answerRenderer(MESSAGES.PROJECT_OPEN_FILE, (browserWindow, filePath) => {
   return fileops.project.openFile(filePath)
 })
 
-answerRenderer(MESSAGES.CORE_SAVE_FILE, (browserWindow, filePath, buffer) => {
+answerRenderer(MESSAGES.PROJECT_SAVE_FILE, (browserWindow, filePath, buffer) => {
   return fileops.project.saveFile(filePath, buffer)
 })
 
-answerRenderer(MESSAGES.CORE_RENAME_FILE, (browserWindow, src, dst) => {
+answerRenderer(MESSAGES.PROJECT_RENAME_FILE, (browserWindow, src, dst) => {
   return fileops.project.rename(src, dst)
 })
 
-answerRenderer(MESSAGES.CORE_REMOVE_FILE, (browserWindow, path) => {
+answerRenderer(MESSAGES.PROJECT_REMOVE_FILE, (browserWindow, path) => {
   return fileops.project.removeFile(path)
 })
 
-answerRenderer(MESSAGES.CORE_REMOVE_FOLDER, (browserWindow, path) => {
+answerRenderer(MESSAGES.PROJECT_REMOVE_FOLDER, (browserWindow, path) => {
   return fileops.project.removeFolder(path)
+})
+
+answerRenderer(MESSAGES.CORE_OPEN_FILE, (browserWindow, filePath) => {
+  return fileops.openFile(filePath)
+})
+
+answerRenderer(MESSAGES.CORE_SAVE_FILE, (browserWindow, filePath, buffer) => {
+  return fileops.saveFile(filePath, buffer)
+})
+
+answerRenderer(MESSAGES.CORE_REMOVE_FILE, (browserWindow, path) => {
+  return fileops.removeFile(path)
 })
