@@ -437,17 +437,25 @@ export class VCS extends Emitter {
         // получить реальный контент файла
         const content = await callMain(MESSAGES.CORE_OPEN_FILE, filePath)
         transaction(() => {
-          this.originalFile = null
+          this.originalFile = FileWrapper.createTextFile({ path: filePath, content: '' })
           this.modifiedFile = FileWrapper.createTextFile({ path: filePath, content })
           this.selectedFilePath = filePath
           this.diffConflictedFile = false
         })
       } else if (mime.includes('image/')) {
-        // получить ссылку на временный файл
+        transaction(() => {
+          this.originalFile = FileWrapper.createEmpty({ path: filePath })
+          this.modifiedFile = FileWrapper.createImageFile({
+            path: filePath,
+            tmpPath: path.resolve(this.projectPath, filePath)
+          })
+          this.selectedFilePath = filePath
+          this.diffConflictedFile = false
+        })
       } else {
         transaction(() => {
-          this.originalFile = null
-          this.modifiedFile = FileWrapper.createBinaryDataFile({ path: filePath })
+          this.originalFile = FileWrapper.createEmpty({ path: filePath })
+          this.modifiedFile = FileWrapper.createBinaryDataFile({ path: filePath, mime })
           this.selectedFilePath = filePath
           this.diffConflictedFile = false
         })

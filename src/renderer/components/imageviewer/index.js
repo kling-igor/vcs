@@ -5,6 +5,7 @@ import ReactResizeDetector from 'react-resize-detector'
 const GridBackgroundStyle = styled.div`
   position: relative;
   height: 100%;
+  width: 100%;
   background-image: ${({ background }) =>
     background === 'transparent'
       ? `linear-gradient(45deg, #444 25%, transparent 25%, transparent 75%, #444 75%),

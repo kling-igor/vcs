@@ -1,6 +1,10 @@
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api'
 
 export class FileWrapper {
+  static createEmpty({ path }) {
+    return new FileWrapper({ path })
+  }
+
   static createTextFile({ path, content }) {
     return new FileWrapper({ path, content, type: 'text' })
   }
@@ -8,8 +12,8 @@ export class FileWrapper {
     return new FileWrapper({ path, tmpPath, type: 'image' })
   }
 
-  static createBinaryDataFile({ path, tmpPath }) {
-    return new FileWrapper({ path, tmpPath, type: 'binary' })
+  static createBinaryDataFile({ path, tmpPath, mime }) {
+    return new FileWrapper({ path, tmpPath, type: 'binary', mime })
   }
 
   /**
@@ -19,12 +23,13 @@ export class FileWrapper {
    * @param {String} content - textual content
    * @param {String} type - one of: text | image | binary
    */
-  constructor({ path, tmpPath, content = '', type }) {
+  constructor({ path, tmpPath, content, type, mime }) {
     this._type = type
     this._path = path
     this._tmpPath = tmpPath
+    this._mime = mime || 'unknown type'
     if (type === 'text') {
-      this.monacoModel = monaco.editor.createModel(content)
+      this.monacoModel = monaco.editor.createModel(content || '')
     }
   }
 
@@ -39,5 +44,9 @@ export class FileWrapper {
 
   get path() {
     return this._path
+  }
+
+  get mime() {
+    return this._mime
   }
 }

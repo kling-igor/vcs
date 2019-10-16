@@ -29,13 +29,24 @@ const PaneSplitter = styled.div`
   background-color: gray;
 `
 
+const EmptyPane = styled.div`
+  width: 100%;
+  height: 100%;
+`
+
 const BinaryDataDiff = memo(
-  withTheme(() => {
+  withTheme(({ original, modified }) => {
+    console.log('ORIGINAL TYPE:', original.type)
+
     return (
       <RootContainerStyle>
-        <BinaryDataPaneStyle>Binary Data</BinaryDataPaneStyle>
+        {original.type == null ? (
+          <EmptyPane />
+        ) : (
+          <BinaryDataPaneStyle>Binary Data ({original.mime})</BinaryDataPaneStyle>
+        )}
         <PaneSplitter />
-        <BinaryDataPaneStyle>Binary Data</BinaryDataPaneStyle>
+        <BinaryDataPaneStyle>Binary Data ({modified.mime})</BinaryDataPaneStyle>
       </RootContainerStyle>
     )
   })
@@ -44,7 +55,7 @@ const BinaryDataDiff = memo(
 const ImageDiff = memo(({ original, modified }) => {
   return (
     <RootContainerStyle>
-      <ImageViewer src={original.content} />
+      {original.type == null ? <EmptyPane /> : <ImageViewer src={original.content} />}
       <PaneSplitter />
       <ImageViewer src={modified.content} />
     </RootContainerStyle>
@@ -72,9 +83,9 @@ export const DiffPane = memo(({ originalFile, modifiedFile, textEditorDidMount }
         )}
       />
     )
-  } else if (originalFile.type === 'image' && modifiedFile.type === 'image') {
-    return <ImageDiff original={originalFile.path} modified={modifiedFile.path} />
+  } else if (modifiedFile.type === 'image') {
+    return <ImageDiff original={originalFile} modified={modifiedFile} />
   }
 
-  return <BinaryDataDiff />
+  return <BinaryDataDiff original={originalFile} modified={modifiedFile} />
 })
