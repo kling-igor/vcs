@@ -395,7 +395,7 @@ export class VCS extends Emitter {
 
     let mime
 
-    const fileType = await callMain(MESSAGES.CORE_GET_FILE_TYPE, path.resolve(this.project.projectPath, filePath))
+    const fileType = await callMain(MESSAGES.CORE_GET_FILE_TYPE, filePath)
     if (fileType) {
       mime = fileType.mime
     }
@@ -430,6 +430,26 @@ export class VCS extends Emitter {
           this.modifiedFile = FileWrapper.createBinaryDataFile({ path: filePath })
           this.selectedFilePath = filePath
           this.diffConflictedFile = true
+        })
+      }
+    } else if (status === 'A') {
+      if (mime === 'text/plain') {
+        // получить реальный контент файла
+        const content = await callMain(MESSAGES.CORE_OPEN_FILE, filePath)
+        transaction(() => {
+          this.originalFile = null
+          this.modifiedFile = FileWrapper.createTextFile({ path: filePath, content })
+          this.selectedFilePath = filePath
+          this.diffConflictedFile = false
+        })
+      } else if (mime.includes('image/')) {
+        // получить ссылку на временный файл
+      } else {
+        transaction(() => {
+          this.originalFile = null
+          this.modifiedFile = FileWrapper.createBinaryDataFile({ path: filePath })
+          this.selectedFilePath = filePath
+          this.diffConflictedFile = false
         })
       }
     } else {
@@ -470,7 +490,7 @@ export class VCS extends Emitter {
   async onStagedFileSelect(filePath) {
     let mime
 
-    const fileType = await callMain(MESSAGES.CORE_GET_FILE_TYPE, path.resolve(this.project.projectPath, filePath))
+    const fileType = await callMain(MESSAGES.CORE_GET_FILE_TYPE, filePath)
     if (fileType) {
       mime = fileType.mime
     }
@@ -686,7 +706,7 @@ export class VCS extends Emitter {
 
     let mime
 
-    const fileType = await callMain(MESSAGES.CORE_GET_FILE_TYPE, path.resolve(this.project.projectPath, filePath))
+    const fileType = await callMain(MESSAGES.CORE_GET_FILE_TYPE, filePath)
     if (fileType) {
       mime = fileType.mime
     }
@@ -995,7 +1015,11 @@ export class VCS extends Emitter {
   @action.bound
   async resolveUsingMine() {
     if (this.selectedFilePath) {
-      await callMain(MESSAGES.VCS_RESOLE_USING_OUR, this.project.projectPath, cleanLeadingSlashes(this.selectedFilePath))
+      await callMain(
+        MESSAGES.VCS_RESOLE_USING_OUR,
+        this.project.projectPath,
+        cleanLeadingSlashes(this.selectedFilePath)
+      )
       await this.status()
 
       transaction(() => {
@@ -1010,7 +1034,11 @@ export class VCS extends Emitter {
   @action.bound
   async resolveUsingTheirs() {
     if (this.selectedFilePath) {
-      await callMain(MESSAGES.VCS_RESOLE_USING_THEIR, this.project.projectPath, cleanLeadingSlashes(this.selectedFilePath))
+      await callMain(
+        MESSAGES.VCS_RESOLE_USING_THEIR,
+        this.project.projectPath,
+        cleanLeadingSlashes(this.selectedFilePath)
+      )
       await this.status()
 
       transaction(() => {

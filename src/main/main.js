@@ -536,7 +536,7 @@ answerRenderer(MESSAGES.VCS_REVERT_COMMIT, async (browserWindow, sha) => {
 answerRenderer(MESSAGES.VCS_RESOLE_AS_IS, async (browserWindow, projectPath, filePath, fileContent) => {
   checkRepo()
   try {
-    await fileops.saveFile(join(projectPath, filePath), fileContent)
+    await fileops.project.saveFile(filePath, fileContent)
     await gitops.removeConflict(repo, filePath)
 
     const index = await gitops.refreshIndex(repo)
@@ -551,7 +551,7 @@ answerRenderer(MESSAGES.VCS_RESOLE_USING_OUR, async (browserWindow, projectPath,
   checkRepo()
   try {
     const fileContent = await gitops.getMineFileContent(repo, filePath)
-    await fileops.saveFile(join(projectPath, filePath), fileContent)
+    await fileops.project.saveFile(filePath, fileContent)
     await gitops.removeConflict(repo, filePath)
 
     const index = await gitops.refreshIndex(repo)
@@ -566,7 +566,7 @@ answerRenderer(MESSAGES.VCS_RESOLE_USING_THEIR, async (browserWindow, projectPat
   checkRepo()
   try {
     const fileContent = await gitops.getTheirsFileContent(repo, filePath)
-    await fileops.saveFile(join(projectPath, filePath), fileContent)
+    await fileops.project.saveFile(filePath, fileContent)
     await gitops.removeConflict(repo, filePath)
 
     const index = await gitops.refreshIndex(repo)
@@ -640,14 +640,14 @@ answerRenderer(MESSAGES.VCS_INIT_REPOSITORY, async (browserWindow, folder) => {
 
 answerRenderer(MESSAGES.CORE_REMOVE_FILE, (browserWindow, path) => {
   console.log('MAIN: remove-file ', path)
-  return fileops.removeFile(path)
+  return fileops.project.removeFile(path)
 })
 
 answerRenderer(MESSAGES.CORE_OPEN_PROJECT, (browserWindow, projectPath) => {
   // return Promise.resolve()
   return new Promise((resolve, reject) => {
-    fileops
-      .openProject(projectPath)
+    fileops.project
+      .open(projectPath)
       .then(notifier => {
         notifier.on('ready', fileTree => {
           browserWindow.webContents.send('file-tree:ready', fileTree)
@@ -674,33 +674,33 @@ answerRenderer(MESSAGES.CORE_OPEN_PROJECT, (browserWindow, projectPath) => {
 })
 
 ipcMain.on(MESSAGES.CORE_CLOSE_PROJECT, event => {
-  // fileops.closeProject()
+  fileops.project.close()
 })
 
 answerRenderer(MESSAGES.CORE_GET_FILE_TYPE, (browserWindow, filePath) => {
-  return fileops.getFileType(filePath)
+  return fileops.project.getFileType(filePath)
 })
 
 answerRenderer(MESSAGES.CORE_CREATE_FOLDER, (browserWindow, folderPath) => {
-  return fileops.createFolder(folderPath)
+  return fileops.project.createFolder(folderPath)
 })
 
-answerRenderer(MESSAGES.CORE_SAVE_FILE, (browserWindow, filePath) => {
-  return fileops.openFile(filePath)
+answerRenderer(MESSAGES.CORE_OPEN_FILE, (browserWindow, filePath) => {
+  return fileops.project.openFile(filePath)
 })
 
 answerRenderer(MESSAGES.CORE_SAVE_FILE, (browserWindow, filePath, buffer) => {
-  return fileops.saveFile(filePath, buffer)
+  return fileops.project.saveFile(filePath, buffer)
 })
 
 answerRenderer(MESSAGES.CORE_RENAME_FILE, (browserWindow, src, dst) => {
-  return fileops.rename(src, dst)
+  return fileops.project.rename(src, dst)
 })
 
 answerRenderer(MESSAGES.CORE_REMOVE_FILE, (browserWindow, path) => {
-  return fileops.removeFile(path)
+  return fileops.project.removeFile(path)
 })
 
 answerRenderer(MESSAGES.CORE_REMOVE_FOLDER, (browserWindow, path) => {
-  return fileops.removeFolder(path)
+  return fileops.project.removeFolder(path)
 })

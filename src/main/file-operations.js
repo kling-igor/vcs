@@ -1,4 +1,4 @@
-import { readdir, stat, mkdirp, readFile, writeFile, rename, existsSync, remove, unlink } from 'fs-extra'
+import { readdir, stat, mkdirp, readFile, writeFile, rename, existsSync, remove, copy, unlink } from 'fs-extra'
 import chokidar from 'chokidar'
 import readChunk from 'read-chunk'
 import fileType from 'file-type'
@@ -14,8 +14,75 @@ const MIME = {
   svg: 'image/svg'
 }
 
-export class FileSystemOperations {
+class ProjectFileOperations {
   projectPath = null
+
+  constructor(fileOps) {
+    this.fileOps = fileOps
+  }
+
+  async open(projectPath) {
+    this.projectPath = projectPath
+    return this.fileOps.openProject(projectPath)
+  }
+
+  close() {
+    this.projectPath = null
+    return this.fileOps.closeProject()
+  }
+
+  async create(projectPath) {
+    if (this.projectPath) return
+
+    this.projectPath = projectPath
+    await this.fileOps.createFolder(projectPath)
+    await this.createFolder('views')
+    await this.createFolder('controllers')
+  }
+
+  async readFileTree(whiteList = []) {
+    if (this.projectPath) return
+
+    return this.fileOps.readProjectFileTree(this.projectPath, whiteList)
+  }
+
+  async rename(src, dst) {
+    if (!this.projectPath) return
+    return this.fileOps.rename(resolve(this.projectPath, src), resolve(this.projectPath, dst))
+  }
+
+  async createFolder(folderPath) {
+    if (!this.projectPath) return
+    return this.fileOps.createFolder(resolve(this.projectPath, folderPath))
+  }
+
+  async removeFile(filePath) {
+    if (!this.projectPath) return
+    return this.fileOps.removeFile(resolve(this.projectPath, filePath))
+  }
+
+  async removeFolder(folderPath) {
+    if (!this.projectPath) return
+    return this.fileOps.removeFolder(resolve(this.projectPath, folderPath))
+  }
+
+  async getFileType(filePath) {
+    if (!this.projectPath) return
+    return this.fileOps.getFileType(resolve(this.projectPath, filePath))
+  }
+
+  async openFile(filePath) {
+    if (!this.projectPath) return
+    return this.fileOps.openFile(resolve(this.projectPath, filePath))
+  }
+
+  async saveFile(filePath, buffer) {
+    if (!this.projectPath) return
+    return this.fileOps.saveFile(resolve(this.projectPath, filePath), buffer)
+  }
+}
+
+export class FileSystemOperations {
   watcher
   initialScanComplete = false
 
@@ -29,13 +96,21 @@ export class FileSystemOperations {
     unlinkDir: []
   }
 
+  constructor() {
+    this._project = new ProjectFileOperations(this)
+  }
+
+  get project() {
+    return this._project
+  }
+
   /**
    * Reads file tree recursively ignoring some of inappropriate folders
    * @returns {Promise} - promise resolved by tree of objects {path: String, fileName: String, !children:[]} where path is relative to original directory
    * @throws {Error} - Directory doesn't match project structure.
    */
-  readProjectFileTree() {
-    const regex = new RegExp(`^${this.projectPath}\/?`)
+  readProjectFileTree(dirPath, whiteList = []) {
+    const regex = new RegExp(`^${dirPath}\/?`)
 
     const readDir = async (dir, isRoot = false) => {
       let childFiles = (await readdir(dir)).map(fileName => ({
@@ -51,7 +126,8 @@ export class FileSystemOperations {
           continue
         }
 
-        if (isRoot) {
+        if (isRoot && whiteList.length > 0) {
+          // TODO: use config settings (as function parameter!!!)
           const rootAllowedItems = [
             'controllers',
             'models',
@@ -70,7 +146,7 @@ export class FileSystemOperations {
           }
         }
 
-        const fullPath = join(this.projectPath, item.path, item.fileName)
+        const fullPath = join(dirPath, item.path, item.fileName)
         const fileInfo = await stat(fullPath)
         if (fileInfo.isDirectory()) {
           item.children = await readDir(fullPath)
@@ -80,23 +156,21 @@ export class FileSystemOperations {
       return childFiles.filter(item => !ignoredPaths.includes(item))
     }
 
-    return readDir(this.projectPath, true)
+    return readDir(dirPath, true)
   }
 
-  async createProject(projectPath) {
-    await this.createFolder(projectPath)
+  // async createProject(projectPath) {
+  //   await this.createFolder(projectPath)
 
-    await this.createFolder(join(projectPath, 'views'))
-    await this.createFolder(join(projectPath, 'controllers'))
-  }
+  //   await this.createFolder(join(projectPath, 'views'))
+  //   await this.createFolder(join(projectPath, 'controllers'))
+  // }
 
   /**
    * reads folder tree and starts watching for changes
    */
   openProject(projectPath) {
     if (!existsSync(projectPath)) return Promise.reject(`Path '${projectPath}' does not exist`)
-
-    this.projectPath = projectPath
 
     return new Promise((resolve, reject) => {
       this.readProjectFileTree()
@@ -176,8 +250,6 @@ export class FileSystemOperations {
   }
 
   closeProject() {
-    if (!this.projectPath) return
-
     if (this.notifier) {
       this.notifier.dispose()
       this.notifier.clear()
@@ -203,9 +275,9 @@ export class FileSystemOperations {
    * @param {String} src
    * @param {String} dst
    */
-  rename(src, dst) {
+  async rename(src, dst) {
     if (src === dst) return
-    if (!existsSync(resolve(this.projectPath, src))) return
+    if (!existsSync(src)) return
 
     let fileAddResolve
     let fileRemoveResolve
@@ -287,12 +359,12 @@ export class FileSystemOperations {
     this.awaitPathOperations(dst, 'add', 'addDir')
 
     // actual fs operation
-    return rename(resolve(this.projectPath, src), resolve(this.projectPath, dst))
+    return rename(src, dst)
   }
 
   async createFolder(folderPath) {
     try {
-      await mkdirp(resolve(this.projectPath, folderPath))
+      await mkdirp(folderPath)
     } catch (err) {
       console.error(err)
     }
@@ -300,7 +372,7 @@ export class FileSystemOperations {
 
   async removeFile(filePath) {
     try {
-      await unlink(resolve(this.projectPath, filePath))
+      await unlink(filePath)
     } catch (err) {
       console.error(err)
     }
@@ -308,7 +380,7 @@ export class FileSystemOperations {
 
   async removeFolder(folderPath) {
     try {
-      await remove(resolve(this.projectPath, folderPath))
+      await remove(folderPath)
     } catch (err) {
       console.error(err)
     }
@@ -327,20 +399,20 @@ export class FileSystemOperations {
       return { ext, mime }
     }
 
-    const buffer = await readChunk(resolve(this.projectPath, filePath), 0, fileType.minimumBytes)
+    const buffer = await readChunk(filePath, 0, fileType.minimumBytes)
     return fileType(buffer)
   }
 
-  openFile(filePath) {
-    return readFile(resolve(this.projectPath, filePath), { encoding: 'utf-8' })
+  async openFile(filePath) {
+    return readFile(filePath, { encoding: 'utf-8' })
   }
 
   // https://stackoverflow.com/questions/16316330/how-to-write-file-if-parent-folder-doesnt-exist
-  saveFile(filePath, buffer) {
+  async saveFile(filePath, buffer) {
     this.awaitPathOperations(filePath, 'add', 'change')
 
     return new Promise((resolve, reject) => {
-      return writeFile(resolve(this.projectPath, filePath), buffer, { encoding: 'utf-8' })
+      return writeFile(filePath, buffer, { encoding: 'utf-8' })
         .then(() => {
           this.forgetPathOpeartions(filePath, 'add', 'change')
           resolve()

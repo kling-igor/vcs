@@ -146,8 +146,6 @@ export async function getTheirsFileContent(repo, filePath) {
  * @returns {{originalContent:String, modifiedContent:String}}
  */
 export async function changedFileDiffToIndex(repo, projectPath, filePath) {
-  // TODO: а если нет еще коммитов ?
-
   console.log('fileDiffToHead:', projectPath, filePath)
 
   let originalContent = ''
