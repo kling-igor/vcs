@@ -2,7 +2,7 @@ import { readdir, stat, mkdirp, readFile, writeFile, rename, existsSync, remove,
 import chokidar from 'chokidar'
 import readChunk from 'read-chunk'
 import fileType from 'file-type'
-import { join, extname } from 'path'
+import { join, resolve, extname } from 'path'
 import { Emitter } from 'event-kit'
 
 const IGNORED = ['.DS_Store', '.Trash', 'node_modules', '.git', '.hg', '.svn', 'controllers_compiled']
@@ -10,7 +10,8 @@ const IGNORED = ['.DS_Store', '.Trash', 'node_modules', '.git', '.hg', '.svn', '
 const MIME = {
   js: 'text/plain',
   json: 'text/plain',
-  txt: 'text/plain'
+  txt: 'text/plain',
+  svg: 'image/svg'
 }
 
 export class FileSystemOperations {
@@ -204,7 +205,7 @@ export class FileSystemOperations {
    */
   rename(src, dst) {
     if (src === dst) return
-    if (!existsSync(src)) return
+    if (!existsSync(resolve(this.projectPath, src))) return
 
     let fileAddResolve
     let fileRemoveResolve
@@ -286,12 +287,12 @@ export class FileSystemOperations {
     this.awaitPathOperations(dst, 'add', 'addDir')
 
     // actual fs operation
-    return rename(src, dst)
+    return rename(resolve(this.projectPath, src), resolve(this.projectPath, dst))
   }
 
   async createFolder(folderPath) {
     try {
-      await mkdirp(folderPath)
+      await mkdirp(resolve(this.projectPath, folderPath))
     } catch (err) {
       console.error(err)
     }
@@ -299,7 +300,7 @@ export class FileSystemOperations {
 
   async removeFile(filePath) {
     try {
-      await unlink(filePath)
+      await unlink(resolve(this.projectPath, filePath))
     } catch (err) {
       console.error(err)
     }
@@ -307,7 +308,7 @@ export class FileSystemOperations {
 
   async removeFolder(folderPath) {
     try {
-      await remove(folderPath)
+      await remove(resolve(this.projectPath, folderPath))
     } catch (err) {
       console.error(err)
     }
@@ -326,12 +327,12 @@ export class FileSystemOperations {
       return { ext, mime }
     }
 
-    const buffer = await readChunk(filePath, 0, fileType.minimumBytes)
+    const buffer = await readChunk(resolve(this.projectPath, filePath), 0, fileType.minimumBytes)
     return fileType(buffer)
   }
 
   openFile(filePath) {
-    return readFile(filePath, { encoding: 'utf-8' })
+    return readFile(resolve(this.projectPath, filePath), { encoding: 'utf-8' })
   }
 
   // https://stackoverflow.com/questions/16316330/how-to-write-file-if-parent-folder-doesnt-exist
@@ -339,7 +340,7 @@ export class FileSystemOperations {
     this.awaitPathOperations(filePath, 'add', 'change')
 
     return new Promise((resolve, reject) => {
-      return writeFile(filePath, buffer, { encoding: 'utf-8' })
+      return writeFile(resolve(this.projectPath, filePath), buffer, { encoding: 'utf-8' })
         .then(() => {
           this.forgetPathOpeartions(filePath, 'add', 'change')
           resolve()

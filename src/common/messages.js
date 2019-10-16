@@ -35,11 +35,14 @@ export const VCS_RESET_COMMIT_SOFT = 'vcs:reset.commit-soft'
 
 export const VCS_ADD_TO_STAGE = 'vcs:add.to.stage'
 export const VCS_REMOVE_FROM_STAGE = 'vcs:remove.from.stage'
+
 export const VCS_CHECKOUT_BRANCH = 'vcs:checkout.branch'
 export const VCS_CHECKOUT_COMMIT = 'vcs:checkout.commit'
 export const VCS_DISCARD_LOCAL_CHANGES = 'vcs:discard.local-changes'
+
 export const VCS_MERGE = 'vcs:merge'
 export const VCS_MERGE_BRANCHES = 'vcs:merge.branches'
+
 export const VCS_DIFF_TO_PARENT = 'vcs:diff.to-parent'
 export const VCS_DIFF_TO_INDEX = 'vcs:diff.to-index'
 export const VCS_DIFF_STAGED_TO_HEAD = 'vcs:diff.staged-to-head'
