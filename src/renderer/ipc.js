@@ -14,6 +14,7 @@ export const callMain = (channel, ...args) => {
 
   return new Promise((resolve, reject) => {
     const errorChannel = `${channel}-error-${uuid}`
+
     ipcRenderer.once(uuid, (event, ...resultArgs) => {
       ipcRenderer.removeAllListeners(errorChannel)
       resolve(...resultArgs)
@@ -21,7 +22,7 @@ export const callMain = (channel, ...args) => {
 
     ipcRenderer.once(errorChannel, (event, errorMessage) => {
       ipcRenderer.removeAllListeners(uuid)
-      // console.log('ERROR:', channel, errorMessage)
+      console.log('ERROR:', errorChannel, errorMessage)
       reject(new Error(errorMessage))
     })
 

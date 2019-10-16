@@ -5,8 +5,8 @@ import { Disposable } from 'event-kit'
 import * as MESSAGES from '../common/messages'
 
 export class ApplicationDelegate {
-  async openProject(projectPath) {
-    return callMain(MESSAGES.CORE_OPEN_PROJECT, projectPath)
+  async openProject(projectPath, whiteList = []) {
+    return callMain(MESSAGES.CORE_OPEN_PROJECT, projectPath, ...whiteList)
   }
 
   async removeFile(path) {

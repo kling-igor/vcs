@@ -21,9 +21,9 @@ class ProjectFileOperations {
     this.fileOps = fileOps
   }
 
-  async open(projectPath) {
+  async open(projectPath, whiteList = []) {
     this.projectPath = projectPath
-    return this.fileOps.openProject(projectPath)
+    return this.fileOps.openProject(projectPath, whiteList)
   }
 
   close() {
@@ -169,11 +169,11 @@ export class FileSystemOperations {
   /**
    * reads folder tree and starts watching for changes
    */
-  openProject(projectPath) {
+  openProject(projectPath, whiteList = []) {
     if (!existsSync(projectPath)) return Promise.reject(`Path '${projectPath}' does not exist`)
 
     return new Promise((resolve, reject) => {
-      this.readProjectFileTree()
+      this.readProjectFileTree(projectPath, whiteList)
         .then(fileTree => {
           this.notifier = new Emitter()
 

@@ -643,11 +643,10 @@ answerRenderer(MESSAGES.CORE_REMOVE_FILE, (browserWindow, path) => {
   return fileops.project.removeFile(path)
 })
 
-answerRenderer(MESSAGES.CORE_OPEN_PROJECT, (browserWindow, projectPath) => {
-  // return Promise.resolve()
+answerRenderer(MESSAGES.CORE_OPEN_PROJECT, (browserWindow, projectPath, ...whiteList) => {
   return new Promise((resolve, reject) => {
     fileops.project
-      .open(projectPath)
+      .open(projectPath, whiteList)
       .then(notifier => {
         notifier.on('ready', fileTree => {
           browserWindow.webContents.send('file-tree:ready', fileTree)

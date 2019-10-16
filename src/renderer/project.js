@@ -9,8 +9,10 @@ export class Project extends EventEmitter {
     this.applicationDelegate = applicationDelegate
   }
 
-  async open({ projectPath }) {
-    await this.applicationDelegate.openProject(projectPath)
+  async open({ projectPath, whiteList = [] }) {
+    // todo:  если тут доступна config, то whitelist брать из нее!!!
+
+    await this.applicationDelegate.openProject(projectPath, whiteList)
 
     this.projectPath = projectPath
 
