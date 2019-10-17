@@ -125,7 +125,7 @@ export const ImageViewer = memo(({ src }) => {
   return (
     <ReactResizeDetector handleWidth handleHeight onResize={onResize}>
       <GridBackgroundStyle onWheel={onWheel} background={background}>
-        <ImageStyle ref={imageRef} width={width * scale} height={height * scale} src={src} />
+        <ImageStyle ref={imageRef} width={width * scale} height={height * scale} src={`${src}?hash=${Date.now()}`} />
         <ButtonsContainer>
           <TransparentButtonStyle onClick={onTransparent} />
           <ButtonStyle color="black" onClick={onBlack} />
