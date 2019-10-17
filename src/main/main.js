@@ -682,6 +682,10 @@ answerRenderer(MESSAGES.PROJECT_CREATE_FOLDER, (browserWindow, folderPath) => {
   return fileops.project.createFolder(folderPath)
 })
 
+answerRenderer(MESSAGES.PROJECT_GET_FILE_BUFFER, (browserWindow, filePath) => {
+  return fileops.project.readFileBuffer(filePath)
+})
+
 answerRenderer(MESSAGES.PROJECT_OPEN_FILE, (browserWindow, filePath) => {
   return fileops.project.openFile(filePath)
 })
@@ -712,4 +716,14 @@ answerRenderer(MESSAGES.CORE_SAVE_FILE, (browserWindow, filePath, buffer) => {
 
 answerRenderer(MESSAGES.CORE_REMOVE_FILE, (browserWindow, path) => {
   return fileops.removeFile(path)
+})
+
+answerRenderer(MESSAGES.CORE_REMOVE_TMP_FILES, async (browserWindow, ...paths) => {
+  for await (const path of paths) {
+    try {
+      fileops.removeFile(path)
+    } catch (e) {
+      console.log('Unable to remove tmp file:', path)
+    }
+  }
 })

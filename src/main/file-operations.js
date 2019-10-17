@@ -76,6 +76,11 @@ class ProjectFileOperations {
     return this.fileOps.openFile(resolve(this.projectPath, filePath))
   }
 
+  async readFileBuffer(filePath) {
+    if (!this.projectPath) return
+    return this.fileOps.readFileBuffer(resolve(this.projectPath, filePath))
+  }
+
   async saveFile(filePath, buffer) {
     if (!this.projectPath) return
     return this.fileOps.saveFile(resolve(this.projectPath, filePath), buffer)
@@ -405,6 +410,10 @@ export class FileSystemOperations {
 
   async openFile(filePath) {
     return readFile(filePath, { encoding: 'utf8' })
+  }
+
+  async readFileBuffer(filePath) {
+    return readFile(filePath)
   }
 
   // https://stackoverflow.com/questions/16316330/how-to-write-file-if-parent-folder-doesnt-exist

@@ -43,10 +43,15 @@ export const VCS_DISCARD_LOCAL_CHANGES = 'vcs:discard.local-changes'
 export const VCS_MERGE = 'vcs:merge'
 export const VCS_MERGE_BRANCHES = 'vcs:merge.branches'
 
+// TODO: удалить
 export const VCS_DIFF_TO_PARENT = 'vcs:diff.to-parent'
 export const VCS_DIFF_TO_INDEX = 'vcs:diff.to-index'
 export const VCS_DIFF_STAGED_TO_HEAD = 'vcs:diff.staged-to-head'
 export const VCS_DIFF_CONFLICTED = 'vcs:diff.conflicted'
+// ----
+
+export const VCS_GET_COMMIT_FILE_BUFFER = 'vcs:get.commit-file-buffer'
+export const VCS_GET_INDEX_FILE_BUFFER = 'vcs:get.index-file-buffer'
 
 export const VCS_CREATE_INDEXED_TMP_FILE = 'vcs:create.indexed-tmp-file'
 export const VCS_CREATE_THEIR_TMP_FILE = 'vcs:create.their-tmp-file'
@@ -56,16 +61,22 @@ export const VCS_RESOLE_USING_THEIR = 'vcs:resolve.using-their'
 export const VCS_RESOLE_USING_OUR = 'vcs:resolve.using-our'
 export const VCS_RESOLE_AS_IS = 'vcs:resolve.as-is'
 
+export const CORE_GET_FILE_BUFFER = 'core:get.file-buffer'
+// дубликат функционала!!!
 export const CORE_OPEN_FILE = 'core:open.file'
-export const CORE_SAVE_FILE = 'core:save.file'
+export const CORE_SAVE_FILE = 'core:save.file' // для utf8 только ?
 export const CORE_REMOVE_FILE = 'core:remove.file'
+
+export const CORE_REMOVE_TMP_FILES = 'core:remove.tmp-files'
 
 export const PROJECT_OPEN = 'project:open'
 export const PROJECT_CLOSE = 'project:close'
 export const PROJECT_GET_FILE_TYPE = 'project:get.file-type'
 export const PROJECT_CREATE_FOLDER = 'project:create.folder'
+export const PROJECT_GET_FILE_BUFFER = 'project:get.file-buffer'
+// дубликат функционала
 export const PROJECT_OPEN_FILE = 'project:open.file'
-export const PROJECT_SAVE_FILE = 'project:save.file'
+export const PROJECT_SAVE_FILE = 'project:save.file' // для utf8 только ?
 export const PROJECT_RENAME_FILE = 'project:rename.file'
 export const PROJECT_REMOVE_FILE = 'project:remove.file'
 export const PROJECT_REMOVE_FOLDER = 'project:remove.folder'
