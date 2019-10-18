@@ -12,7 +12,7 @@ export default ({ vcs, workspace, project, Dialog }) => path => {
           Dialog.confirmStageFile()
             .then(() => {
               console.log('STAGING ', path)
-              vcs.stageFile(path)
+              vcs.stageFile(path, status)
             })
             .catch(noop)
         },

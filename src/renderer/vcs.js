@@ -1023,7 +1023,7 @@ export class VCS extends Emitter {
   }
 
   @action.bound
-  async stageFile(filePath) {
+  async stageFile(filePath, status) {
     if (filePath === this.selectedChangedFile) {
       transaction(() => {
         this.selectedFilePath = null
@@ -1034,7 +1034,13 @@ export class VCS extends Emitter {
       })
     }
 
-    await callMain(MESSAGES.VCS_ADD_TO_STAGE, [cleanLeadingSlashes(filePath)])
+    if (status === 'D') {
+      await callMain(MESSAGES.VCS_REMOVE_FROM_STAGE, [cleanLeadingSlashes(filePath)])
+    }
+    else {
+      await callMain(MESSAGES.VCS_ADD_TO_STAGE, [cleanLeadingSlashes(filePath)])
+    }
+
     await this.status()
 
     console.log('STAGE FILE:', filePath, this.selectedChangedFile)
