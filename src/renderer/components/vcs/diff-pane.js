@@ -94,7 +94,7 @@ export const DiffPane = memo(({ originalFile, modifiedFile, textEditorDidMount }
         )}
       />
     )
-  } else if (modifiedFile.type === 'image') {
+  } else if (originalFile.type === 'image' || modifiedFile.type === 'image') {
     return <ImageDiff original={originalFile} modified={modifiedFile} />
   }
 

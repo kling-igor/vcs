@@ -412,44 +412,60 @@ export class VCS extends Emitter {
   async onChangedFileSelect(filePath) {
     console.log('CLICK ON CHANGED FILE:', filePath)
 
-    let mime
-
-    const fileType = await callMain(MESSAGES.PROJECT_GET_FILE_TYPE, filePath)
-    if (fileType) {
-      mime = fileType.mime
-    }
+    let left
+    let right
+    let disposableFiles = []
 
     // TODO:  нужно проверить статус
     // если M C A то есть смысл читать локальную копию
     // если D то локальная копия отсутствует
     const { status } = this.changedFiles.find(item => `${item.path}/${item.filename}` === filePath)
 
+    let mime
+
+    let fileType
+
+    if (status !== 'D') {
+      fileType = await callMain(MESSAGES.PROJECT_GET_FILE_TYPE, filePath)
+
+      if (fileType) {
+        mime = fileType.mime
+      }
+    }
+
     if (status === 'A') {
       if (mime === 'text/plain') {
         const buffer = await callMain(MESSAGES.PROJECT_GET_FILE_BUFFER, cleanLeadingSlashes(filePath))
-        const left = FileWrapper.createTextFile({ path: filePath, content: '' })
-        const right = FileWrapper.createTextFile({ path: filePath, content: buffer.toString() })
-        this.updateDiffInfo(left, right, filePath)
+        left = FileWrapper.createTextFile({ path: filePath, content: '' })
+        right = FileWrapper.createTextFile({ path: filePath, content: buffer.toString() })
       } else if (mime.includes('image/')) {
         const tmpPath = path.resolve(this.projectPath, filePath)
-        const left = FileWrapper.createEmpty({ path: filePath })
-        const right = FileWrapper.createImageFile({ path: filePath, tmpPath })
-        this.updateDiffInfo(left, right, filePath)
+        left = FileWrapper.createEmpty({ path: filePath })
+        right = FileWrapper.createImageFile({ path: filePath, tmpPath })
       } else {
-        const left = FileWrapper.createEmpty({ path: filePath })
-        const right = FileWrapper.createBinaryDataFile({ path: filePath, mime })
-        this.updateDiffInfo(left, right, filePath)
+        left = FileWrapper.createEmpty({ path: filePath })
+        right = FileWrapper.createBinaryDataFile({ path: filePath, mime })
       }
     } else if (status === 'D') {
+      fileType = await callMain(MESSAGES.VCS_GET_FILE_TYPE, 'HEAD', cleanLeadingSlashes(filePath))
+
+      if (fileType) {
+        mime = fileType.mime
+      }
+
       if (mime === 'text/plain') {
-        // получить буфер из head коммита
+        const buffer = await callMain(MESSAGES.VCS_GET_COMMIT_FILE_BUFFER, 'HEAD', cleanLeadingSlashes(filePath))
+        left = FileWrapper.createTextFile({ path: filePath, content: buffer.toString() })
+        right = FileWrapper.createTextFile({ path: filePath, content: '' })
       } else if (mime.includes('image/')) {
-        // TODO: имя файла filePath_sha.ext
-        // получить путь для временного файла, полученного из head коммита
+        const tmpFilePath = await callMain(MESSAGES.VCS_CREATE_COMMIT_TMP_FILE, 'HEAD', cleanLeadingSlashes(filePath))
+
+        left = FileWrapper.createImageFile({ path: filePath, tmpPath: tmpFilePath })
+        right = FileWrapper.createEmpty({ path: filePath })
+        disposableFiles = [tmpFilePath]
       } else {
-        const left = FileWrapper.createBinaryDataFile({ path: filePath, mime })
-        const right = FileWrapper.createEmpty({ path: filePath })
-        this.updateDiffInfo(left, right, filePath)
+        left = FileWrapper.createBinaryDataFile({ path: filePath, mime })
+        right = FileWrapper.createEmpty({ path: filePath })
       }
     } else if (status === 'C') {
       if (mime === 'text/plain') {
@@ -477,19 +493,20 @@ export class VCS extends Emitter {
         //   this.diffConflictedFile = true
         // })
       } else {
-        const left = FileWrapper.createBinaryDataFile({ path: filePath })
-        const right = FileWrapper.createBinaryDataFile({ path: filePath })
+        left = FileWrapper.createBinaryDataFile({ path: filePath })
+        right = FileWrapper.createBinaryDataFile({ path: filePath })
         this.updateDiffInfo(left, right, filePath, [], true)
       }
+
+      return // to prevent further updateDiffInfo
     } else {
       // M
       if (mime === 'text/plain') {
         const workDirBuffer = await callMain(MESSAGES.PROJECT_GET_FILE_BUFFER, cleanLeadingSlashes(filePath))
         const commitBuffer = await callMain(MESSAGES.VCS_GET_COMMIT_FILE_BUFFER, 'HEAD', cleanLeadingSlashes(filePath))
 
-        const left = FileWrapper.createTextFile({ path: filePath, content: commitBuffer.toString() })
-        const right = FileWrapper.createTextFile({ path: filePath, content: workDirBuffer.toString() })
-        this.updateDiffInfo(left, right, filePath)
+        left = FileWrapper.createTextFile({ path: filePath, content: commitBuffer.toString() })
+        right = FileWrapper.createTextFile({ path: filePath, content: workDirBuffer.toString() })
       } else if (mime.includes('image/')) {
         const headTmpFilePath = await callMain(
           MESSAGES.VCS_CREATE_COMMIT_TMP_FILE,
@@ -497,21 +514,27 @@ export class VCS extends Emitter {
           cleanLeadingSlashes(filePath)
         )
 
-        const left = FileWrapper.createImageFile({ path: filePath, tmpPath: headTmpFilePath })
-        const right = FileWrapper.createImageFile({ path: filePath, tmpPath: path.resolve(this.projectPath, filePath) })
-        this.updateDiffInfo(left, right, filePath, [headTmpFilePath])
+        left = FileWrapper.createImageFile({ path: filePath, tmpPath: headTmpFilePath })
+        right = FileWrapper.createImageFile({ path: filePath, tmpPath: path.resolve(this.projectPath, filePath) })
+
+        disposableFiles = [headTmpFilePath]
       } else {
-        const left = FileWrapper.createBinaryDataFile({ path: filePath })
-        const right = FileWrapper.createBinaryDataFile({ path: filePath })
-        this.updateDiffInfo(left, right, filePath)
+        left = FileWrapper.createBinaryDataFile({ path: filePath })
+        right = FileWrapper.createBinaryDataFile({ path: filePath })
       }
     }
+
+    this.updateDiffInfo(left, right, filePath, disposableFiles)
   }
 
   // контент из staged - нужно формировать временные файлы с содержимым из staged
   // т.к. после помещения в staged  содержимое в WT может уже быть изменено
   @action.bound
   async onStagedFileSelect(filePath) {
+    let left
+    let right
+    let disposableFiles = []
+
     let mime
 
     const fileType = await callMain(MESSAGES.PROJECT_GET_FILE_TYPE, filePath)
@@ -524,58 +547,35 @@ export class VCS extends Emitter {
     if (status === 'A') {
       if (mime === 'text/plain') {
         const buffer = await callMain(MESSAGES.VCS_GET_INDEX_FILE_BUFFER, cleanLeadingSlashes(filePath))
-        const left = FileWrapper.createTextFile({ path: filePath, content: '' })
-        const right = FileWrapper.createTextFile({ path: filePath, content: buffer.toString() })
-        this.updateDiffInfo(left, right, filePath)
+        left = FileWrapper.createTextFile({ path: filePath, content: '' })
+        right = FileWrapper.createTextFile({ path: filePath, content: buffer.toString() })
       } else if (mime.includes('image/')) {
         const tmpFilePath = await callMain(MESSAGES.VCS_CREATE_INDEX_TMP_FILE, cleanLeadingSlashes(filePath))
-        const left = FileWrapper.createEmpty({ path: filePath })
-        const right = FileWrapper.createImageFile({ path: filePath, tmpPath: tmpFilePath })
-        this.updateDiffInfo(left, right, filePath, [tmpFilePath])
+        left = FileWrapper.createEmpty({ path: filePath })
+        right = FileWrapper.createImageFile({ path: filePath, tmpPath: tmpFilePath })
+        disposableFiles = [tmpFilePath]
       } else {
-        const left = FileWrapper.createEmpty({ path: filePath })
-        const right = FileWrapper.createBinaryDataFile({ path: filePath, mime })
-        this.updateDiffInfo(left, right, filePath)
+        left = FileWrapper.createEmpty({ path: filePath })
+        right = FileWrapper.createBinaryDataFile({ path: filePath, mime })
       }
     } else if (status === 'D') {
       if (mime === 'text/plain') {
       } else if (mime.includes('image/')) {
       } else {
-        const left = FileWrapper.createBinaryDataFile({ path: filePath, mime })
-        const right = FileWrapper.createEmpty({ path: filePath })
-        this.updateDiffInfo(left, right, filePath)
+        left = FileWrapper.createBinaryDataFile({ path: filePath, mime })
+        right = FileWrapper.createEmpty({ path: filePath })
       }
     } else {
       // M
       if (mime === 'text/plain') {
       } else if (mime.includes('image/')) {
       } else {
-        const left = FileWrapper.createBinaryDataFile({ path: filePath, mime })
-        const right = FileWrapper.createBinaryDataFile({ path: filePath, mime })
-        this.updateDiffInfo(left, right, filePath)
+        left = FileWrapper.createBinaryDataFile({ path: filePath, mime })
+        right = FileWrapper.createBinaryDataFile({ path: filePath, mime })
       }
     }
 
-    // if (mime === 'text/plain') {
-    //   const { originalContent = '', modifiedContent = '', details: errorDetails } = await callMain(
-    //     MESSAGES.VCS_DIFF_STAGED_TO_HEAD,
-    //     cleanLeadingSlashes(filePath)
-    //   )
-
-    //   transaction(() => {
-    //     this.originalFile = FileWrapper.createTextFile({ path: filePath, content: originalContent })
-    //     this.modifiedFile = FileWrapper.createTextFile({ path: filePath, content: modifiedContent })
-    //     this.selectedFilePath = filePath
-    //     this.diffConflictedFile = false
-    //   })
-    // } else {
-    //   transaction(() => {
-    //     this.originalFile = FileWrapper.createBinaryDataFile({ path: filePath })
-    //     this.modifiedFile = FileWrapper.createBinaryDataFile({ path: filePath })
-    //     this.selectedFilePath = filePath
-    //     this.diffConflictedFile = false
-    //   })
-    // }
+    this.updateDiffInfo(left, right, filePath, disposableFiles)
   }
 
   @action
