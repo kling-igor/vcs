@@ -220,3 +220,19 @@ export async function revertCommit(repo, sha) {
     console.log('ERR:', e)
   }
 }
+
+/**
+ * @param {nodegit.Repository} repo
+ * @param {String} sha
+ * @param {String} filePath
+ * @returns {Buffer}
+ */
+export async function getCommitFileContent(repo, sha, filePath) {
+  const oid = nodegit.Oid.fromString(sha)
+  const commit = await repo.getCommit(oid)
+  const entry = await commit.getEntry(filePath)
+
+  if (entry && entry.isFile()) {
+    return (await entry.getBlob()).content()
+  }
+}

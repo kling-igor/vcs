@@ -32,7 +32,7 @@ export { pull } from './pull'
 export { push } from './push'
 
 export {
-  fileDiffToParent,
+  // fileDiffToParent,
   changedFileDiffToIndex,
   stagedFileDiffToHead,
   getMineFileContent,
@@ -49,5 +49,6 @@ export {
   mixedResetToCommit,
   hardResetToCommit,
   discardLocalChanges,
-  revertCommit
+  revertCommit,
+  getCommitFileContent
 } from './commit'

@@ -395,17 +395,24 @@ export class FileSystemOperations {
    * @param {String} filePath
    * @returns {ext:String, mime:String}
    */
-  async getFileType(filePath) {
+  async getFileType(filePath, buffer) {
     const ext = extname(filePath).slice(1)
-
     const mime = MIME[ext]
 
     if (mime) {
       return { ext, mime }
     }
 
-    const buffer = await readChunk(filePath, 0, fileType.minimumBytes)
-    return fileType(buffer)
+    if (buffer) {
+      if (buffer.length > fileType.minimumBytes) {
+        return fileType(buffer.slice(0, fileType.minimumBytes))
+      }
+
+      return fileType(buffer)
+    }
+
+    const fileBuffer = await readChunk(filePath, 0, fileType.minimumBytes)
+    return fileType(fileBuffer)
   }
 
   async openFile(filePath) {

@@ -501,7 +501,7 @@ export class VCS extends Emitter {
         // получить путь на временный файл содержимого index
         // получить путь в FS к актуальному содержимому файла
         // const mineTmpPath = callMain(MESSAGES.VCS_CREATE_OUR_TMP_FILE, filePath)
-        // const indexedTmpPath = callMain(MESSAGES.VCS_CREATE_INDEXED_TMP_FILE, this.projectPath, filePath)
+        // const indexedTmpPath = callMain(MESSAGES.VCS_CREATE_INDEX_TMP_FILE, this.projectPath, filePath)
         // // todo очищать файлы как только развыделяется файл
         // transaction(() => {
         //   this.originalFile = FileWrapper.createImageFile({ path: filePath, tmpPath: mineTmpPath })
@@ -537,7 +537,7 @@ export class VCS extends Emitter {
         const right = FileWrapper.createTextFile({ path: filePath, content: buffer.toString() })
         this.updateDiffInfo(left, right, filePath)
       } else if (mime.includes('image/')) {
-        const tmpFilePath = await callMain(MESSAGES.VCS_CREATE_INDEXED_TMP_FILE, cleanLeadingSlashes(filePath))
+        const tmpFilePath = await callMain(MESSAGES.VCS_CREATE_INDEX_TMP_FILE, cleanLeadingSlashes(filePath))
         const left = FileWrapper.createEmpty({ path: filePath })
         const right = FileWrapper.createImageFile({ path: filePath, tmpPath: tmpFilePath })
         this.updateDiffInfo(left, right, filePath, [tmpFilePath])
@@ -774,31 +774,96 @@ export class VCS extends Emitter {
 
     this.commitSelectedFile = filePath
 
-    let mime
+    const {
+      parents: [parentSha]
+    } = this.commitInfo
 
-    const fileType = await callMain(MESSAGES.PROJECT_GET_FILE_TYPE, filePath)
+    let mime
+    let fileType
+
+    try {
+      fileType = await callMain(MESSAGES.VCS_GET_FILE_TYPE, this.commitInfo.commit, cleanLeadingSlashes(filePath))
+    } catch (e) {
+      console.log('FILETYPE GET ERROR:', e)
+      throw e
+    }
+
     if (fileType) {
       mime = fileType.mime
     }
 
+    // TODO: узнать статуc файла в коммите - это поспособствует к правильному формированию данных для DIFF
+
     if (mime === 'text/plain') {
       try {
-        // запрашиваем детальную информацию по файлу
-        const { originalContent = '', modifiedContent = '', details: errorDetails } = await callMain(
-          MESSAGES.VCS_DIFF_TO_PARENT,
+        let buffer
+        try {
+          buffer = await callMain(
+            MESSAGES.VCS_GET_COMMIT_FILE_BUFFER,
+            this.commitInfo.commit,
+            cleanLeadingSlashes(filePath)
+          )
+        } catch (e) {
+          console.log('BUFFER GET ERROR:', e)
+          throw e
+        }
+
+        let parentBuffer
+        if (parentSha) {
+          try {
+            parentBuffer = await callMain(MESSAGES.VCS_GET_COMMIT_FILE_BUFFER, parentSha, cleanLeadingSlashes(filePath))
+          } catch (e) {
+            console.log('PARENT COMMIT BUFFER GET ERROR:', e)
+            throw e
+          }
+        }
+
+        const left = FileWrapper.createTextFile({
+          path: filePath,
+          content: parentBuffer ? parentBuffer.toString() : ''
+        })
+        const right = FileWrapper.createTextFile({ path: filePath, content: buffer.toString() })
+
+        this.updateDiffInfo(left, right, filePath)
+      } catch (e) {
+        console.log('FILE DETAILS ERROR:', e)
+      }
+    } else if (mime.includes('image/')) {
+      try {
+        const tmpFilePath = await callMain(
+          MESSAGES.VCS_CREATE_COMMIT_TMP_FILE,
           this.commitInfo.commit,
           cleanLeadingSlashes(filePath)
         )
 
-        transaction(() => {
-          this.originalFile = FileWrapper.createTextFile({ path: filePath, content: originalContent })
-          this.modifiedFile = FileWrapper.createTextFile({ path: filePath, content: modifiedContent })
-          this.diffConflictedFile = false
-        })
+        let parentTmpFilePath
+        if (parentSha) {
+          parentTmpFilePath = await callMain(
+            MESSAGES.VCS_CREATE_COMMIT_TMP_FILE,
+            parentSha,
+            cleanLeadingSlashes(filePath)
+          )
+        }
+
+        const left = parentSha
+          ? FileWrapper.createImageFile({ path: filePath, tmpPath: parentTmpFilePath })
+          : FileWrapper.createEmpty({ path: filePath })
+        const right = FileWrapper.createImageFile({ path: filePath, tmpPath: tmpFilePath })
+
+        this.updateDiffInfo(left, right, filePath, [tmpFilePath, parentTmpFilePath])
       } catch (e) {
-        console.log('FILE DETAILS ERROR:', e)
+        console.log('UNABLE TO MAKE DIFF EDITOR', e)
       }
     } else {
+      try {
+        const left = parentSha
+          ? FileWrapper.createBinaryDataFile({ path: filePath, mime })
+          : FileWrapper.createEmpty({ path: filePath })
+        const right = FileWrapper.createBinaryDataFile({ path: filePath, mime })
+        this.updateDiffInfo(left, right, filePath)
+      } catch (e) {
+        console.log('UNABLE TO MAKE DIFF EDITOR', e)
+      }
     }
   }
 

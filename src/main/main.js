@@ -266,43 +266,43 @@ answerRenderer(MESSAGES.VCS_MERGE_BRANCHES, async (browserWindow, ourBranchName,
   }
 })
 
-answerRenderer(MESSAGES.VCS_DIFF_TO_PARENT, async (browserWindow, sha, filePath) => {
-  checkRepo()
+// answerRenderer(MESSAGES.VCS_DIFF_TO_PARENT, async (browserWindow, sha, filePath) => {
+//   checkRepo()
 
-  if (!sha) {
-    console.error('sha not specified')
-    return null
-  }
+//   if (!sha) {
+//     console.error('sha not specified')
+//     return null
+//   }
 
-  return gitops.fileDiffToParent(repo, sha, filePath)
-})
+//   return gitops.fileDiffToParent(repo, sha, filePath)
+// })
 
-answerRenderer(MESSAGES.VCS_DIFF_TO_INDEX, async (browserWindow, projectPath, filePath) => {
-  checkRepo()
+// answerRenderer(MESSAGES.VCS_DIFF_TO_INDEX, async (browserWindow, projectPath, filePath) => {
+//   checkRepo()
 
-  return gitops.changedFileDiffToIndex(repo, projectPath, filePath)
-})
+//   return gitops.changedFileDiffToIndex(repo, projectPath, filePath)
+// })
 
-answerRenderer(MESSAGES.VCS_DIFF_STAGED_TO_HEAD, async (browserWindow, filePath) => {
-  checkRepo()
+// answerRenderer(MESSAGES.VCS_DIFF_STAGED_TO_HEAD, async (browserWindow, filePath) => {
+//   checkRepo()
 
-  return gitops.stagedFileDiffToHead(repo, filePath)
-})
+//   return gitops.stagedFileDiffToHead(repo, filePath)
+// })
 
-answerRenderer(MESSAGES.VCS_DIFF_CONFLICTED, async (browserWindow, filePath) => {
-  checkRepo()
+// answerRenderer(MESSAGES.VCS_DIFF_CONFLICTED, async (browserWindow, filePath) => {
+//   checkRepo()
 
-  // TODO: нужно проверить тип файлов!!!
+//   // TODO: нужно проверить тип файлов!!!
 
-  const mineContent = await gitops.getMineFileContent(repo, filePath)
+//   const mineContent = await gitops.getMineFileContent(repo, filePath)
 
-  const theirsContent = await gitops.getTheirsFileContent(repo, filePath)
+//   const theirsContent = await gitops.getTheirsFileContent(repo, filePath)
 
-  return {
-    mineContent,
-    theirsContent
-  }
-})
+//   return {
+//     mineContent,
+//     theirsContent
+//   }
+// })
 
 answerRenderer(MESSAGES.VCS_GET_INDEX_FILE_BUFFER, async (browserWindow, filePath) => {
   checkRepo()
@@ -310,12 +310,28 @@ answerRenderer(MESSAGES.VCS_GET_INDEX_FILE_BUFFER, async (browserWindow, filePat
   return await gitops.getIndexedFileContent(repo, filePath)
 })
 
-answerRenderer(MESSAGES.VCS_CREATE_INDEXED_TMP_FILE, async (browserWindow, filePath) => {
+answerRenderer(MESSAGES.VCS_GET_COMMIT_FILE_BUFFER, async (browserWindow, sha, filePath) => {
+  checkRepo()
+  return gitops.getCommitFileContent(repo, sha, filePath)
+})
+
+answerRenderer(MESSAGES.VCS_CREATE_INDEX_TMP_FILE, async (browserWindow, filePath) => {
   checkRepo()
 
   const buffer = await gitops.getIndexedFileContent(repo, filePath)
 
   const tempPath = join('/tmp', `index_${filePath}`)
+  await fileops.saveFile(tempPath, buffer)
+
+  return tempPath
+})
+
+answerRenderer(MESSAGES.VCS_CREATE_COMMIT_TMP_FILE, async (browserWindow, sha, filePath) => {
+  checkRepo()
+
+  const buffer = await gitops.getCommitFileContent(repo, sha, filePath)
+
+  const tempPath = join('/tmp', `${sha}_${filePath}`)
   await fileops.saveFile(tempPath, buffer)
 
   return tempPath
@@ -650,7 +666,7 @@ answerRenderer(MESSAGES.VCS_INIT_REPOSITORY, async (browserWindow, folder) => {
 
 /* FAKE APPLICATION (from editor) */
 
-answerRenderer(MESSAGES.PROJECT_OPEN, (browserWindow, projectPath, ...whiteList) => {
+answerRenderer(MESSAGES.PROJECT_OPEN, async (browserWindow, projectPath, ...whiteList) => {
   return new Promise((resolve, reject) => {
     fileops.project
       .open(projectPath, whiteList)
@@ -679,60 +695,67 @@ answerRenderer(MESSAGES.PROJECT_OPEN, (browserWindow, projectPath, ...whiteList)
   })
 })
 
-ipcMain.on(MESSAGES.PROJECT_CLOSE, event => {
+ipcMain.on(MESSAGES.PROJECT_CLOSE, async event => {
   fileops.project.close()
 })
 
-answerRenderer(MESSAGES.PROJECT_GET_FILE_TYPE, (browserWindow, filePath) => {
+answerRenderer(MESSAGES.PROJECT_GET_FILE_TYPE, async (browserWindow, filePath) => {
   return fileops.project.getFileType(filePath)
 })
 
-answerRenderer(MESSAGES.PROJECT_CREATE_FOLDER, (browserWindow, folderPath) => {
+answerRenderer(MESSAGES.VCS_GET_FILE_TYPE, async (browserWindow, sha, filePath) => {
+  const buffer = await gitops.getCommitFileContent(repo, sha, filePath)
+  return fileops.getFileType(filePath, buffer)
+})
+
+answerRenderer(MESSAGES.PROJECT_CREATE_FOLDER, async (browserWindow, folderPath) => {
   return fileops.project.createFolder(folderPath)
 })
 
-answerRenderer(MESSAGES.PROJECT_GET_FILE_BUFFER, (browserWindow, filePath) => {
+answerRenderer(MESSAGES.PROJECT_GET_FILE_BUFFER, async (browserWindow, filePath) => {
   return fileops.project.readFileBuffer(filePath)
 })
 
-answerRenderer(MESSAGES.PROJECT_OPEN_FILE, (browserWindow, filePath) => {
+answerRenderer(MESSAGES.PROJECT_OPEN_FILE, async (browserWindow, filePath) => {
   return fileops.project.openFile(filePath)
 })
 
-answerRenderer(MESSAGES.PROJECT_SAVE_FILE, (browserWindow, filePath, buffer) => {
+answerRenderer(MESSAGES.PROJECT_SAVE_FILE, async (browserWindow, filePath, buffer) => {
   return fileops.project.saveFile(filePath, buffer)
 })
 
-answerRenderer(MESSAGES.PROJECT_RENAME_FILE, (browserWindow, src, dst) => {
+answerRenderer(MESSAGES.PROJECT_RENAME_FILE, async (browserWindow, src, dst) => {
   return fileops.project.rename(src, dst)
 })
 
-answerRenderer(MESSAGES.PROJECT_REMOVE_FILE, (browserWindow, path) => {
+answerRenderer(MESSAGES.PROJECT_REMOVE_FILE, async (browserWindow, path) => {
   return fileops.project.removeFile(path)
 })
 
-answerRenderer(MESSAGES.PROJECT_REMOVE_FOLDER, (browserWindow, path) => {
+answerRenderer(MESSAGES.PROJECT_REMOVE_FOLDER, async (browserWindow, path) => {
   return fileops.project.removeFolder(path)
 })
 
-answerRenderer(MESSAGES.CORE_OPEN_FILE, (browserWindow, filePath) => {
+answerRenderer(MESSAGES.CORE_OPEN_FILE, async (browserWindow, filePath) => {
   return fileops.openFile(filePath)
 })
 
-answerRenderer(MESSAGES.CORE_SAVE_FILE, (browserWindow, filePath, buffer) => {
+answerRenderer(MESSAGES.CORE_SAVE_FILE, async (browserWindow, filePath, buffer) => {
   return fileops.saveFile(filePath, buffer)
 })
 
-answerRenderer(MESSAGES.CORE_REMOVE_FILE, (browserWindow, path) => {
+answerRenderer(MESSAGES.CORE_REMOVE_FILE, async (browserWindow, path) => {
   return fileops.removeFile(path)
 })
 
 answerRenderer(MESSAGES.CORE_REMOVE_TMP_FILES, async (browserWindow, ...paths) => {
   for await (const path of paths) {
-    try {
-      fileops.removeFile(path)
-    } catch (e) {
-      console.log('Unable to remove tmp file:', path)
+    if (path) {
+      try {
+        fileops.removeFile(path)
+      } catch (e) {
+        console.log('Unable to remove tmp file:', path)
+      }
     }
   }
 })

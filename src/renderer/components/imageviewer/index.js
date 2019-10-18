@@ -22,12 +22,12 @@ const GridBackgroundStyle = styled.div`
 const ImageStyle = styled.img``
 
 const ButtonStyle = styled.div`
-  border-color: gray;
+  border-color: ${({ selected }) => (selected ? '#6fa0f6' : 'gray')};
   border-radius: 3px;
   border-width: 1px;
   border-style: solid;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   background-color: ${({ color }) => (color ? color : 'transparent')};
   margin: 8px;
 `
@@ -35,8 +35,8 @@ const ButtonStyle = styled.div`
 const TransparentButtonStyle = styled(ButtonStyle)`
   background-image: linear-gradient(45deg, #444 25%, transparent 25%, transparent 75%, #444 75%),
     linear-gradient(45deg, #444 25%, #333 25%, #333 75%, #444 75%);
-  background-size: 28px 28px;
-  background-position: 0 0, 14px 14px;
+  background-size: 24px 24px;
+  background-position: 0 0, 12px 12px;
 `
 
 const ButtonsContainer = styled.div`
@@ -53,6 +53,7 @@ const ButtonsContainer = styled.div`
 `
 
 export const ImageViewer = memo(({ src }) => {
+  const [selected, setSelected] = useState('transparent')
   const imageRef = useRef(null)
   const [width, setWidth] = useState(0)
   const [height, setHeight] = useState(0)
@@ -112,14 +113,17 @@ export const ImageViewer = memo(({ src }) => {
 
   const onBlack = useCallback(() => {
     setBackground('#000')
+    setSelected('black')
   }, [])
 
   const onWhite = useCallback(() => {
     setBackground('#fff')
+    setSelected('white')
   }, [])
 
   const onTransparent = useCallback(() => {
     setBackground('transparent')
+    setSelected('transparent')
   }, [])
 
   return (
@@ -127,9 +131,9 @@ export const ImageViewer = memo(({ src }) => {
       <GridBackgroundStyle onWheel={onWheel} background={background}>
         <ImageStyle ref={imageRef} width={width * scale} height={height * scale} src={`${src}?hash=${Date.now()}`} />
         <ButtonsContainer>
-          <TransparentButtonStyle onClick={onTransparent} />
-          <ButtonStyle color="black" onClick={onBlack} />
-          <ButtonStyle color="white" onClick={onWhite} />
+          <TransparentButtonStyle onClick={onTransparent} selected={selected === 'transparent'} />
+          <ButtonStyle color="black" onClick={onBlack} selected={selected === 'black'} />
+          <ButtonStyle color="white" onClick={onWhite} selected={selected === 'white'} />
         </ButtonsContainer>
       </GridBackgroundStyle>
     </ReactResizeDetector>

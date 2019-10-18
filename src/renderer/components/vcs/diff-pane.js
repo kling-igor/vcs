@@ -15,8 +15,9 @@ const BinaryDataPaneStyle = styled.div`
   width: 100%;
   height: 100%;
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
   color: ${({ theme: { type } }) => (type === 'dark' ? '#ffffffaa' : '#000000aa')};
   padding-top: 8px;
   user-select: none;
@@ -37,7 +38,12 @@ const BinaryDataPane = memo(({ source: { type, mime } }) => {
   if (!type) {
     return <EmptyPane />
   }
-  return <BinaryDataPaneStyle>Binary Data ({mime})</BinaryDataPaneStyle>
+  return (
+    <BinaryDataPaneStyle>
+      <p>Binary Data</p>
+      <p>({mime})</p>
+    </BinaryDataPaneStyle>
+  )
 })
 
 const BinaryDataDiff = memo(

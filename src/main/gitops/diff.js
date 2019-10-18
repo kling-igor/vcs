@@ -2,102 +2,88 @@ import nodegit from 'nodegit'
 import { resolve } from 'path'
 import { readFile } from 'fs-extra'
 
-/**
- * @param {nodegit.Repository} repo
- * @param {String} sha
- * @param {String} filePath
- * @returns {Buffer}
- */
-async function getCommittedFileContent(repo, sha, filePath) {
-  try {
-    const oid = nodegit.Oid.fromString(sha)
-    const commit = await repo.getCommit(oid)
+// /**
+//  * @param {nodegit.Repository} repo
+//  * @param {String} sha
+//  * @param {String} filePath
+//  * @returns {Buffer}
+//  */
+// async function getCommittedFileContent(repo, sha, filePath) {
+//   try {
+//     const oid = nodegit.Oid.fromString(sha)
+//     const commit = await repo.getCommit(oid)
 
-    const entry = await commit.getEntry(filePath)
+//     const entry = await commit.getEntry(filePath)
 
-    if (entry && entry.isFile()) {
-      return await entry.getBlob()
-    }
-  } catch (e) {
-    console.log('Unable to get commited file content', e.message)
-  }
-}
+//     if (entry && entry.isFile()) {
+//       return await entry.getBlob()
+//     }
+//   } catch (e) {
+//     console.log('Unable to get commited file content', e.message)
+//   }
+// }
 
-/**
- * @param {nodegit.Repository} repo
- * @param {String} filePath
- * @returns {Buffer}
- */
-async function getIndexedFileContent(repo, filePath) {
-  const index = await repo.index()
-  const entry = index.entries().find(item => item.path === filePath)
-  if (entry) {
-    const blob = await nodegit.Blob.lookup(repo, entry.id)
-    return blob.content()
-  }
-}
+// /**
+//  * File current and parent versions
+//  * @param {nodegit.Repository} repo
+//  * @param {String} sha
+//  * @param {String} filePath - file relative path to repository
+//  * @returns {{originalContent: String, modifiedContent:String}}
+//  */
+// export async function fileDiffToParent(repo, sha, filePath) {
+//   let originalContent = ''
+//   let modifiedContent = ''
 
-/**
- * File current and parent versions
- * @param {nodegit.Repository} repo
- * @param {String} sha
- * @param {String} filePath - file relative path to repository
- * @returns {{originalContent: String, modifiedContent:String}}
- */
-export async function fileDiffToParent(repo, sha, filePath) {
-  let originalContent = ''
-  let modifiedContent = ''
+//   try {
+//     originalContent = (await getCommittedFileContent(repo, sha, filePath)).toString()
 
-  try {
-    originalContent = (await getCommittedFileContent(repo, sha, filePath)).toString()
+//     const oid = nodegit.Oid.fromString(sha)
+//     const commit = await repo.getCommit(oid)
 
-    const oid = nodegit.Oid.fromString(sha)
-    const commit = await repo.getCommit(oid)
+//     const [parentSha] = commit.parents()
+//     if (parentSha) {
+//       modifiedEntry = (await getCommittedFileContent(repo, parentSha, filePath)).toString()
+//     }
+//     return {
+//       originalContent,
+//       modifiedContent
+//     }
+//   } catch (e) {
+//     console.log('FILE DIFF ERROR:', e)
+//     return { details: e }
+//   }
 
-    const [parentSha] = commit.parents()
-    if (parentSha) {
-      modifiedEntry = (await getCommittedFileContent(repo, parentSha, filePath)).toString()
-    }
-    return {
-      originalContent,
-      modifiedContent
-    }
-  } catch (e) {
-    console.log('FILE DIFF ERROR:', e)
-    return { details: e }
-  }
+// // const oid = nodegit.Oid.fromString(sha)
+// // const commit = await repo.getCommit(oid)
 
-  // // const oid = nodegit.Oid.fromString(sha)
-  // // const commit = await repo.getCommit(oid)
+// let originalContent = ''
+// let modifiedContent = ''
 
-  // let originalContent = ''
-  // let modifiedContent = ''
+// try {
+//   // const [parentSha] = commit.parents()
+//   // if (parentSha) {
+//   //   const parentCommit = await repo.getCommit(parentSha)
+//   //   const originalEntry = await parentCommit.getEntry(filePath)
+//   //   if (originalEntry && originalEntry.isFile()) {
+//   //     originalContent = (await originalEntry.getBlob()).toString()
+//   //   }
+//   // }
+//   // originalContent = await getParentCommitContent(repo, sha, filePath)
+//   // const modifiedEntry = await commit.getEntry(filePath)
+//   // if (modifiedEntry.isFile()) {
+//   //   modifiedContent = (await modifiedEntry.getBlob()).toString()
+//   //   return {
+//   //     originalContent,
+//   //     modifiedContent
+//   //   }
+//   // }
+// } catch (e) {
+//   console.log('FILE DIFF ERROR:', e)
+//   return { details: e }
+// }
 
-  // try {
-  //   // const [parentSha] = commit.parents()
-  //   // if (parentSha) {
-  //   //   const parentCommit = await repo.getCommit(parentSha)
-  //   //   const originalEntry = await parentCommit.getEntry(filePath)
-  //   //   if (originalEntry && originalEntry.isFile()) {
-  //   //     originalContent = (await originalEntry.getBlob()).toString()
-  //   //   }
-  //   // }
-  //   // originalContent = await getParentCommitContent(repo, sha, filePath)
-  //   // const modifiedEntry = await commit.getEntry(filePath)
-  //   // if (modifiedEntry.isFile()) {
-  //   //   modifiedContent = (await modifiedEntry.getBlob()).toString()
-  //   //   return {
-  //   //     originalContent,
-  //   //     modifiedContent
-  //   //   }
-  //   // }
-  // } catch (e) {
-  //   console.log('FILE DIFF ERROR:', e)
-  //   return { details: e }
-  // }
-
-  // return { details: 'ERROR!!!!' }
-}
+// return { details: 'ERROR!!!!' }
+// }
 
 /**
  *
@@ -216,5 +202,19 @@ export async function stagedFileDiffToHead(repo, filePath) {
     }
   } catch (e) {
     console.log(e)
+  }
+}
+
+/**
+ * @param {nodegit.Repository} repo
+ * @param {String} filePath
+ * @returns {Buffer}
+ */
+async function getIndexedFileContent(repo, filePath) {
+  const index = await repo.index()
+  const entry = index.entries().find(item => item.path === filePath)
+  if (entry) {
+    const blob = await nodegit.Blob.lookup(repo, entry.id)
+    return blob.content()
   }
 }
