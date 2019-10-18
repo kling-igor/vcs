@@ -68,12 +68,16 @@ const DiffPaneContainer = withTheme(
         })
       }
 
+      setSaveButtonDisabled(false)
+      setOursButtonDisabled(false)
+      setTheirsButtonDisabled(false)
+
       return () => {
         if (disposable) {
           disposable.dispose()
         }
       }
-    }, [modifiedFile])
+    }, [originalFile, modifiedFile])
 
     const onSaveClick = useCallback(() => {
       setSaveButtonDisabled(true)
