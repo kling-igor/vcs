@@ -43,9 +43,19 @@ const OurContainerStyle = styled.div`
 const buttonStyle = { width: 100, marginRight: 8 }
 
 const DiffPaneContainer = withTheme(
-  ({ theme, originalFile, modifiedFile, diffConflictedFile, textEditorDidMount, onSave, onUseOurs, onUseTheirs }) => {
+  ({
+    theme,
+    originalFile,
+    modifiedFile,
+    diffConflictedFile,
+    diffConflictedFileMIME,
+    textEditorDidMount,
+    onSave,
+    onUseOurs,
+    onUseTheirs
+  }) => {
     const [saveButtonDisabled, setSaveButtonDisabled] = useState(false)
-    const [oursButtonDisabled, setOursButtonDisabled] = useState(true)
+    const [oursButtonDisabled, setOursButtonDisabled] = useState(false)
     const [theirsButtonDisabled, setTheirsButtonDisabled] = useState(false)
 
     useEffect(() => {
@@ -105,14 +115,16 @@ const DiffPaneContainer = withTheme(
               />
             </TheirContainerStyle>
             <OurContainerStyle>
-              <Button
-                text="Save"
-                disabled={saveButtonDisabled}
-                intent="primary"
-                onClick={onSaveClick}
-                small
-                style={buttonStyle}
-              />
+              {diffConflictedFileMIME === 'text/plain' && (
+                <Button
+                  text="Save"
+                  disabled={saveButtonDisabled}
+                  intent="primary"
+                  onClick={onSaveClick}
+                  small
+                  style={buttonStyle}
+                />
+              )}
               <Button
                 text="Take Ours"
                 disabled={oursButtonDisabled}
@@ -165,6 +177,7 @@ const CommitPage = ({ storage, workspace }) => {
       originalFile,
       modifiedFile,
       diffConflictedFile,
+      diffConflictedFileMIME,
       resolveUsingMine,
       resolveUsingTheirs,
       resolveAsIs,
@@ -185,6 +198,7 @@ const CommitPage = ({ storage, workspace }) => {
             originalFile={originalFile}
             modifiedFile={modifiedFile}
             diffConflictedFile={diffConflictedFile}
+            diffConflictedFileMIME={diffConflictedFileMIME}
             textEditorDidMount={textEditorDidMount}
             onSave={resolveAsIs}
             onUseOurs={resolveUsingMine}

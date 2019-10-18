@@ -72,6 +72,7 @@ export class VCS extends Emitter {
   @observable.ref modifiedFile = null
 
   @observable diffConflictedFile = false
+  @observable diffConflictedFileMIME = null
 
   disposableFiles = []
 
@@ -391,7 +392,7 @@ export class VCS extends Emitter {
    * единый способ управления информацией для Diff редактора
    */
   @action
-  async updateDiffInfo(left, right, filePath, disposableFiles = [], isConflicted = false) {
+  async updateDiffInfo(left, right, filePath, disposableFiles = [], isConflicted = false, mime) {
     if (this.disposableFiles.length > 0) {
       // удаляем временные файлы от предыдущего выделения
       await callMain(MESSAGES.CORE_REMOVE_TMP_FILES, ...disposableFiles)
@@ -401,10 +402,9 @@ export class VCS extends Emitter {
       this.originalFile = left
       this.modifiedFile = right
       this.selectedFilePath = filePath
-      this.diffConflictedFile = isConflicted
       this.disposableFiles = disposableFiles
-
-      console.log(`ORIGINAL ${left.type} MODIFIED ${right.type}`)
+      this.diffConflictedFile = isConflicted
+      this.diffConflictedFileMIME = mime
     })
   }
 
@@ -468,11 +468,14 @@ export class VCS extends Emitter {
         right = FileWrapper.createEmpty({ path: filePath })
       }
     } else if (status === 'C') {
+      let diffMIME
+
       if (mime === 'text/plain') {
         const oursBuffer = await callMain(MESSAGES.VCS_GET_OUR_FILE_BUFFER, cleanLeadingSlashes(filePath))
         const theirsBuffer = await callMain(MESSAGES.VCS_GET_THEIR_FILE_BUFFER, cleanLeadingSlashes(filePath))
         left = FileWrapper.createTextFile({ path: filePath, content: theirsBuffer.toString() })
         right = FileWrapper.createTextFile({ path: filePath, content: oursBuffer.toString() })
+        diffMIME = mime
       } else if (mime.includes('image/')) {
         const ourTmpFile = await callMain(MESSAGES.VCS_GET_OUR_TMP_FILE, cleanLeadingSlashes(filePath))
         const theirTmpFile = await callMain(MESSAGES.VCS_GET_THEIR_TMP_FILE, cleanLeadingSlashes(filePath))
@@ -485,7 +488,7 @@ export class VCS extends Emitter {
         right = FileWrapper.createBinaryDataFile({ path: filePath })
       }
 
-      this.updateDiffInfo(left, right, filePath, disposableFiles, true)
+      this.updateDiffInfo(left, right, filePath, disposableFiles, true, diffMIME)
       return // to prevent further updateDiffInfo
     } else {
       // M
@@ -742,6 +745,7 @@ export class VCS extends Emitter {
       this.modifiedFile = null
       this.commitSelectedFile = null
       this.diffConflictedFile = false
+      this.diffConflictedFileMIME = null
       this.commitInfo = commitInfo
     })
   }
@@ -931,6 +935,7 @@ export class VCS extends Emitter {
       this.selectedFilePath = null
       this.commitSelectedFile = null
       this.diffConflictedFile = false
+      this.diffConflictedFileMIME = null
 
       this.emit('mode:changed', 'commit')
     })
@@ -946,6 +951,7 @@ export class VCS extends Emitter {
       this.selectedFilePath = null
       this.commitSelectedFile = null
       this.diffConflictedFile = false
+      this.diffConflictedFileMIME = null
 
       this.emit('mode:changed', 'log')
     })
@@ -979,6 +985,7 @@ export class VCS extends Emitter {
           this.originalFile = null
           this.modifiedFile = null
           this.diffConflictedFile = false
+          this.diffConflictedFileMIME = null
         })
       }
 
@@ -1000,6 +1007,7 @@ export class VCS extends Emitter {
           this.originalFile = null
           this.modifiedFile = null
           this.diffConflictedFile = false
+          this.diffConflictedFileMIME = null
         })
       }
 
@@ -1016,6 +1024,7 @@ export class VCS extends Emitter {
         this.originalFile = null
         this.modifiedFile = null
         this.diffConflictedFile = false
+        this.diffConflictedFileMIME = null
       })
     }
 
@@ -1042,6 +1051,7 @@ export class VCS extends Emitter {
           this.originalFile = null
           this.modifiedFile = null
           this.diffConflictedFile = false
+          this.diffConflictedFileMIME = null
         })
       }
       await callMain(MESSAGES.VCS_REMOVE_FROM_STAGE, paths)
@@ -1063,6 +1073,7 @@ export class VCS extends Emitter {
           this.originalFile = null
           this.modifiedFile = null
           this.diffConflictedFile = false
+          this.diffConflictedFileMIME = null
         })
       }
 
@@ -1079,6 +1090,7 @@ export class VCS extends Emitter {
         this.originalFile = null
         this.modifiedFile = null
         this.diffConflictedFile = false
+        this.diffConflictedFileMIME = null
       })
     }
 
@@ -1106,6 +1118,7 @@ export class VCS extends Emitter {
           this.originalFile = null
           this.modifiedFile = null
           this.diffConflictedFile = false
+          this.diffConflictedFileMIME = null
         })
       }
       await callMain(MESSAGES.VCS_DISCARD_LOCAL_CHANGES, this.project.projectPath, paths)
@@ -1166,6 +1179,7 @@ export class VCS extends Emitter {
         this.modifiedFile = null
         this.selectedFilePath = null
         this.diffConflictedFile = false
+        this.diffConflictedFileMIME = null
       })
     }
   }
@@ -1185,6 +1199,7 @@ export class VCS extends Emitter {
         this.modifiedFile = null
         this.selectedFilePath = null
         this.diffConflictedFile = false
+        this.diffConflictedFileMIME = null
       })
     }
   }
@@ -1205,6 +1220,7 @@ export class VCS extends Emitter {
         this.modifiedFile = null
         this.selectedFilePath = null
         this.diffConflictedFile = false
+        this.diffConflictedFileMIME = null
       })
     }
   }
