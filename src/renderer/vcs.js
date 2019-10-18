@@ -186,65 +186,65 @@ export class VCS extends Emitter {
     this.commitMessage = event.target.value
   }
 
-  // ui-optimistic addition to index specified files
-  @action
-  addToStage(collection) {
-    let selected = collection.slice()
+  // // ui-optimistic addition to index specified files
+  // @action
+  // addToStage(collection) {
+  //   let selected = collection.slice()
 
-    const [filtered, remained] = this.changedFiles.reduce(
-      (acc, item) => {
-        const fullPath = `${item.path}/${item.filename}`
-        const index = selected.findIndex(i => i === fullPath)
-        if (index !== -1) {
-          acc[0].push(item)
-          selected = [...selected.slice(0, index), ...selected.slice(index + 1)]
-        } else {
-          acc[1].push(item)
-        }
+  //   const [filtered, remained] = this.changedFiles.reduce(
+  //     (acc, item) => {
+  //       const fullPath = `${item.path}/${item.filename}`
+  //       const index = selected.findIndex(i => i === fullPath)
+  //       if (index !== -1) {
+  //         acc[0].push(item)
+  //         selected = [...selected.slice(0, index), ...selected.slice(index + 1)]
+  //       } else {
+  //         acc[1].push(item)
+  //       }
 
-        return acc
-      },
-      [[], []]
-    )
+  //       return acc
+  //     },
+  //     [[], []]
+  //   )
 
-    transaction(() => {
-      this.stagedFiles = sort([...new Set([...this.stagedFiles, ...filtered])])
-      this.changedFiles = sort(remained)
-    })
+  //   transaction(() => {
+  //     this.stagedFiles = sort([...new Set([...this.stagedFiles, ...filtered])])
+  //     this.changedFiles = sort(remained)
+  //   })
 
-    // вызываем операцию добавления в индекс
-    // по факту операции меняем состояние
-  }
+  //   // вызываем операцию добавления в индекс
+  //   // по факту операции меняем состояние
+  // }
 
-  // ui-optimistic removing from index specified files
-  @action
-  removeFromStage(collection) {
-    let selected = collection.slice()
+  // // ui-optimistic removing from index specified files
+  // @action
+  // removeFromStage(collection) {
+  //   let selected = collection.slice()
 
-    const [filtered, remained] = this.stagedFiles.reduce(
-      (acc, item) => {
-        const fullPath = `${item.path}/${item.filename}`
-        const index = selected.findIndex(i => i === fullPath)
-        if (index !== -1) {
-          acc[0].push(item)
-          selected = [...selected.slice(0, index), ...selected.slice(index + 1)]
-        } else {
-          acc[1].push(item)
-        }
+  //   const [filtered, remained] = this.stagedFiles.reduce(
+  //     (acc, item) => {
+  //       const fullPath = `${item.path}/${item.filename}`
+  //       const index = selected.findIndex(i => i === fullPath)
+  //       if (index !== -1) {
+  //         acc[0].push(item)
+  //         selected = [...selected.slice(0, index), ...selected.slice(index + 1)]
+  //       } else {
+  //         acc[1].push(item)
+  //       }
 
-        return acc
-      },
-      [[], []]
-    )
+  //       return acc
+  //     },
+  //     [[], []]
+  //   )
 
-    transaction(() => {
-      this.changedFiles = sort([...new Set([...this.changedFiles, ...filtered])])
-      this.stagedFiles = sort(remained)
-    })
+  //   transaction(() => {
+  //     this.changedFiles = sort([...new Set([...this.changedFiles, ...filtered])])
+  //     this.stagedFiles = sort(remained)
+  //   })
 
-    // вызываем операцию удаления из индекса
-    // по факту операции меняем состояние
-  }
+  //   // вызываем операцию удаления из индекса
+  //   // по факту операции меняем состояние
+  // }
 
   @action.bound
   async createBranch(name) {
@@ -769,14 +769,28 @@ export class VCS extends Emitter {
       parents: [parentSha]
     } = this.commitInfo
 
+    let left
+    let right
+    let disposableFiles = []
+
     let mime
     let fileType
+
+    let fileIsRemoved = false
 
     try {
       fileType = await callMain(MESSAGES.VCS_GET_FILE_TYPE, this.commitInfo.commit, cleanLeadingSlashes(filePath))
     } catch (e) {
-      console.log('FILETYPE GET ERROR:', e)
-      throw e
+      if (/does not exist in the given tree/.test(e.message)) {
+        fileIsRemoved = true
+        try {
+          fileType = await callMain(MESSAGES.VCS_GET_FILE_TYPE, parentSha, cleanLeadingSlashes(filePath))
+        } catch (e) {
+          console.log('FILETYPE GET ERROR:', e)
+        }
+      } else {
+        throw e
+      }
     }
 
     if (fileType) {
@@ -788,15 +802,18 @@ export class VCS extends Emitter {
     if (mime === 'text/plain') {
       try {
         let buffer
-        try {
-          buffer = await callMain(
-            MESSAGES.VCS_GET_COMMIT_FILE_BUFFER,
-            this.commitInfo.commit,
-            cleanLeadingSlashes(filePath)
-          )
-        } catch (e) {
-          console.log('BUFFER GET ERROR:', e)
-          throw e
+
+        if (!fileIsRemoved) {
+          try {
+            buffer = await callMain(
+              MESSAGES.VCS_GET_COMMIT_FILE_BUFFER,
+              this.commitInfo.commit,
+              cleanLeadingSlashes(filePath)
+            )
+          } catch (e) {
+            console.log('BUFFER GET ERROR:', e)
+            throw e
+          }
         }
 
         let parentBuffer
@@ -809,23 +826,26 @@ export class VCS extends Emitter {
           }
         }
 
-        const left = FileWrapper.createTextFile({
+        left = FileWrapper.createTextFile({
           path: filePath,
           content: parentBuffer ? parentBuffer.toString() : ''
         })
-        const right = FileWrapper.createTextFile({ path: filePath, content: buffer.toString() })
 
-        this.updateDiffInfo(left, right, filePath)
+        right = FileWrapper.createTextFile({ path: filePath, content: fileIsRemoved ? '' : buffer.toString() })
       } catch (e) {
         console.log('FILE DETAILS ERROR:', e)
       }
     } else if (mime.includes('image/')) {
       try {
-        const tmpFilePath = await callMain(
-          MESSAGES.VCS_CREATE_COMMIT_TMP_FILE,
-          this.commitInfo.commit,
-          cleanLeadingSlashes(filePath)
-        )
+        let tmpFilePath
+
+        if (!fileIsRemoved) {
+          tmpFilePath = await callMain(
+            MESSAGES.VCS_CREATE_COMMIT_TMP_FILE,
+            this.commitInfo.commit,
+            cleanLeadingSlashes(filePath)
+          )
+        }
 
         let parentTmpFilePath
         if (parentSha) {
@@ -836,26 +856,32 @@ export class VCS extends Emitter {
           )
         }
 
-        const left = parentSha
+        left = parentSha
           ? FileWrapper.createImageFile({ path: filePath, tmpPath: parentTmpFilePath })
           : FileWrapper.createEmpty({ path: filePath })
-        const right = FileWrapper.createImageFile({ path: filePath, tmpPath: tmpFilePath })
 
-        this.updateDiffInfo(left, right, filePath, [tmpFilePath, parentTmpFilePath])
+        right = fileIsRemoved
+          ? FileWrapper.createEmpty({ path: filePath })
+          : FileWrapper.createImageFile({ path: filePath, tmpPath: tmpFilePath })
+
+        disposableFiles = [tmpFilePath, parentTmpFilePath]
       } catch (e) {
         console.log('UNABLE TO MAKE DIFF EDITOR', e)
       }
     } else {
       try {
-        const left = parentSha
+        left = parentSha
           ? FileWrapper.createBinaryDataFile({ path: filePath, mime })
           : FileWrapper.createEmpty({ path: filePath })
-        const right = FileWrapper.createBinaryDataFile({ path: filePath, mime })
-        this.updateDiffInfo(left, right, filePath)
+        right = fileIsRemoved
+          ? FileWrapper.createEmpty({ path: filePath })
+          : FileWrapper.createBinaryDataFile({ path: filePath, mime })
       } catch (e) {
         console.log('UNABLE TO MAKE DIFF EDITOR', e)
       }
     }
+
+    this.updateDiffInfo(left, right, filePath, disposableFiles)
   }
 
   @action.bound
