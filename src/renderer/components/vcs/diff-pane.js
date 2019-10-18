@@ -33,35 +33,36 @@ const EmptyPane = styled.div`
   width: 100%;
   height: 100%;
 `
+const BinaryDataPane = memo(({ source: { type, mime } }) => {
+  if (!type) {
+    return <EmptyPane />
+  }
+  return <BinaryDataPaneStyle>Binary Data ({mime})</BinaryDataPaneStyle>
+})
 
 const BinaryDataDiff = memo(
   withTheme(({ original, modified }) => {
-    console.log('ORIGINAL TYPE:', original.type)
-
     return (
       <RootContainerStyle>
-        {original.type == null ? (
-          <EmptyPane />
-        ) : (
-          <BinaryDataPaneStyle>Binary Data ({original.mime})</BinaryDataPaneStyle>
-        )}
+        <BinaryDataPane source={original} />
         <PaneSplitter />
-        {modified.type == null ? (
-          <EmptyPane />
-        ) : (
-          <BinaryDataPaneStyle>Binary Data ({modified.mime})</BinaryDataPaneStyle>
-        )}
+        <BinaryDataPane source={modified} />
       </RootContainerStyle>
     )
   })
 )
 
+const ImageDataPane = memo(({ source: { type, content } }) => {
+  if (!type) return <EmptyPane />
+  return <ImageViewer src={content} />
+})
+
 const ImageDiff = memo(({ original, modified }) => {
   return (
     <RootContainerStyle>
-      {original.type == null ? <EmptyPane /> : <ImageViewer src={original.content} />}
+      <ImageDataPane source={original} />
       <PaneSplitter />
-      {modified.type == null ? <EmptyPane /> : <ImageViewer src={modified.content} />}
+      <ImageDataPane source={modified} />
     </RootContainerStyle>
   )
 })

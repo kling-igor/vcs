@@ -17,7 +17,15 @@ export { log } from './log'
 export { createBranch, deleteBranch, checkoutBranch, checkoutRemoteBranch } from './branch'
 export { createTag, deleteTagByName } from './tag'
 
-export { refreshIndex, addToIndex, removeFromIndex, writeIndex, removeConflict, discardIndexedChanges } from './stage'
+export {
+  refreshIndex,
+  addToIndex,
+  removeFromIndex,
+  writeIndex,
+  removeConflict,
+  discardIndexedChanges,
+  getIndexedFileContent
+} from './stage'
 
 export { pull } from './pull'
 

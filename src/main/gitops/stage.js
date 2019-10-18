@@ -54,3 +54,12 @@ export async function removeConflict(repo, filePath) {
   const index = await repo.index()
   await index.conflictRemove(filePath)
 }
+
+export async function getIndexedFileContent(repo, filePath) {
+  const index = await repo.index()
+  const entry = index.entries().find(item => item.path === filePath)
+  if (entry) {
+    const blob = await nodegit.Blob.lookup(repo, entry.id)
+    return blob.content()
+  }
+}

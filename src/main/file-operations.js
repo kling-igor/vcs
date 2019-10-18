@@ -412,10 +412,6 @@ export class FileSystemOperations {
     return readFile(filePath, { encoding: 'utf8' })
   }
 
-  async readFileBuffer(filePath) {
-    return readFile(filePath)
-  }
-
   // https://stackoverflow.com/questions/16316330/how-to-write-file-if-parent-folder-doesnt-exist
   async saveFile(filePath, buffer) {
     this.awaitPathOperations(filePath, 'add', 'change')
@@ -438,5 +434,13 @@ export class FileSystemOperations {
     operations.forEach(operation => {
       this.awaitingOperations[operation] = this.awaitingOperations[operation].filter(item => item !== path)
     })
+  }
+
+  async readFileBuffer(filePath) {
+    return readFile(filePath)
+  }
+
+  async writeFileBuffer(filePath, buffer) {
+    return writeFile(filePath, buffer)
   }
 }

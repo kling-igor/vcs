@@ -304,6 +304,23 @@ answerRenderer(MESSAGES.VCS_DIFF_CONFLICTED, async (browserWindow, filePath) => 
   }
 })
 
+answerRenderer(MESSAGES.VCS_GET_INDEX_FILE_BUFFER, async (browserWindow, filePath) => {
+  checkRepo()
+
+  return await gitops.getIndexedFileContent(repo, filePath)
+})
+
+answerRenderer(MESSAGES.VCS_CREATE_INDEXED_TMP_FILE, async (browserWindow, filePath) => {
+  checkRepo()
+
+  const buffer = await gitops.getIndexedFileContent(repo, filePath)
+
+  const tempPath = join('/tmp', `index_${filePath}`)
+  await fileops.saveFile(tempPath, buffer)
+
+  return tempPath
+})
+
 // получение информации о коммите для отображения в списке
 answerRenderer(MESSAGES.VCS_GET_COMMIT_DIGEST, async (browserWindow, startIndex, endIndex) => {
   return gitLogResult.commits.slice(startIndex, endIndex + 1)
@@ -587,14 +604,6 @@ answerRenderer(MESSAGES.VCS_CREATE_OUR_TMP_FILE, async (browserWindow, filePath)
 
 answerRenderer(MESSAGES.VCS_CREATE_THEIR_TMP_FILE, async (browserWindow, filePath) => {
   const fileContent = await gitops.getTheirsFileContent(repo, filePath)
-  const tempPath = join('/tmp', filePath)
-  await fileops.saveFile(tempPath, fileContent)
-
-  return tempPath
-})
-
-answerRenderer(MESSAGES.VCS_CREATE_INDEXED_TMP_FILE, async (browserWindow, projectPath, filePath) => {
-  const fileContent = await gitops.changedFileDiffToIndex(repo, projectPath, filePath)
   const tempPath = join('/tmp', filePath)
   await fileops.saveFile(tempPath, fileContent)
 

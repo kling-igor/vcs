@@ -68,8 +68,8 @@ export class VCS extends Emitter {
   @observable showAuthorType = 'FULL_NAME_WITH_EMAIL' // ABBREVIATED | FULL_NAME | FULL_NAME_WITH_EMAIL
 
   // diff editor
-  @observable originalFile = null
-  @observable modifiedFile = null
+  @observable.ref originalFile = null
+  @observable.ref modifiedFile = null
 
   @observable diffConflictedFile = false
 
@@ -403,6 +403,8 @@ export class VCS extends Emitter {
       this.selectedFilePath = filePath
       this.diffConflictedFile = isConflicted
       this.disposableFiles = disposableFiles
+
+      console.log(`ORIGINAL ${left.type} MODIFIED ${right.type}`)
     })
   }
 
@@ -424,7 +426,7 @@ export class VCS extends Emitter {
 
     if (status === 'A') {
       if (mime === 'text/plain') {
-        const buffer = await callMain(MESSAGES.PROJECT_GET_FILE_BUFFER, filePath)
+        const buffer = await callMain(MESSAGES.PROJECT_GET_FILE_BUFFER, cleanLeadingSlashes(filePath))
         const left = FileWrapper.createTextFile({ path: filePath, content: '' })
         const right = FileWrapper.createTextFile({ path: filePath, content: buffer.toString() })
         this.updateDiffInfo(left, right, filePath)
@@ -530,30 +532,21 @@ export class VCS extends Emitter {
 
     if (status === 'A') {
       if (mime === 'text/plain') {
-        // const tmpFilePath = await callMain(MESSAGES.VCS_CREATE_INDEXED_TMP_FILE, this.projectPath, filePath)
-        // console.log('TMP:', tmpFilePath)
-        // const content = await callMain(MESSAGES.CORE_OPEN_FILE, tmpFilePath)
-        // transaction(() => {
-        //   this.originalFile = FileWrapper.createEmpty({ path: filePath })
-        //   this.modifiedFile = FileWrapper.createTextFile({ path: filePath, content })
-        //   this.selectedFilePath = filePath
-        //   this.diffConflictedFile = false
-        // })
+        const buffer = await callMain(MESSAGES.VCS_GET_INDEX_FILE_BUFFER, cleanLeadingSlashes(filePath))
+        const left = FileWrapper.createTextFile({ path: filePath, content: '' })
+        const right = FileWrapper.createTextFile({ path: filePath, content: buffer.toString() })
+        this.updateDiffInfo(left, right, filePath)
       } else if (mime.includes('image/')) {
-        // const tmpFilePath = await callMain(MESSAGES.VCS_CREATE_INDEXED_TMP_FILE, this.projectPath, filePath)
-        // transaction(() => {
-        //   this.originalFile = FileWrapper.createEmpty({ path: filePath })
-        //   this.modifiedFile = FileWrapper.createImageFile({ path: filePath, tmpPath: tmpFilePath })
-        //   this.selectedFilePath = filePath
-        //   this.diffConflictedFile = false
-        // })
+        const tmpFilePath = await callMain(MESSAGES.VCS_CREATE_INDEXED_TMP_FILE, cleanLeadingSlashes(filePath))
+        const left = FileWrapper.createEmpty({ path: filePath })
+        const right = FileWrapper.createImageFile({ path: filePath, tmpPath: tmpFilePath })
+        this.updateDiffInfo(left, right, filePath, [tmpFilePath])
       } else {
         const left = FileWrapper.createEmpty({ path: filePath })
         const right = FileWrapper.createBinaryDataFile({ path: filePath, mime })
         this.updateDiffInfo(left, right, filePath)
       }
-    }
-    if (status === 'D') {
+    } else if (status === 'D') {
       if (mime === 'text/plain') {
       } else if (mime.includes('image/')) {
       } else {
