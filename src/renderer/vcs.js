@@ -395,7 +395,7 @@ export class VCS extends Emitter {
   async updateDiffInfo(left, right, filePath, disposableFiles = [], isConflicted = false, mime) {
     if (this.disposableFiles.length > 0) {
       // удаляем временные файлы от предыдущего выделения
-      await callMain(MESSAGES.CORE_REMOVE_TMP_FILES, ...disposableFiles)
+      await callMain(MESSAGES.CORE_REMOVE_TMP_FILES, ...this.disposableFiles)
     }
 
     transaction(() => {
@@ -740,6 +740,11 @@ export class VCS extends Emitter {
 
     const commitInfo = await callMain(MESSAGES.VCS_GET_COMMIT_DETAILS, sha)
 
+    if (this.disposableFiles.length > 0) {
+      // удаляем временные файлы от предыдущего выделения
+      await callMain(MESSAGES.CORE_REMOVE_TMP_FILES, ...this.disposableFiles)
+    }
+
     transaction(() => {
       this.originalFile = null
       this.modifiedFile = null
@@ -747,6 +752,7 @@ export class VCS extends Emitter {
       this.diffConflictedFile = false
       this.diffConflictedFileMIME = null
       this.commitInfo = commitInfo
+      this.disposableFiles = []
     })
   }
 

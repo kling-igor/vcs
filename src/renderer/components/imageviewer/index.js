@@ -1,4 +1,4 @@
-import React, { memo, useRef, useEffect, useState, useCallback } from 'react'
+import React, { memo, useRef, useEffect, useState, useCallback, useMemo } from 'react'
 import styled from 'styled-components'
 import ReactResizeDetector from 'react-resize-detector'
 
@@ -19,7 +19,10 @@ const GridBackgroundStyle = styled.div`
   align-items: center;
 `
 
-const ImageStyle = styled.img``
+const ImageStyle = styled.img`
+  opacity: ${({ loaded }) => (loaded ? '1' : '0')};
+  transition: opacity 0.25s;
+`
 
 const ButtonStyle = styled.div`
   border-color: ${({ selected }) => (selected ? '#6fa0f6' : 'gray')};
@@ -53,6 +56,7 @@ const ButtonsContainer = styled.div`
 `
 
 export const ImageViewer = memo(({ src }) => {
+  const [loaded, setLoaded] = useState(false)
   const [selected, setSelected] = useState('transparent')
   const imageRef = useRef(null)
   const [width, setWidth] = useState(0)
@@ -93,6 +97,7 @@ export const ImageViewer = memo(({ src }) => {
     const storeImageSize = function() {
       setImageWidth(this.naturalWidth)
       setImageHeight(this.naturalHeight)
+      setLoaded(true)
     }
 
     if (imageRef.current) {
@@ -129,7 +134,13 @@ export const ImageViewer = memo(({ src }) => {
   return (
     <ReactResizeDetector handleWidth handleHeight onResize={onResize}>
       <GridBackgroundStyle onWheel={onWheel} background={background}>
-        <ImageStyle ref={imageRef} width={width * scale} height={height * scale} src={`${src}?hash=${Date.now()}`} />
+        <ImageStyle
+          ref={imageRef}
+          width={width * scale}
+          height={height * scale}
+          src={`${src}?hash=${Date.now()}`}
+          loaded={loaded}
+        />
         <ButtonsContainer>
           <TransparentButtonStyle onClick={onTransparent} selected={selected === 'transparent'} />
           <ButtonStyle color="black" onClick={onBlack} selected={selected === 'black'} />
