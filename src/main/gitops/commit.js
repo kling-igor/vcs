@@ -228,8 +228,7 @@ export async function revertCommit(repo, sha) {
  * @returns {Buffer}
  */
 export async function getCommitFileContent(repo, sha, filePath) {
-  const oid = nodegit.Oid.fromString(sha)
-  const commit = await repo.getCommit(oid)
+  const commit = sha === 'HEAD' ? await repo.getHeadCommit() : await repo.getCommit(nodegit.Oid.fromString(sha))
   const entry = await commit.getEntry(filePath)
 
   if (entry && entry.isFile()) {

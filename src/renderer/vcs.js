@@ -484,31 +484,22 @@ export class VCS extends Emitter {
     } else {
       // M
       if (mime === 'text/plain') {
-        // получить буфер из содержимого в index
-        // получить буфер из FS (актуальное содержимое файла)
-        // const { originalContent = '', modifiedContent = '', details: errorDetails } = await callMain(
-        //   MESSAGES.VCS_DIFF_TO_INDEX,
-        //   this.projectPath,
-        //   cleanLeadingSlashes(filePath)
-        // )
-        // transaction(() => {
-        //   this.originalFile = FileWrapper.createTextFile({ path: filePath, content: originalContent })
-        //   this.modifiedFile = FileWrapper.createTextFile({ path: filePath, content: modifiedContent })
-        //   this.selectedFilePath = filePath
-        //   this.diffConflictedFile = false
-        // })
+        const workDirBuffer = await callMain(MESSAGES.PROJECT_GET_FILE_BUFFER, cleanLeadingSlashes(filePath))
+        const commitBuffer = await callMain(MESSAGES.VCS_GET_COMMIT_FILE_BUFFER, 'HEAD', cleanLeadingSlashes(filePath))
+
+        const left = FileWrapper.createTextFile({ path: filePath, content: commitBuffer.toString() })
+        const right = FileWrapper.createTextFile({ path: filePath, content: workDirBuffer.toString() })
+        this.updateDiffInfo(left, right, filePath)
       } else if (mime.includes('image/')) {
-        // получить путь на временный файл содержимого index
-        // получить путь в FS к актуальному содержимому файла
-        // const mineTmpPath = callMain(MESSAGES.VCS_CREATE_OUR_TMP_FILE, filePath)
-        // const indexedTmpPath = callMain(MESSAGES.VCS_CREATE_INDEX_TMP_FILE, this.projectPath, filePath)
-        // // todo очищать файлы как только развыделяется файл
-        // transaction(() => {
-        //   this.originalFile = FileWrapper.createImageFile({ path: filePath, tmpPath: mineTmpPath })
-        //   this.modifiedFile = FileWrapper.createImageFile({ path: filePath, tmpPath: indexedTmpPath })
-        //   this.selectedFilePath = filePath
-        //   this.diffConflictedFile = true
-        // })
+        const headTmpFilePath = await callMain(
+          MESSAGES.VCS_CREATE_COMMIT_TMP_FILE,
+          'HEAD',
+          cleanLeadingSlashes(filePath)
+        )
+
+        const left = FileWrapper.createImageFile({ path: filePath, tmpPath: headTmpFilePath })
+        const right = FileWrapper.createImageFile({ path: filePath, tmpPath: path.resolve(this.projectPath, filePath) })
+        this.updateDiffInfo(left, right, filePath, [headTmpFilePath])
       } else {
         const left = FileWrapper.createBinaryDataFile({ path: filePath })
         const right = FileWrapper.createBinaryDataFile({ path: filePath })
