@@ -43,21 +43,17 @@ export const VCS_DISCARD_LOCAL_CHANGES = 'vcs:discard.local-changes'
 export const VCS_MERGE = 'vcs:merge'
 export const VCS_MERGE_BRANCHES = 'vcs:merge.branches'
 
-// TODO: удалить
-// export const VCS_DIFF_TO_PARENT = 'vcs:diff.to-parent'
-// export const VCS_DIFF_TO_INDEX = 'vcs:diff.to-index'
-// export const VCS_DIFF_STAGED_TO_HEAD = 'vcs:diff.staged-to-head'
-// export const VCS_DIFF_CONFLICTED = 'vcs:diff.conflicted'
-// ----
-
 export const VCS_GET_COMMIT_FILE_BUFFER = 'vcs:get.commit-file-buffer'
 export const VCS_GET_INDEX_FILE_BUFFER = 'vcs:get.index-file-buffer'
 
 export const VCS_CREATE_COMMIT_TMP_FILE = 'vcs:create.commit-tmp-file'
 export const VCS_CREATE_INDEX_TMP_FILE = 'vcs:create.index-tmp-file'
-// TODO: удалить
-// export const VCS_CREATE_THEIR_TMP_FILE = 'vcs:create.their-tmp-file'
-// export const VCS_CREATE_OUR_TMP_FILE = 'vcs:create.our-tmp-file'
+
+export const VCS_GET_THEIR_TMP_FILE = 'vcs:get.their-tmp-file'
+export const VCS_GET_OUR_TMP_FILE = 'vcs:get.our-tmp-file'
+
+export const VCS_GET_THEIR_FILE_BUFFER = 'vcs:get.their-file-buffer'
+export const VCS_GET_OUR_FILE_BUFFER = 'vcs:get.our-file-buffer'
 
 export const VCS_RESOLE_USING_THEIR = 'vcs:resolve.using-their'
 export const VCS_RESOLE_USING_OUR = 'vcs:resolve.using-our'

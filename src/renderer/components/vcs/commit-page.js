@@ -20,6 +20,22 @@ const ButtonContainer = styled.div`
   width: 100%;
   height: 32px;
   display: flex;
+  /* justify-content: flex-end;
+  align-items: center; */
+`
+
+const TheirContainerStyle = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+`
+
+const OurContainerStyle = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
   justify-content: flex-end;
   align-items: center;
 `
@@ -79,22 +95,32 @@ const DiffPaneContainer = withTheme(
       <RootContainerStyle>
         {diffConflictedFile && (
           <ButtonContainer className={buttonContainerClassName}>
-            <Button
-              text="Theirs"
-              disabled={theirsButtonDisabled}
-              onClick={onUseTheirsClick}
-              small
-              style={buttonStyle}
-            />
-            <Button text="Ours" disabled={oursButtonDisabled} onClick={onUseOursClick} small style={buttonStyle} />
-            <Button
-              text="Save"
-              disabled={saveButtonDisabled}
-              intent="primary"
-              onClick={onSaveClick}
-              small
-              style={buttonStyle}
-            />
+            <TheirContainerStyle>
+              <Button
+                text="Take Theirs"
+                disabled={theirsButtonDisabled}
+                onClick={onUseTheirsClick}
+                small
+                style={buttonStyle}
+              />
+            </TheirContainerStyle>
+            <OurContainerStyle>
+              <Button
+                text="Save"
+                disabled={saveButtonDisabled}
+                intent="primary"
+                onClick={onSaveClick}
+                small
+                style={buttonStyle}
+              />
+              <Button
+                text="Take Ours"
+                disabled={oursButtonDisabled}
+                onClick={onUseOursClick}
+                small
+                style={buttonStyle}
+              />
+            </OurContainerStyle>
           </ButtonContainer>
         )}
         <DiffPane originalFile={originalFile} modifiedFile={modifiedFile} textEditorDidMount={textEditorDidMount} />

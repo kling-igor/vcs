@@ -31,13 +31,7 @@ export { pull } from './pull'
 
 export { push } from './push'
 
-export {
-  // fileDiffToParent,
-  changedFileDiffToIndex,
-  stagedFileDiffToHead,
-  getMineFileContent,
-  getTheirsFileContent
-} from './diff'
+export { getMineFileContent, getTheirsFileContent } from './diff'
 
 export {
   commit,

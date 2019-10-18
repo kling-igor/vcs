@@ -469,35 +469,23 @@ export class VCS extends Emitter {
       }
     } else if (status === 'C') {
       if (mime === 'text/plain') {
-        // получить буфер из временного файла (для обоих коммитов)
-        // const { mineContent = '', theirsContent = '' } = await callMain(
-        //   MESSAGES.VCS_DIFF_CONFLICTED,
-        //   cleanLeadingSlashes(filePath)
-        // ) // remove leading slash)
-        // transaction(() => {
-        //   this.originalFile = FileWrapper.createTextFile({ path: filePath, content: mineContent })
-        //   this.modifiedFile = FileWrapper.createTextFile({ path: filePath, content: theirsContent })
-        //   this.selectedFilePath = filePath
-        //   this.diffConflictedFile = true
-        // })
+        const oursBuffer = await callMain(MESSAGES.VCS_GET_OUR_FILE_BUFFER, cleanLeadingSlashes(filePath))
+        const theirsBuffer = await callMain(MESSAGES.VCS_GET_THEIR_FILE_BUFFER, cleanLeadingSlashes(filePath))
+        left = FileWrapper.createTextFile({ path: filePath, content: theirsBuffer.toString() })
+        right = FileWrapper.createTextFile({ path: filePath, content: oursBuffer.toString() })
       } else if (mime.includes('image/')) {
-        // получить пути для временных файлов для обоих коммитов
-        // TODO: имя файла filePath_sha.ext
-        // const mineTmpPath = callMain(MESSAGES.VCS_CREATE_OUR_TMP_FILE, filePath)
-        // const theirsTmpPath = callMain(MESSAGES.VCS_CREATE_THEIR_TMP_FILE, filePath)
-        // // todo очищать файлы как только развыделяется файл
-        // transaction(() => {
-        //   this.originalFile = FileWrapper.createImageFile({ path: filePath, tmpPath: mineTmpPath })
-        //   this.modifiedFile = FileWrapper.createImageFile({ path: filePath, tmpPath: theirsTmpPath })
-        //   this.selectedFilePath = filePath
-        //   this.diffConflictedFile = true
-        // })
+        const ourTmpFile = await callMain(MESSAGES.VCS_GET_OUR_TMP_FILE, cleanLeadingSlashes(filePath))
+        const theirTmpFile = await callMain(MESSAGES.VCS_GET_THEIR_TMP_FILE, cleanLeadingSlashes(filePath))
+
+        left = FileWrapper.createImageFile({ path: filePath, tmpPath: theirTmpFile })
+        right = FileWrapper.createImageFile({ path: filePath, tmpPath: ourTmpFile })
+        disposableFiles = [ourTmpFile, theirTmpFile]
       } else {
         left = FileWrapper.createBinaryDataFile({ path: filePath })
         right = FileWrapper.createBinaryDataFile({ path: filePath })
-        this.updateDiffInfo(left, right, filePath, [], true)
       }
 
+      this.updateDiffInfo(left, right, filePath, disposableFiles, true)
       return // to prevent further updateDiffInfo
     } else {
       // M
@@ -781,6 +769,7 @@ export class VCS extends Emitter {
     try {
       fileType = await callMain(MESSAGES.VCS_GET_FILE_TYPE, this.commitInfo.commit, cleanLeadingSlashes(filePath))
     } catch (e) {
+      // where is now way to check if file was deleted in commit (now found yet in API)
       if (/does not exist in the given tree/.test(e.message)) {
         fileIsRemoved = true
         try {
@@ -796,8 +785,6 @@ export class VCS extends Emitter {
     if (fileType) {
       mime = fileType.mime
     }
-
-    // TODO: узнать статуc файла в коммите - это поспособствует к правильному формированию данных для DIFF
 
     if (mime === 'text/plain') {
       try {

@@ -266,44 +266,6 @@ answerRenderer(MESSAGES.VCS_MERGE_BRANCHES, async (browserWindow, ourBranchName,
   }
 })
 
-// answerRenderer(MESSAGES.VCS_DIFF_TO_PARENT, async (browserWindow, sha, filePath) => {
-//   checkRepo()
-
-//   if (!sha) {
-//     console.error('sha not specified')
-//     return null
-//   }
-
-//   return gitops.fileDiffToParent(repo, sha, filePath)
-// })
-
-// answerRenderer(MESSAGES.VCS_DIFF_TO_INDEX, async (browserWindow, projectPath, filePath) => {
-//   checkRepo()
-
-//   return gitops.changedFileDiffToIndex(repo, projectPath, filePath)
-// })
-
-// answerRenderer(MESSAGES.VCS_DIFF_STAGED_TO_HEAD, async (browserWindow, filePath) => {
-//   checkRepo()
-
-//   return gitops.stagedFileDiffToHead(repo, filePath)
-// })
-
-// answerRenderer(MESSAGES.VCS_DIFF_CONFLICTED, async (browserWindow, filePath) => {
-//   checkRepo()
-
-//   // TODO: нужно проверить тип файлов!!!
-
-//   const mineContent = await gitops.getMineFileContent(repo, filePath)
-
-//   const theirsContent = await gitops.getTheirsFileContent(repo, filePath)
-
-//   return {
-//     mineContent,
-//     theirsContent
-//   }
-// })
-
 answerRenderer(MESSAGES.VCS_GET_INDEX_FILE_BUFFER, async (browserWindow, filePath) => {
   checkRepo()
 
@@ -332,6 +294,34 @@ answerRenderer(MESSAGES.VCS_CREATE_COMMIT_TMP_FILE, async (browserWindow, sha, f
   const buffer = await gitops.getCommitFileContent(repo, sha, filePath)
 
   const tempPath = join('/tmp', `${sha}_${filePath}`)
+  await fileops.saveFile(tempPath, buffer)
+
+  return tempPath
+})
+
+answerRenderer(MESSAGES.VCS_GET_OUR_FILE_BUFFER, async (browserWindow, filePath) => {
+  checkRepo()
+  return await gitops.getMineFileContent(repo, filePath)
+})
+
+answerRenderer(MESSAGES.VCS_GET_THEIR_FILE_BUFFER, async (browserWindow, filePath) => {
+  checkRepo()
+  return await gitops.getTheirsFileContent(repo, filePath)
+})
+
+answerRenderer(MESSAGES.VCS_GET_OUR_TMP_FILE, async (browserWindow, filePath) => {
+  const buffer = await gitops.getMineFileContent(repo, filePath)
+
+  const tempPath = join('/tmp', `our_${filePath}`)
+  await fileops.saveFile(tempPath, buffer)
+
+  return tempPath
+})
+
+answerRenderer(MESSAGES.VCS_GET_THEIR_TMP_FILE, async (browserWindow, filePath) => {
+  const buffer = await gitops.getTheirsFileContent(repo, filePath)
+
+  const tempPath = join('/tmp', `their_${filePath}`)
   await fileops.saveFile(tempPath, buffer)
 
   return tempPath
@@ -608,22 +598,6 @@ answerRenderer(MESSAGES.VCS_RESOLE_USING_THEIR, async (browserWindow, projectPat
   } catch (e) {
     console.log('RESOLVE USING THEIRS ERROR:', e)
   }
-})
-
-answerRenderer(MESSAGES.VCS_CREATE_OUR_TMP_FILE, async (browserWindow, filePath) => {
-  const fileContent = await gitops.getMineFileContent(repo, filePath)
-  const tempPath = join('/tmp', filePath)
-  await fileops.saveFile(join('/tmp', filePath), fileContent)
-
-  return tempPath
-})
-
-answerRenderer(MESSAGES.VCS_CREATE_THEIR_TMP_FILE, async (browserWindow, filePath) => {
-  const fileContent = await gitops.getTheirsFileContent(repo, filePath)
-  const tempPath = join('/tmp', filePath)
-  await fileops.saveFile(tempPath, fileContent)
-
-  return tempPath
 })
 
 answerRenderer(MESSAGES.VCS_ADD_REMOTE, async (browserWindow, name, url) => {
