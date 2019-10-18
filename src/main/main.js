@@ -312,19 +312,23 @@ answerRenderer(MESSAGES.VCS_GET_THEIR_FILE_BUFFER, async (browserWindow, filePat
 answerRenderer(MESSAGES.VCS_GET_OUR_TMP_FILE, async (browserWindow, filePath) => {
   const buffer = await gitops.getMineFileContent(repo, filePath)
 
-  const tempPath = join('/tmp', `our_${filePath}`)
-  await fileops.saveFile(tempPath, buffer)
+  if (buffer) {
+    const tempPath = join('/tmp', `our_${filePath}`)
+    await fileops.saveFile(tempPath, buffer)
 
-  return tempPath
+    return tempPath
+  }
 })
 
 answerRenderer(MESSAGES.VCS_GET_THEIR_TMP_FILE, async (browserWindow, filePath) => {
   const buffer = await gitops.getTheirsFileContent(repo, filePath)
 
-  const tempPath = join('/tmp', `their_${filePath}`)
-  await fileops.saveFile(tempPath, buffer)
+  if (buffer) {
+    const tempPath = join('/tmp', `their_${filePath}`)
+    await fileops.saveFile(tempPath, buffer)
 
-  return tempPath
+    return tempPath
+  }
 })
 
 // получение информации о коммите для отображения в списке
@@ -573,13 +577,23 @@ answerRenderer(MESSAGES.VCS_RESOLE_AS_IS, async (browserWindow, projectPath, fil
 answerRenderer(MESSAGES.VCS_RESOLE_USING_OUR, async (browserWindow, projectPath, filePath) => {
   checkRepo()
   try {
+    // TODO: как решить конфликт если файл был удален ,,,
     const fileContent = await gitops.getMineFileContent(repo, filePath)
-    await fileops.project.saveFile(filePath, fileContent)
-    await gitops.removeConflict(repo, filePath)
+    if (fileContent) {
+      await fileops.project.saveFile(filePath, fileContent)
+      await gitops.removeConflict(repo, filePath)
 
-    const index = await gitops.refreshIndex(repo)
-    await gitops.addToIndex(index, filePath)
-    await gitops.writeIndex(index)
+      const index = await gitops.refreshIndex(repo)
+      await gitops.addToIndex(index, filePath)
+      await gitops.writeIndex(index)
+    } else {
+      await fileops.project.removeFile(filePath)
+      await gitops.removeConflict(repo, filePath)
+
+      const index = await gitops.refreshIndex(repo)
+      await gitops.removeFromIndex(index, filePath)
+      await gitops.writeIndex(index)
+    }
   } catch (e) {
     console.log('RESOLVE USING MINE ERROR:', e)
   }
@@ -589,12 +603,21 @@ answerRenderer(MESSAGES.VCS_RESOLE_USING_THEIR, async (browserWindow, projectPat
   checkRepo()
   try {
     const fileContent = await gitops.getTheirsFileContent(repo, filePath)
-    await fileops.project.saveFile(filePath, fileContent)
-    await gitops.removeConflict(repo, filePath)
+    if (fileContent) {
+      await fileops.project.saveFile(filePath, fileContent)
+      await gitops.removeConflict(repo, filePath)
 
-    const index = await gitops.refreshIndex(repo)
-    await gitops.addToIndex(index, filePath)
-    await gitops.writeIndex(index)
+      const index = await gitops.refreshIndex(repo)
+      await gitops.addToIndex(index, filePath)
+      await gitops.writeIndex(index)
+    } else {
+      await fileops.project.removeFile(filePath)
+      await gitops.removeConflict(repo, filePath)
+
+      const index = await gitops.refreshIndex(repo)
+      await gitops.removeFromIndex(index, filePath)
+      await gitops.writeIndex(index)
+    }
   } catch (e) {
     console.log('RESOLVE USING THEIRS ERROR:', e)
   }

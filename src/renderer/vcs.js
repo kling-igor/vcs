@@ -468,24 +468,38 @@ export class VCS extends Emitter {
         right = FileWrapper.createEmpty({ path: filePath })
       }
     } else if (status === 'C') {
+      // конфликт может быть не только когда изменения в обоих ветках в файле,
+      // но и когда в файл был удален в любой из веток (а может быть даже в обоих)
+
+      // нужно понимать факт удаления и тогда не запрашивать TMP файл
+
       let diffMIME
 
       if (mime === 'text/plain') {
         const oursBuffer = await callMain(MESSAGES.VCS_GET_OUR_FILE_BUFFER, cleanLeadingSlashes(filePath))
         const theirsBuffer = await callMain(MESSAGES.VCS_GET_THEIR_FILE_BUFFER, cleanLeadingSlashes(filePath))
-        left = FileWrapper.createTextFile({ path: filePath, content: theirsBuffer.toString() })
-        right = FileWrapper.createTextFile({ path: filePath, content: oursBuffer.toString() })
+        left = FileWrapper.createTextFile({ path: filePath, content: theirsBuffer ? theirsBuffer.toString() : ''})
+        right = FileWrapper.createTextFile({ path: filePath, content: oursBuffer ? oursBuffer.toString() : '' })
         diffMIME = mime
       } else if (mime.includes('image/')) {
         const ourTmpFile = await callMain(MESSAGES.VCS_GET_OUR_TMP_FILE, cleanLeadingSlashes(filePath))
         const theirTmpFile = await callMain(MESSAGES.VCS_GET_THEIR_TMP_FILE, cleanLeadingSlashes(filePath))
 
-        left = FileWrapper.createImageFile({ path: filePath, tmpPath: theirTmpFile })
-        right = FileWrapper.createImageFile({ path: filePath, tmpPath: ourTmpFile })
+        left = theirTmpFile
+          ? FileWrapper.createImageFile({ path: filePath, tmpPath: theirTmpFile })
+          : FileWrapper.createEmpty({ path: filePath })
+        right = ourTmpFile
+          ? FileWrapper.createImageFile({ path: filePath, tmpPath: ourTmpFile })
+          : FileWrapper.createEmpty({ path: filePath })
         disposableFiles = [ourTmpFile, theirTmpFile]
       } else {
-        left = FileWrapper.createBinaryDataFile({ path: filePath })
-        right = FileWrapper.createBinaryDataFile({ path: filePath })
+        // как признаки того, что есть файлы в соответствующих ветках
+        const ourTmpFile = await callMain(MESSAGES.VCS_GET_OUR_TMP_FILE, cleanLeadingSlashes(filePath))
+        const theirTmpFile = await callMain(MESSAGES.VCS_GET_THEIR_TMP_FILE, cleanLeadingSlashes(filePath))
+
+        left = theirTmpFile ? FileWrapper.createBinaryDataFile({ path: filePath }) : FileWrapper.createEmpty({ path: filePath })
+        right = ourTmpFile ? FileWrapper.createBinaryDataFile({ path: filePath }) : FileWrapper.createEmpty({ path: filePath })
+        disposableFiles = [ourTmpFile, theirTmpFile]
       }
 
       this.updateDiffInfo(left, right, filePath, disposableFiles, true, diffMIME)
@@ -1036,8 +1050,7 @@ export class VCS extends Emitter {
 
     if (status === 'D') {
       await callMain(MESSAGES.VCS_REMOVE_FROM_STAGE, [cleanLeadingSlashes(filePath)])
-    }
-    else {
+    } else {
       await callMain(MESSAGES.VCS_ADD_TO_STAGE, [cleanLeadingSlashes(filePath)])
     }
 

@@ -10,7 +10,10 @@ export async function getMineFileContent(repo, filePath) {
 
   const index = await repo.index()
   const conflict = await index.conflictGet(filePath)
-  return (await repo.getBlob(conflict.our_out.id)).content()
+
+  if (conflict.our_out) {
+    return (await repo.getBlob(conflict.our_out.id)).content()
+  }
 }
 
 /**
@@ -23,5 +26,8 @@ export async function getTheirsFileContent(repo, filePath) {
 
   const index = await repo.index()
   const conflict = await index.conflictGet(filePath)
-  return (await repo.getBlob(conflict.their_out.id)).content()
+
+  if (conflict.their_out) {
+    return (await repo.getBlob(conflict.their_out.id)).content()
+  }
 }
