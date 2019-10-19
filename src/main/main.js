@@ -478,40 +478,6 @@ answerRenderer(MESSAGES.VCS_PUSH, async (browserWindow, projectPath, remoteName,
   })
 })
 
-answerRenderer(MESSAGES.VCS_PULL, async (browserWindow, projectPath, remoteName, userName, password) => {
-  checkRepo()
-
-  const remote = await gitops.getRemote(repo, remoteName)
-
-  let name
-  let pass
-
-  if (userName && password) {
-    await keytar.setPassword(remote.url(), userName, password)
-
-    name = userName
-    pass = password
-  } else {
-    const [record = {}] = await keytar.findCredentials(remote.url())
-
-    name = record.account
-    pass = record.password
-  }
-
-  if (gitOpsWorker) {
-    gitOpsWorker.kill('SIGKILL')
-    gitOpsWorker = null
-  }
-
-  if (!gitOpsWorker) {
-    gitOpsWorker = fork(join(__dirname, 'gitops-worker.js'), ['fetch', projectPath, remoteName, name, pass])
-
-    gitOpsWorker.once('message', () => {
-      browserWindow.webContents.send(MESSAGES.VCS_PULL)
-    })
-  }
-})
-
 answerRenderer(MESSAGES.VCS_CREATE_BRANCH, async (browserWindow, name, commit) => {
   checkRepo()
 

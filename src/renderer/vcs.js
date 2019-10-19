@@ -1272,18 +1272,37 @@ export class VCS extends Emitter {
   @action.bound
   async push(remoteName, branch, userName, password) {
     this.emit('operation:begin', 'push')
-    await callMain(MESSAGES.VCS_PUSH, this.project.projectPath, remoteName, branch, userName, password)
+    const { error } = await callMain(
+      MESSAGES.VCS_PUSH,
+      this.project.projectPath,
+      remoteName,
+      branch,
+      userName,
+      password
+    )
+
+    if (error) {
+      this.emit('operation:finish', 'push')
+      throw new Error(error)
+    }
 
     await this.status()
     await this.getLog()
-
     this.emit('operation:finish', 'push')
   }
 
   @action.bound
   async fetch(remoteName, userName, password) {
     this.emit('operation:begin', 'fetch')
-    await callMain(MESSAGES.VCS_FETCH, this.project.projectPath, remoteName, userName, password)
+    const { error } = await callMain(MESSAGES.VCS_FETCH, this.project.projectPath, remoteName, userName, password)
+
+    if (error) {
+
+      console.log('VCS: FETCH ERROR:', error)
+
+      this.emit('operation:finish', 'fetch')
+      throw new Error(error)
+    }
 
     await this.status()
     await this.getLog()
@@ -1295,7 +1314,12 @@ export class VCS extends Emitter {
   async pull(remoteName, userName, password) {
     this.emit('operation:begin', 'pull')
 
-    await callMain(MESSAGES.VCS_PULL, this.project.projectPath, remoteName, userName, password)
+    const { error } = await callMain(MESSAGES.VCS_FETCH, this.project.projectPath, remoteName, userName, password)
+
+    if (error) {
+      this.emit('operation:finish', 'pull')
+      throw new Error(error)
+    }
 
     const mergingBranches = this.heads.reduce((acc, item) => {
       const { name, upstream, ahead, behind } = item

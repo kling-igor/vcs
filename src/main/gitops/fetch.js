@@ -10,15 +10,19 @@ export async function fetch(repo, remoteName, username, password) {
 
   const remoteCallbacks = {
     certificateCheck: () => 0,
-    credentials: (url, userName) => {
-      // console.log('CRED URL:', url)
-      // console.log('CRED USERNAME:', userName)
-
+    credentials: url => {
+      console.log('url:', url)
       if (attepmpt++ < 5) {
         return username && password ? nodegit.Cred.userpassPlaintextNew(username, password) : nodegit.Cred.defaultNew()
       }
 
       throw new Error('auth failed')
+    },
+    pushTransferProgress: {
+      throttle: 200,
+      callback: () => {
+        console.log('PROGRESS')
+      }
     }
   }
 
@@ -40,21 +44,19 @@ export async function fetch(repo, remoteName, username, password) {
 
     await remote.disconnect()
   } catch (e) {
-    console.log('CONNECTION ERROR:', e.message)
+    console.log('CONNECT ERROR:', e.message)
 
     if (e.message.includes('unexpected HTTP status code:')) {
       console.log('CHECK CONNECTION...')
       throw new Error('Connection error')
     }
 
-    if (e.message.includes('credentials callback returned an invalid cred type')) {
+    if (
+      e.message.includes('credentials callback returned an invalid cred type') ||
+      e.message.includes('Method connect has thrown an error.')
+    ) {
       console.log('AUTH REQUIRED')
       throw new Error('Auth required')
-    }
-
-    if (e.message.includes('Method connect has thrown an error.')) {
-      console.log('AUTH FAILED')
-      throw new Error('Auth failed')
     }
   }
 
@@ -67,22 +69,7 @@ export async function fetch(repo, remoteName, username, password) {
       prune: 1,
       updateFetchhead: 1,
       fetchOpts: {
-        callbacks: {
-          // github will fail cert check on some OSX machines, this overrides that check
-          certificateCheck: () => 0,
-          credentials: (url, userName) => {
-            // console.log('CRED URL:', url)
-            // console.log('CRED USERNAME:', userName)
-
-            if (attepmpt++ < 5) {
-              return username && password
-                ? nodegit.Cred.userpassPlaintextNew(username, password)
-                : nodegit.Cred.defaultNew()
-            }
-
-            throw new Error('auth failed')
-          }
-        }
+        callbacks: remoteCallbacks
       }
     })
   } catch (e) {
@@ -92,14 +79,12 @@ export async function fetch(repo, remoteName, username, password) {
       throw new Error('Connection error')
     }
 
-    if (e.message.includes('credentials callback returned an invalid cred type')) {
+    if (
+      e.message.includes('credentials callback returned an invalid cred type') ||
+      e.message.includes('Method connect has thrown an error.')
+    ) {
       console.log('AUTH REQUIRED')
       throw new Error('Auth required')
-    }
-
-    if (e.message.includes('Method connect has thrown an error.')) {
-      console.log('AUTH FAILED')
-      throw new Error('Auth failed')
     }
   }
 }

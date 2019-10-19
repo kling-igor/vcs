@@ -27,8 +27,6 @@ export {
   getIndexedFileContent
 } from './stage'
 
-export { pull } from './pull'
-
 export { push } from './push'
 
 export { getMineFileContent, getTheirsFileContent } from './diff'

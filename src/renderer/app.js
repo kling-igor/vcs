@@ -252,10 +252,12 @@ export default class App extends Component {
     await vcs.open(PROJECT_PATH)
     await project.open({ projectPath: PROJECT_PATH })
 
+    // react on long term operation begin
     vcs.on('operation:begin', operation => {
       dock.setPageProgress('vcs', true)
     })
 
+    // react on long term operation finish
     vcs.on('operation:finish', operation => {
       dock.setPageProgress('vcs', false)
     })

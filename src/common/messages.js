@@ -9,7 +9,6 @@ export const VCS_GET_LOG = 'vcs:get.log'
 
 export const VCS_FETCH = 'vcs:fetch'
 export const VCS_PUSH = 'vcs:push'
-export const VCS_PULL = 'vcs:pull'
 
 export const VCS_ADD_REMOTE = 'vcs:add.remote'
 export const VCS_DELETE_REMOTE = 'vcs:delete.remote'

@@ -87,13 +87,12 @@ export default ({ vcs, workspace, Dialog }) => () => {
           if (!password) return
         } else if (e.message === 'Auth failed') {
           // Dialog
-
-          return
         } else if (e.message === 'Connection error') {
           // Dialog
-          return
         } else {
         }
+
+        return
       }
     }
   }
@@ -157,7 +156,12 @@ export default ({ vcs, workspace, Dialog }) => () => {
           console.log('remoteName:', remoteName)
 
           await handler(async ({ userName, password } = {}) => {
-            await vcs.push(remoteName, branch, userName, password)
+            try {
+              await vcs.push(remoteName, branch, userName, password)
+            } catch (e) {
+              console.log('PUSH E:', e)
+              throw e
+            }
           })
         },
         enabled: !pendingOperation
