@@ -1,6 +1,6 @@
 const { remote } = window.require('electron')
 const noop = () => {}
-export default ({ vcs, workspace, Dialog }) => path => {
+export default ({ vcs, workspace, Dialog }) => filePath => {
   workspace.showContextMenu({
     items: [
       {
@@ -8,8 +8,8 @@ export default ({ vcs, workspace, Dialog }) => path => {
         click: () => {
           Dialog.confirmUnstageFile()
             .then(() => {
-              console.log('UNSTAGING ', path)
-              vcs.unstageFile(path)
+              console.log('UNSTAGING ', filePath)
+              vcs.unstageFile(filePath)
             })
             .catch(noop)
         }
@@ -20,8 +20,8 @@ export default ({ vcs, workspace, Dialog }) => path => {
       {
         label: `Copy Path to Clipboard`,
         click: () => {
-          console.log('COPYING TO CLIPBOARD:', path)
-          remote.clipboard.writeText(path)
+          console.log('COPYING TO CLIPBOARD:', filePath)
+          remote.clipboard.writeText(filePath)
         }
       }
     ]

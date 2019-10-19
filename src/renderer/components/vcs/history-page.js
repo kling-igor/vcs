@@ -4,7 +4,7 @@
 import React, { Component } from 'react'
 import { observer } from 'mobx-react'
 import styled, { withTheme } from 'styled-components'
-import { Button } from '@blueprintjs/core'
+import { Button, InputGroup } from '@blueprintjs/core'
 import { IconNames } from '@blueprintjs/icons'
 
 import CircularProgress from '@material-ui/core/CircularProgress'
@@ -22,13 +22,21 @@ const RootContainerStyle = styled.div`
   align-items: flex-start;
 `
 
-const ButtonContainer = styled.div`
+const TopContainer = styled.div`
   width: 100%;
   height: 32px;
   display: flex;
   justify-content: flex-end;
   align-items: center;
   padding-right: 4px;
+`
+
+const InputWrapperStyle = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 300px;
+  height: 100%;
 `
 
 const HistoryContainerWrapper = styled.div`
@@ -68,6 +76,7 @@ class HistoryPage extends Component {
     const lowerSize = +this.state.layout[1] / 100
 
     const {
+      theme,
       onGitLogSettingsMenu,
       storage: {
         logUpdateTime,
@@ -92,13 +101,28 @@ class HistoryPage extends Component {
       workspace: { textEditorDidMount }
     } = this.props
 
+    const className = theme.type === 'dark' ? 'bp3-dark' : null
+
     return (
       <SplitPane split="horizontal" allowResize resizersSize={0} onResizeEnd={this.setLayout}>
         <Pane size={upperSize} minSize="50px" maxSize="100%">
           <RootContainerStyle>
-            <ButtonContainer>
+            <TopContainer className={className}>
+              <InputWrapperStyle>
+                <InputGroup
+                  style={{ backgroundColor: '#293742' }}
+                  leftIcon="search"
+                  onChange={() => {}}
+                  placeholder="Jump to ..."
+                  rightElement={null}
+                  small
+                  fill
+                  round
+                  value={''}
+                />
+              </InputWrapperStyle>
               <Button small minimal icon={IconNames.MORE} onClick={onGitLogSettingsMenu} style={menuButtonStyle} />
-            </ButtonContainer>
+            </TopContainer>
             <HistoryContainerWrapper>
               {isProcessingGitLog && (
                 <ProgressRootStyle>

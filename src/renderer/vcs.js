@@ -1027,7 +1027,7 @@ export class VCS extends Emitter {
 
       return acc
     }, [])
-    
+
     if (paths.length > 0) {
       if (this.selectedChangedFile && paths.includes(cleanLeadingSlashes(this.selectedChangedFile))) {
         transaction(() => {
@@ -1169,12 +1169,20 @@ export class VCS extends Emitter {
   async merge(sha, commitOnSuccess) {
     this.mergingSha = sha
 
+    const mineBranch = this.heads.find(item => item.sha === this.headCommit)
+    const theirBranch = this.heads.find(item => item.sha === sha)
+
+    const mineBranchName = mineBranch ? mineBranch.name : this.headCommit
+    const theirBranchName = theirBranch ? theirBranch.name : sha
+
     await callMain(MESSAGES.VCS_MERGE, sha)
+
+    const commitMessage = `Merge ${theirBranchName} into ${mineBranchName}\n`
 
     if (this.isMerging && commitOnSuccess) {
       await callMain(
         MESSAGES.VCS_CREATE_COMMIT,
-        'Merge',
+        commitMessage,
         sha,
         this.alterName || this.name,
         this.alterEmail || this.email
@@ -1193,24 +1201,20 @@ export class VCS extends Emitter {
       await this.getLog()
     }
 
-    // this.commitMessage = `Merge branch '${}' into branch ${}`
-    this.commitMessage = `Merge`
+    this.commitMessage = commitMessage
   }
 
   @action.bound
-  async resolveUsingMine() {
-    if (this.selectedFilePath) {
-      await callMain(
-        MESSAGES.VCS_RESOLE_USING_OUR,
-        this.project.projectPath,
-        cleanLeadingSlashes(this.selectedFilePath)
-      )
+  async resolveUsingMine(filePath) {
+    const resolvingPath = filePath || this.selectedFilePath
+    if (resolvingPath) {
+      await callMain(MESSAGES.VCS_RESOLE_USING_OUR, this.project.projectPath, cleanLeadingSlashes(resolvingPath))
       await this.status()
 
       transaction(() => {
         this.originalFile = null
         this.modifiedFile = null
-        this.selectedFilePath = null
+        this.selectedFilePath = this.selectedFilePath == resolvingPath ? null : this.selectedFilePath
         this.diffConflictedFile = false
         this.diffConflictedFileMIME = null
       })
@@ -1218,19 +1222,16 @@ export class VCS extends Emitter {
   }
 
   @action.bound
-  async resolveUsingTheirs() {
-    if (this.selectedFilePath) {
-      await callMain(
-        MESSAGES.VCS_RESOLE_USING_THEIR,
-        this.project.projectPath,
-        cleanLeadingSlashes(this.selectedFilePath)
-      )
+  async resolveUsingTheirs(filePath) {
+    const resolvingPath = filePath || this.selectedFilePath
+    if (resolvingPath) {
+      await callMain(MESSAGES.VCS_RESOLE_USING_THEIR, this.project.projectPath, cleanLeadingSlashes(resolvingPath))
       await this.status()
 
       transaction(() => {
         this.originalFile = null
         this.modifiedFile = null
-        this.selectedFilePath = null
+        this.selectedFilePath = this.selectedFilePath == resolvingPath ? null : this.selectedFilePath
         this.diffConflictedFile = false
         this.diffConflictedFileMIME = null
       })

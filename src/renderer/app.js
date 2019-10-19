@@ -74,7 +74,7 @@ export default class App extends Component {
 
   async componentDidMount() {
     dock.addPage('vcs', {
-      pageTitle: 'GIT',
+      pageTitle: 'git',
       pageIcon: './assets/ui/git/git.svg'
     })
 
@@ -247,7 +247,7 @@ export default class App extends Component {
     // ЭТО ДЕЛАТЬ В ОТВЕТ НА СОБЫТИЕ ОТКРЫТИЯ ПРОЕКТА
     replacePanes(vcs.mode)
 
-    const PROJECT_PATH = '/Users/user/Projects/testrepo' //resolve(__dirname, '../test-repo')
+    const PROJECT_PATH = '/Users/kling/Altarix/testrepo' //resolve(__dirname, '../test-repo')
 
     await vcs.open(PROJECT_PATH)
     await project.open({ projectPath: PROJECT_PATH })

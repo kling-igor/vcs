@@ -1,8 +1,8 @@
 const { remote } = window.require('electron')
 const noop = () => {}
-export default ({ vcs, workspace, project, Dialog }) => path => {
+export default ({ vcs, workspace, project, Dialog }) => filePath => {
   const { pendingOperation } = vcs
-  const { status } = vcs.changedFiles.find(item => `${item.path}/${item.filename}` === path)
+  const { status } = vcs.changedFiles.find(item => `${item.path}/${item.filename}` === filePath)
 
   workspace.showContextMenu({
     items: [
@@ -11,8 +11,8 @@ export default ({ vcs, workspace, project, Dialog }) => path => {
         click: () => {
           Dialog.confirmStageFile()
             .then(() => {
-              console.log('STAGING ', path)
-              vcs.stageFile(path, status)
+              console.log('STAGING ', filePath)
+              vcs.stageFile(filePath, status)
             })
             .catch(noop)
         },
@@ -22,18 +22,18 @@ export default ({ vcs, workspace, project, Dialog }) => path => {
         label: `Remove`,
         click: () => {
           if (status === 'A') {
-            Dialog.confirmFileRemoveUntracked(path)
+            Dialog.confirmFileRemoveUntracked(filePath)
               .then(async () => {
-                console.log('REMOVING ', path)
-                await project.removeFile(path.replace(/^(\.\/)+/, ''))
+                console.log('REMOVING ', filePath)
+                await project.removeFile(filePath.replace(/^(\.\/)+/, ''))
                 await vcs.status()
               })
               .catch(noop)
           } else {
-            Dialog.confirmFileRemove(path)
+            Dialog.confirmFileRemove(filePath)
               .then(async () => {
-                console.log('REMOVING ', path)
-                await project.removeFile(path.replace(/^(\.\/)+/, ''))
+                console.log('REMOVING ', filePath)
+                await project.removeFile(filePath.replace(/^(\.\/)+/, ''))
                 await vcs.status()
               })
               .catch(noop)
@@ -44,10 +44,10 @@ export default ({ vcs, workspace, project, Dialog }) => path => {
       {
         label: `Stop tracking`,
         click: () => {
-          Dialog.confirmFileStopTracking(path)
+          Dialog.confirmFileStopTracking(filePath)
             .then(async () => {
-              console.log('STOP TRACKING ', path)
-              await vcs.stopTracking(path)
+              console.log('STOP TRACKING ', filePath)
+              await vcs.stopTracking(filePath)
             })
             .catch(noop)
         },
@@ -56,10 +56,10 @@ export default ({ vcs, workspace, project, Dialog }) => path => {
       {
         label: `Discard Changes`,
         click: () => {
-          Dialog.confirmDiscardFileChanges(path)
+          Dialog.confirmDiscardFileChanges(filePath)
             .then(() => {
-              console.log('DISCARDING FILE CHANGES ', path)
-              vcs.discardLocalChanges(path)
+              console.log('DISCARDING FILE CHANGES ', filePath)
+              vcs.discardLocalChanges(filePath)
             })
             .catch(noop)
         },
@@ -79,9 +79,9 @@ export default ({ vcs, workspace, project, Dialog }) => path => {
           {
             label: "Resolve Using 'Mine'",
             click: () => {
-              Dialog.confirmResolveConflictsUsingMine(path)
+              Dialog.confirmResolveConflictsUsingMine(filePath)
                 .then(async () => {
-                  await vcs.resolveUsingMine(path)
+                  await vcs.resolveUsingMine(filePath)
                 })
                 .catch(noop)
             }
@@ -89,9 +89,9 @@ export default ({ vcs, workspace, project, Dialog }) => path => {
           {
             label: "Resolve Using 'Theirs'",
             click: () => {
-              Dialog.confirmResolveConflictsUsingTheirs(path)
+              Dialog.confirmResolveConflictsUsingTheirs(filePath)
                 .then(async () => {
-                  await vcs.resolveUsingTheirs(path)
+                  await vcs.resolveUsingTheirs(filePath)
                 })
                 .catch(noop)
             }
@@ -106,7 +106,7 @@ export default ({ vcs, workspace, project, Dialog }) => path => {
           // {
           //   label: 'Mark Resolved',
           //   click: () => {
-          //     Dialog.confirmMarkResolved(path)
+          //     Dialog.confirmMarkResolved(filePath)
           //       .then(async () => {})
           //       .catch(noop)
           //   }
@@ -114,7 +114,7 @@ export default ({ vcs, workspace, project, Dialog }) => path => {
           // {
           //   label: 'Mark Unresolved',
           //   click: () => {
-          //     Dialog.confirmMarkUnresolved(path)
+          //     Dialog.confirmMarkUnresolved(filePath)
           //       .then(async () => {})
           //       .catch(noop)
           //   }
@@ -127,8 +127,8 @@ export default ({ vcs, workspace, project, Dialog }) => path => {
       {
         label: `Copy Path to Clipboard`,
         click: () => {
-          console.log('COPYING TO CLIPBOARD:', path)
-          remote.clipboard.writeText(path)
+          console.log('COPYING TO CLIPBOARD:', filePath)
+          remote.clipboard.writeText(filePath)
         }
       }
     ]
