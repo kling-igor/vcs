@@ -478,7 +478,7 @@ export class VCS extends Emitter {
       if (mime === 'text/plain') {
         const oursBuffer = await callMain(MESSAGES.VCS_GET_OUR_FILE_BUFFER, cleanLeadingSlashes(filePath))
         const theirsBuffer = await callMain(MESSAGES.VCS_GET_THEIR_FILE_BUFFER, cleanLeadingSlashes(filePath))
-        left = FileWrapper.createTextFile({ path: filePath, content: theirsBuffer ? theirsBuffer.toString() : ''})
+        left = FileWrapper.createTextFile({ path: filePath, content: theirsBuffer ? theirsBuffer.toString() : '' })
         right = FileWrapper.createTextFile({ path: filePath, content: oursBuffer ? oursBuffer.toString() : '' })
         diffMIME = mime
       } else if (mime.includes('image/')) {
@@ -497,8 +497,12 @@ export class VCS extends Emitter {
         const ourTmpFile = await callMain(MESSAGES.VCS_GET_OUR_TMP_FILE, cleanLeadingSlashes(filePath))
         const theirTmpFile = await callMain(MESSAGES.VCS_GET_THEIR_TMP_FILE, cleanLeadingSlashes(filePath))
 
-        left = theirTmpFile ? FileWrapper.createBinaryDataFile({ path: filePath }) : FileWrapper.createEmpty({ path: filePath })
-        right = ourTmpFile ? FileWrapper.createBinaryDataFile({ path: filePath }) : FileWrapper.createEmpty({ path: filePath })
+        left = theirTmpFile
+          ? FileWrapper.createBinaryDataFile({ path: filePath })
+          : FileWrapper.createEmpty({ path: filePath })
+        right = ourTmpFile
+          ? FileWrapper.createBinaryDataFile({ path: filePath })
+          : FileWrapper.createEmpty({ path: filePath })
         disposableFiles = [ourTmpFile, theirTmpFile]
       }
 
@@ -992,7 +996,7 @@ export class VCS extends Emitter {
   @action.bound
   async stageSelectedFiles() {
     const paths = this.changedFiles.reduce((acc, item) => {
-      if (item.selected) {
+      if (item.selected && item.status !== 'C') {
         return [...acc, cleanLeadingSlashes(`${item.path}/${item.filename}`)]
       }
 
@@ -1016,10 +1020,14 @@ export class VCS extends Emitter {
 
   @action.bound
   async stageAllFiles() {
-    const paths = this.changedFiles.reduce(
-      (acc, item) => [...acc, cleanLeadingSlashes(`${item.path}/${item.filename}`)],
-      []
-    )
+    const paths = this.changedFiles.reduce((acc, item) => {
+      if (item.status !== 'C') {
+        return [...acc, cleanLeadingSlashes(`${item.path}/${item.filename}`)]
+      }
+
+      return acc
+    }, [])
+    
     if (paths.length > 0) {
       if (this.selectedChangedFile && paths.includes(cleanLeadingSlashes(this.selectedChangedFile))) {
         transaction(() => {

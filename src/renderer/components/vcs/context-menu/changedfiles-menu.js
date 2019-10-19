@@ -38,7 +38,8 @@ export default ({ vcs, workspace, project, Dialog }) => path => {
               })
               .catch(noop)
           }
-        }
+        },
+        enabled: status !== 'C'
       },
       {
         label: `Stop tracking`,
@@ -49,7 +50,8 @@ export default ({ vcs, workspace, project, Dialog }) => path => {
               await vcs.stopTracking(path)
             })
             .catch(noop)
-        }
+        },
+        enabled: status !== 'C'
       },
       {
         label: `Discard Changes`,
@@ -60,7 +62,8 @@ export default ({ vcs, workspace, project, Dialog }) => path => {
               vcs.discardLocalChanges(path)
             })
             .catch(noop)
-        }
+        },
+        enabled: status !== 'C'
       },
       // {
       //   label: `Ignore...`,
@@ -92,30 +95,30 @@ export default ({ vcs, workspace, project, Dialog }) => path => {
                 })
                 .catch(noop)
             }
-          },
-          {
-            type: 'separator'
-          },
-          {
-            label: 'Restart Merge',
-            click: () => {}
-          },
-          {
-            label: 'Mark Resolved',
-            click: () => {
-              Dialog.confirmMarkResolved(path)
-                .then(async () => {})
-                .catch(noop)
-            }
-          },
-          {
-            label: 'Mark Unresolved',
-            click: () => {
-              Dialog.confirmMarkUnresolved(path)
-                .then(async () => {})
-                .catch(noop)
-            }
           }
+          // {
+          //   type: 'separator'
+          // },
+          // {
+          //   label: 'Restart Merge',
+          //   click: () => {}
+          // },
+          // {
+          //   label: 'Mark Resolved',
+          //   click: () => {
+          //     Dialog.confirmMarkResolved(path)
+          //       .then(async () => {})
+          //       .catch(noop)
+          //   }
+          // },
+          // {
+          //   label: 'Mark Unresolved',
+          //   click: () => {
+          //     Dialog.confirmMarkUnresolved(path)
+          //       .then(async () => {})
+          //       .catch(noop)
+          //   }
+          // }
         ]
       },
       {

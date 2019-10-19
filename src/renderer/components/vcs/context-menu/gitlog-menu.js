@@ -60,17 +60,17 @@ export default ({ vcs, workspace, Dialog }) => sha => {
         },
         enabled: headCommit !== sha && !pendingOperation
       },
-      {
-        label: 'Rebase...',
-        click: () => {
-          Dialog.confirmBranchRebase(name)
-            .then(() => {
-              console.log('REBASING CURRENT CHANGES TO ', name)
-            })
-            .catch(noop)
-        },
-        enabled: headCommit !== sha && !pendingOperation
-      },
+      // {
+      //   label: 'Rebase...',
+      //   click: () => {
+      //     Dialog.confirmBranchRebase(name)
+      //       .then(() => {
+      //         console.log('REBASING CURRENT CHANGES TO ', name)
+      //       })
+      //       .catch(noop)
+      //   },
+      //   enabled: headCommit !== sha && !pendingOperation
+      // },
       {
         type: 'separator'
       },
