@@ -20,12 +20,7 @@ const BranchesList = observer(({ storage: { heads, selectedCommit, onCommitSelec
   })
 
   return (
-    <ItemList
-      items={items}
-      selectedCommit={selectedCommit}
-      onItemSelect={onCommitSelect}
-      onContextMenu={onContextMenu}
-    />
+    <ItemList items={items} selectedKey={selectedCommit} onItemSelect={onCommitSelect} onContextMenu={onContextMenu} />
   )
 })
 

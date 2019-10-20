@@ -80,13 +80,20 @@ const ListRootStyle = styled.div`
 
 const scrollBarsStyle = { width: '100%', height: '100%' }
 
-const ItemList = ({ items, onItemSelect, selectedCommit, onContextMenu }) => {
+const ItemList = ({
+  items,
+  onItemSelect = () => {},
+  selectedKey,
+  onContextMenu = () => {},
+  keyKey = 'sha',
+  titleKey = 'name'
+}) => {
   const onClickHandler = useCallback(
-    event => onItemSelect(event.currentTarget.dataset.sha, event.currentTarget.dataset.name),
+    event => onItemSelect(event.currentTarget.dataset.key, event.currentTarget.dataset.name),
     []
   )
   const onContextMenuHandler = useCallback(
-    event => onContextMenu(event.currentTarget.dataset.sha, event.currentTarget.dataset.name),
+    event => onContextMenu(event.currentTarget.dataset.key, event.currentTarget.dataset.title),
     []
   )
 
@@ -94,17 +101,17 @@ const ItemList = ({ items, onItemSelect, selectedCommit, onContextMenu }) => {
     <ListRootStyle>
       <Scrollbars style={scrollBarsStyle} thumbMinSize={30} autoHide autoHideTimeout={1000} autoHideDuration={200}>
         <ListStyle>
-          {items.map(({ name, sha, decoratedName }) => {
+          {items.map(({ [keyKey]: key, [titleKey]: title, decoratedName }) => {
             return (
               <ListItemContainerStyle
-                key={name}
-                data-sha={sha}
-                data-name={name}
+                key={key}
+                data-key={key}
+                data-title={title}
                 onClick={onClickHandler}
                 onContextMenu={onContextMenuHandler}
-                selected={sha === selectedCommit}
+                selected={key === selectedKey}
               >
-                <ListItemNameStyle>{decoratedName || name}</ListItemNameStyle>
+                <ListItemNameStyle>{decoratedName || title}</ListItemNameStyle>
               </ListItemContainerStyle>
             )
           })}

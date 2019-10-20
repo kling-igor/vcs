@@ -627,6 +627,23 @@ answerRenderer(MESSAGES.VCS_INIT_REPOSITORY, async (browserWindow, folder) => {
   await gitops.createRepository(folder)
 })
 
+answerRenderer(MESSAGES.VCS_GET_STASHES, async browserWindow => {
+  return await gitops.getStashes(repo)
+})
+
+answerRenderer(MESSAGES.VCS_SAVE_STASH, async (browserWindow, message, keepStaged) => {
+  await gitops.saveStash(repo, message, keepStaged)
+})
+
+answerRenderer(MESSAGES.VCS_APPLY_STASH, async (browserWindow, index) => {
+  console.log('APPLY STASH:', index)
+  return await gitops.applyStash(repo, index)
+})
+
+answerRenderer(MESSAGES.VCS_DROP_STASH, async (browserWindow, index) => {
+  return await gitops.dropStash(repo, index)
+})
+
 /* FAKE APPLICATION (from editor) */
 
 answerRenderer(MESSAGES.PROJECT_OPEN, async (browserWindow, projectPath, ...whiteList) => {

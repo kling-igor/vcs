@@ -44,3 +44,5 @@ export {
   revertCommit,
   getCommitFileContent
 } from './commit'
+
+export { getStashes, saveStash, applyStash, dropStash } from './stash'

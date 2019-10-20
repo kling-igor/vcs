@@ -87,6 +87,8 @@ export const CloneProjectPane = withTheme(({ workspace, project, vcs, Dialog }) 
       await workspace.openProject(projectFolder)
       await vcs.open(projectFolder)
       await vcs.getLog()
+      await vcs.status()
+      await vcs.getStashes()
     })
   }
 
@@ -119,6 +121,8 @@ export const CloneProjectPane = withTheme(({ workspace, project, vcs, Dialog }) 
         await vcs.init(folder)
         await vcs.open(folder)
         await vcs.getLog()
+        await vcs.status()
+        await vcs.getStashes()
       } catch (e) {
         console.log('INIT REPO ERROR:', e)
       }

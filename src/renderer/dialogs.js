@@ -205,3 +205,23 @@ export function confirmEnterUserDetails() {
 }
 
 // Please commit your changes or stash them before
+
+export function confirmStashChanges() {
+  const message = 'Confirm Stash Changes'
+  const detail = 'This will stash all the changes in your working copy and return it to a clean state.'
+  const option = 'Keep staged changes'
+  return confirmActionMessage({ message, detail, option, acceptButton: 'Proceed' })
+}
+
+export function confirmStashDeletion(stashMessage) {
+  const message = 'Confirm Deletion'
+  const detail = `Are you sure you want to delete the stashed changes '${stashMessage}'?`
+  return confirmActionMessage({ message, detail })
+}
+
+export function confirmApplyStash(stashMessage) {
+  const message = 'Apply Stash?'
+  const detail = `Are you sure you want to apply the stash '${stashMessage}' to your working copy?`
+  const option = 'Delete after applying'
+  return confirmActionMessage({ message, detail, option })
+}

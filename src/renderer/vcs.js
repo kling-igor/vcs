@@ -99,6 +99,7 @@ export class VCS extends Emitter {
   @observable.ref heads = []
   @observable.ref remoteHeads = []
   @observable.ref tags = []
+  @observable.ref stashes = []
   @observable.ref remotes = []
   @observable maxOffset = 0
 
@@ -1297,7 +1298,6 @@ export class VCS extends Emitter {
     const { error } = await callMain(MESSAGES.VCS_FETCH, this.project.projectPath, remoteName, userName, password)
 
     if (error) {
-
       console.log('VCS: FETCH ERROR:', error)
 
       this.emit('operation:finish', 'fetch')
@@ -1368,5 +1368,54 @@ export class VCS extends Emitter {
   @action.bound
   async getCommits(startIndex, endIndex) {
     return callMain(MESSAGES.VCS_GET_COMMIT_DIGEST, startIndex, endIndex)
+  }
+
+  async getStashes() {
+    this.stashes = await callMain(MESSAGES.VCS_GET_STASHES)
+    console.log('STASHES:', this.stashes)
+  }
+
+  @action
+  async stashChanges(message, keepStaged) {
+    // если нет комитов, то отменить !!!
+
+    let stashMessage = message
+    if (message == '') {
+      try {
+        const { commit, message } = await callMain(MESSAGES.VCS_GET_COMMIT_DETAILS, this.headCommit)
+        const branch = this.heads.find(item => (item.sha = this.headCommit))
+        const branchName = branch ? branch.name : '(no branch)'
+
+        stashMessage = `WIP on ${branchName}: ${commit.slice(0, 8)} ${message}`
+      } catch (e) {
+        console.log('UNABLE TO GET HEAD COMMIT INFO')
+      }
+    }
+
+    await callMain(MESSAGES.VCS_SAVE_STASH, stashMessage, keepStaged)
+    await this.getLog()
+    await this.status()
+    await this.getStashes()
+  }
+
+  @action.bound
+  async applyStash(index, dropAfter) {
+    const errCode = await callMain(MESSAGES.VCS_APPLY_STASH, index)
+    if (!errCode) {
+      await this.getLog()
+      await this.status()
+
+      if (dropAfter) {
+        await this.dropStash(index)
+        await this.getStashes()
+      }
+    }
+
+    return result
+  }
+
+  @action.bound
+  async dropStash(index) {
+    await callMain(MESSAGES.VCS_DROP_STASH, index)
   }
 }

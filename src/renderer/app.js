@@ -28,6 +28,7 @@ import StagedFiles from './components/vcs/staged-files'
 import BranchesList from './components/vcs/branches-list.js'
 import TagsList from './components/vcs/tags-list.js'
 import RemotesList from './components/vcs/remotes-list.js'
+import StashList from './components/vcs/stash-list.js'
 
 import * as Dialog from './dialogs'
 
@@ -37,6 +38,7 @@ import {
   onGitLogContextMenu,
   onChangedFileContextMenu,
   onStagedFileContextMenu,
+  onStashContextMenu,
   onRemoteContextMenu,
   onVcsContextMenu
 } from './components/vcs/context-menu'
@@ -96,6 +98,7 @@ export default class App extends Component {
 
           await vcs.getLog()
           await vcs.status()
+          await vcs.getStashes()
         },
         tooltip: 'Refresh'
       }
@@ -227,6 +230,13 @@ export default class App extends Component {
         })
 
         dock.addPane('vcs', {
+          title: 'STASH',
+          elapsed: false,
+          component: <StashList storage={vcs} onContextMenu={onStashContextMenu({ vcs, workspace, Dialog })} />,
+          paneHeaderButtons: []
+        })
+
+        dock.addPane('vcs', {
           title: 'REMOTES',
           elapsed: false,
           component: <RemotesList storage={vcs} onContextMenu={onRemoteContextMenu({ vcs, workspace, Dialog })} />,
@@ -263,6 +273,8 @@ export default class App extends Component {
     })
 
     await vcs.getLog()
+    await vcs.status()
+    await vcs.getStashes()
 
     dock.showPage('vcs')
   }

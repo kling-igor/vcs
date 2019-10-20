@@ -19,6 +19,11 @@ export const VCS_DELETE_BRANCH = 'vcs:delete.branch'
 export const VCS_CREATE_TAG = 'vcs:create.tag'
 export const VCS_DELETE_TAG = 'vcs:delete.tag'
 
+export const VCS_GET_STASHES = 'vcs:get.stashes'
+export const VCS_SAVE_STASH = 'vcs:save.stash'
+export const VCS_APPLY_STASH = 'vcs:apply.stash'
+export const VCS_DROP_STASH = 'vcs:drop.stash'
+
 export const VCS_GET_REPOSITORY_STATUS = 'vcs:get.repository-status'
 export const VCS_GET_HEAD_BRANCH = 'vcs:get.head-branch'
 export const VCS_GET_REPOSITORY_REFS = 'vcs:get.repository-refs'

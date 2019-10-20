@@ -1,8 +1,6 @@
 const { remote } = window.require('electron')
 const noop = () => {}
 export default ({ vcs, workspace, Dialog }) => sha => {
-  if (!sha) return
-
   const { currentCommit, heads, tags, headCommit, hasLocalChanges, pendingOperation } = vcs
 
   const branch = heads.find(item => item.sha === sha)
@@ -14,6 +12,7 @@ export default ({ vcs, workspace, Dialog }) => sha => {
     items: [
       {
         label: 'Checkout...',
+        enabled: !!sha && !pendingOperation,
         click: () => {
           let name = sha
           let detachedHead = true
@@ -39,11 +38,11 @@ export default ({ vcs, workspace, Dialog }) => sha => {
               })
               .catch(noop)
           }
-        },
-        enabled: !pendingOperation
+        }
       },
       {
         label: 'Merge...',
+        enabled: !!sha && headCommit !== sha && !pendingOperation,
         click: () => {
           Dialog.confirmBranchMerge()
             .then(async commitOnSuccess => {
@@ -57,8 +56,7 @@ export default ({ vcs, workspace, Dialog }) => sha => {
               }
             })
             .catch(noop)
-        },
-        enabled: headCommit !== sha && !pendingOperation
+        }
       },
       // {
       //   label: 'Rebase...',
@@ -76,6 +74,7 @@ export default ({ vcs, workspace, Dialog }) => sha => {
       },
       {
         label: 'Tag...',
+        enabled: !!sha && !pendingOperation,
         click: () => {
           let tagName = ''
 
@@ -102,11 +101,11 @@ export default ({ vcs, workspace, Dialog }) => sha => {
               vcs.createTag(sha, tagName, tagMessage)
             })
             .catch(noop)
-        },
-        enabled: !pendingOperation
+        }
       },
       {
         label: 'Branch...',
+        enabled: !!sha && sha === headCommit && !pendingOperation,
         click: () => {
           workspace
             .showInputUnique({
@@ -121,14 +120,14 @@ export default ({ vcs, workspace, Dialog }) => sha => {
               }
             })
             .catch(noop)
-        },
-        enabled: sha === headCommit && !pendingOperation
+        }
       },
       {
         type: 'separator'
       },
       {
         label: 'Soft Reset Branch...',
+        enabled: !!sha && !pendingOperation,
         click: () => {
           Dialog.confirmSoftBranchPointerReset('master')
             .then(() => {
@@ -136,11 +135,11 @@ export default ({ vcs, workspace, Dialog }) => sha => {
               vcs.softResetCommit(sha)
             })
             .catch(noop)
-        },
-        enabled: !pendingOperation
+        }
       },
       {
         label: 'Mixed Reset Branch...',
+        enabled: !!sha && !pendingOperation,
         click: () => {
           Dialog.confirmMixedBranchPointerReset('master')
             .then(() => {
@@ -148,11 +147,11 @@ export default ({ vcs, workspace, Dialog }) => sha => {
               vcs.mixedResetCommit(sha)
             })
             .catch(noop)
-        },
-        enabled: !pendingOperation
+        }
       },
       {
         label: 'Hard Reset Branch...',
+        enabled: !!sha && !pendingOperation,
         click: () => {
           Dialog.confirmHardBranchPointerReset('master')
             .then(() => {
@@ -160,14 +159,34 @@ export default ({ vcs, workspace, Dialog }) => sha => {
               vcs.hardResetCommit(sha)
             })
             .catch(noop)
-        },
-        enabled: !pendingOperation
+        }
+      },
+      {
+        type: 'separator'
+      },
+      {
+        label: 'Stash',
+        enabled: !sha && !pendingOperation,
+        click: async () => {
+          try {
+            const keepChanges = await Dialog.confirmStashChanges()
+            const stashMessage = await workspace.showInputBox({
+              placeHolder: 'Message (optional)',
+              validateInput: input => true
+            })
+
+            if (stashMessage != null) {
+              await vcs.stashChanges(stashMessage, keepChanges)
+            }
+          } catch (_) {}
+        }
       },
       {
         type: 'separator'
       },
       {
         label: 'Reverse commit...',
+        enabled: !!sha && !pendingOperation,
         click: () => {
           Dialog.confirmBackout()
             .then(() => {
@@ -175,14 +194,14 @@ export default ({ vcs, workspace, Dialog }) => sha => {
               vcs.revertCommit(sha)
             })
             .catch(noop)
-        },
-        enabled: !pendingOperation
+        }
       },
       {
         type: 'separator'
       },
       {
         label: 'Copy SHA-1 to Clipboard',
+        enabled: !!sha,
         click: () => {
           remote.clipboard.writeText(sha)
         }
