@@ -635,9 +635,8 @@ answerRenderer(MESSAGES.VCS_SAVE_STASH, async (browserWindow, message, keepStage
   await gitops.saveStash(repo, message, keepStaged)
 })
 
-answerRenderer(MESSAGES.VCS_APPLY_STASH, async (browserWindow, index) => {
-  console.log('APPLY STASH:', index)
-  return await gitops.applyStash(repo, index)
+answerRenderer(MESSAGES.VCS_APPLY_STASH, async (browserWindow, index, dropAfter) => {
+  return await gitops.applyStash(repo, index, dropAfter)
 })
 
 answerRenderer(MESSAGES.VCS_DROP_STASH, async (browserWindow, index) => {

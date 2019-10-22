@@ -22,18 +22,21 @@ export async function saveStash(repo, message, keepStaged) {
   }
 }
 
-export async function applyStash(repo, index) {
-  let result = -1
+export async function applyStash(repo, index, dropAfter) {
   try {
-    result = await nodegit.Stash.apply(repo, +index)
+    if (dropAfter) {
+      await nodegit.Stash.pop(repo, +index)
+    } else {
+      await nodegit.Stash.apply(repo, +index)
+    }
     // 0 - success
     // GIT_ENOTFOUND
-    // GIT_EMERGECONFLICT
-    console.log('APPLY RESULT:', result)
+    // -24 = GIT_EMERGECONFLICT
   } catch (e) {
-    console.log(e)
+    if (/conflicts? prevents? checkout/.test(e.message)) {
+      throw new Error('Merge conflict')
+    }
   }
-  return result
 }
 
 export async function dropStash(repo, index) {

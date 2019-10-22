@@ -1400,13 +1400,13 @@ export class VCS extends Emitter {
 
   @action.bound
   async applyStash(index, dropAfter) {
-    const errCode = await callMain(MESSAGES.VCS_APPLY_STASH, index)
+    const errCode = await callMain(MESSAGES.VCS_APPLY_STASH, index, dropAfter)
     if (!errCode) {
       await this.getLog()
       await this.status()
 
       if (dropAfter) {
-        await this.dropStash(index)
+        // await this.dropStash(index)
         await this.getStashes()
       }
     }
