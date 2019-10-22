@@ -11,7 +11,7 @@ export class Dock {
 
   @observable currentPage = null
 
-  paneSizes = {}
+  @observable paneSizes = {}
 
   // для каждой страницы для каждого раздела страницы сохраняются размеры
   // paneSizes = {}

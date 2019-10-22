@@ -200,6 +200,7 @@ const ScrollBarThumbStyle = styled.div`
 
 const PaneStyle = styled.div`
   /* height: ${({ offset = 0 }) => `calc(100% - ${offset}px)`}; */
+  height: 100%;
   width: 100%;
   overflow: hidden;
 `
