@@ -29,6 +29,7 @@ export const VCS_GET_HEAD_BRANCH = 'vcs:get.head-branch'
 export const VCS_GET_REPOSITORY_REFS = 'vcs:get.repository-refs'
 export const VCS_GET_COMMIT_DETAILS = 'vcs:get.commit-details'
 export const VCS_GET_COMMIT_DIGEST = 'vcs:get.commit-digest'
+export const VCS_GET_COMMIT_INDEX = 'vcs:get.commit-index'
 
 export const VCS_CREATE_COMMIT = 'vcs:create.commit'
 export const VCS_REVERT_COMMIT = 'vcs:revert.commit'

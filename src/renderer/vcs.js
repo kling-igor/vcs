@@ -61,6 +61,8 @@ export class VCS extends Emitter {
   // array of previous commit messages
   @observable.ref previousCommits = []
 
+  @observable commitIndex = undefined
+
   @observable showSHA = true
   @observable showDate = true
   @observable showAuthor = true
@@ -783,6 +785,8 @@ export class VCS extends Emitter {
       return
     }
 
+    const index = await await callMain(MESSAGES.VCS_GET_COMMIT_INDEX, sha)
+
     const commitInfo = await callMain(MESSAGES.VCS_GET_COMMIT_DETAILS, sha)
 
     if (this.disposableFiles.length > 0) {
@@ -791,6 +795,7 @@ export class VCS extends Emitter {
     }
 
     transaction(() => {
+      this.commitIndex = index
       this.originalFile = null
       this.modifiedFile = null
       this.commitSelectedFile = null

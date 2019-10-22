@@ -1,6 +1,6 @@
 const { remote } = window.require('electron')
 const noop = () => {}
-export default ({ vcs, workspace, Dialog }) => (sha, tag) => {
+export default ({ vcs, workspace, notifications, Dialog }) => (sha, tag) => {
   const { heads, hasLocalChanges, pendingOperation } = vcs
 
   const branch = heads.find(item => item.sha === sha)
@@ -59,6 +59,7 @@ export default ({ vcs, workspace, Dialog }) => (sha, tag) => {
         label: 'Copy Tag Name to Clipboard',
         click: () => {
           remote.clipboard.writeText(tag)
+          notifications.addInfo('Tag name copied to clipboard.')
         }
       }
     ]

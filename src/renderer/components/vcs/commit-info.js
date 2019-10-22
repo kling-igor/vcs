@@ -33,6 +33,7 @@ const TableStyle = styled.table`
 `
 
 const LeftColumnStyle = styled.td`
+  opacity: 0.8;
   text-align: right;
   width: 50px;
   user-select: none;
@@ -71,7 +72,14 @@ const ScrollBarThumbStyle = styled.div`
   border-radius: 4px;
 `
 
-const CommitInfo = observer(({ storage: { commitInfo } }) => {
+const RefStyle = styled(TextStyle)`
+  :hover {
+    text-decoration: underline;
+    cursor: pointer;
+  }
+`
+
+const CommitInfo = observer(({ onCommitContextMenu, storage: { commitInfo, onCommitSelect } }) => {
   if (!commitInfo) return null
 
   const {
@@ -84,14 +92,6 @@ const CommitInfo = observer(({ storage: { commitInfo } }) => {
   } = commitInfo
 
   const hash = MD5(email).toString()
-
-  const parentsString = parents.length > 0 ? parents.join(', ') : null
-  const labelsString = labels.length > 0 ? labels.map(label => label.replace('refs/heads/', '')).join(', ') : null
-
-  // const LETTERS = name
-  //   .split(' ')
-  //   .map(item => item.slice(0, 1))
-  //   .slice(0, 2)
 
   return (
     <ContainerWithScrollbarsStyle
@@ -118,16 +118,19 @@ const CommitInfo = observer(({ storage: { commitInfo } }) => {
             <tr>
               <LeftColumnStyle>Commit:</LeftColumnStyle>
               <RightColumnStyle className="bp3-monospace-text">
-                <TextStyle>
-                  {commit} {`[${commit.slice(0, 8)}]`}
-                </TextStyle>
+                <TextStyle onContextMenu={() => onCommitContextMenu(commit)}>{commit.slice(0, 8)}</TextStyle>
               </RightColumnStyle>
             </tr>
-            {!!parentsString && (
+            {parents.length > 0 && (
               <tr>
                 <LeftColumnStyle>Parents:</LeftColumnStyle>
                 <RightColumnStyle className="bp3-monospace-text">
-                  <TextStyle>{parentsString}</TextStyle>
+                  {parents.map((sha, i) => (
+                    <span key={sha}>
+                      <RefStyle onClick={() => onCommitSelect(sha)}>{sha.slice(0, 8)}</RefStyle>
+                      {i < parents.length - 1 && ', '}
+                    </span>
+                  ))}
                 </RightColumnStyle>
               </tr>
             )}
@@ -143,11 +146,16 @@ const CommitInfo = observer(({ storage: { commitInfo } }) => {
                 <TextStyle>{`${moment.unix(date).format('Do MMMM YYYY, H:mm:ss')}`}</TextStyle>
               </RightColumnStyle>
             </tr>
-            {!!labelsString && (
+            {labels.length > 0 && (
               <tr>
                 <LeftColumnStyle>Labels:</LeftColumnStyle>
                 <RightColumnStyle>
-                  <TextStyle>{labelsString}</TextStyle>
+                  {labels.map((ref, i) => (
+                    <span key={ref}>
+                      <RefStyle>{ref.replace('refs/heads/', '')}</RefStyle>
+                      {i < labels.length - 1 && ', '}
+                    </span>
+                  ))}
                 </RightColumnStyle>
               </tr>
             )}

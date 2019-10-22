@@ -1,6 +1,6 @@
 const { remote } = window.require('electron')
 const noop = () => {}
-export default ({ vcs, workspace, Dialog }) => sha => {
+export default ({ vcs, workspace, notifications, Dialog }) => sha => {
   const { currentCommit, heads, tags, headCommit, hasLocalChanges, pendingOperation } = vcs
 
   const branch = heads.find(item => item.sha === sha)
@@ -204,6 +204,7 @@ export default ({ vcs, workspace, Dialog }) => sha => {
         enabled: !!sha,
         click: () => {
           remote.clipboard.writeText(sha)
+          notifications.addInfo('SHA copied to clipboard.')
         }
       }
     ]

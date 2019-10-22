@@ -204,6 +204,7 @@ export const History = memo(
     maxOffset,
     remoteHeads,
     tags,
+    commitIndex,
     onCommitSelect,
     onContextMenu,
     selectedCommit,
@@ -376,7 +377,7 @@ export const History = memo(
                           rowRenderer={rowRenderer}
                           rowCount={commitsCount}
                           rowHeight={ROW_HEIGHT}
-                          // scrollToIndex={scrollToIndex}
+                          scrollToIndex={commitIndex}
                         />
                       </div>
                     </div>

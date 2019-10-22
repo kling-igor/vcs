@@ -1,6 +1,6 @@
 const GIT_ADDR_REGEX = /((git|ssh|file|http(s)?)|(git@[\w\.]+))(:(\/\/)?)([\w\.@\:\/\-~]+)(\.git)(\/)?/
 
-export default ({ vcs, workspace, Dialog }) => () => {
+export default ({ vcs, workspace, notifications, Dialog }) => () => {
   const { remotes, heads, pendingOperation } = vcs
 
   const getPushingBranch = async () => {
@@ -63,8 +63,6 @@ export default ({ vcs, workspace, Dialog }) => () => {
         console.log('OP ERROR:', e)
 
         if (e.message === 'Auth required') {
-          console.log('AUTH REQUIRED!!!!!')
-
           try {
             await Dialog.confirmAuthRequired()
           } catch (e) {
@@ -86,9 +84,10 @@ export default ({ vcs, workspace, Dialog }) => () => {
 
           if (!password) return
         } else if (e.message === 'Auth failed') {
-          // Dialog
+          notifications.addError('Auth failed.')
         } else if (e.message === 'Connection error') {
           // Dialog
+          notifications.addError('Connection error.')
         } else {
         }
 
@@ -132,6 +131,7 @@ export default ({ vcs, workspace, Dialog }) => () => {
             try {
               await Dialog.confirmPull()
             } catch (e) {
+              notifications.addError('Pull error:', e.message)
               return
             }
           }
@@ -160,6 +160,7 @@ export default ({ vcs, workspace, Dialog }) => () => {
               await vcs.push(remoteName, branch, userName, password)
             } catch (e) {
               console.log('PUSH E:', e)
+              notifications.addError('Push error:', e.message)
               throw e
             }
           })

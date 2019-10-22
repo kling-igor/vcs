@@ -2,7 +2,7 @@ const { remote } = window.require('electron')
 
 const noop = () => {}
 
-export default ({ vcs, workspace, Dialog }) => (_, name) => {
+export default ({ vcs, workspace, notifications, Dialog }) => (_, name) => {
   const { remotes, currentBranch, hasLocalChanges, pendingOperation } = vcs
 
   const remotesSubmenu = remotes.map(item => ({
@@ -99,6 +99,7 @@ export default ({ vcs, workspace, Dialog }) => (_, name) => {
         label: 'Copy Branch Name to Clipboard',
         click: () => {
           remote.clipboard.writeText(name)
+          notifications.addInfo('Branch name copied to clipboard.')
         }
       }
     ]

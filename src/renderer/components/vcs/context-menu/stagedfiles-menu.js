@@ -1,6 +1,6 @@
 const { remote } = window.require('electron')
 const noop = () => {}
-export default ({ vcs, workspace, Dialog }) => filePath => {
+export default ({ vcs, workspace, notifications, Dialog }) => filePath => {
   workspace.showContextMenu({
     items: [
       {
@@ -20,7 +20,7 @@ export default ({ vcs, workspace, Dialog }) => filePath => {
       {
         label: `Copy Path to Clipboard`,
         click: () => {
-          console.log('COPYING TO CLIPBOARD:', filePath)
+          notifications.addInfo('File path copied to clipboard.')
           remote.clipboard.writeText(filePath)
         }
       }

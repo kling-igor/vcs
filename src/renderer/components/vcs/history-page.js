@@ -64,11 +64,37 @@ const menuButtonStyle = { width: '30px', height: '30px', marginRight: '8px', out
 @observer
 class HistoryPage extends Component {
   state = {
-    layout: ['20000', '20000']
+    layout: ['20000', '20000'],
+    jumpSha: '',
+    jumpShaIntent: 'none'
   }
 
   setLayout = layout => {
     this.setState({ layout })
+  }
+
+  onJumpShaChange = e => {
+    const value = e.target.value.toLowerCase().trim()
+    let intent = 'primary'
+
+    if (value) {
+      if (/[0-9a-f]/g.test(value)) {
+        if (value.length < 6) {
+          intent = 'warning'
+        }
+      } else {
+        intent = 'danger'
+      }
+    }
+
+    this.setState({ jumpSha: value, jumpShaIntent: intent })
+  }
+
+  onJumpShaKeyPress = e => {
+    if (!this.state.jumpSha || this.state.jumpShaIntent !== 'primary') return
+    if (e.which === 13 || e.keyCode === 13) {
+      this.props.storage.onCommitSelect(this.state.jumpSha)
+    }
   }
 
   render() {
@@ -79,6 +105,7 @@ class HistoryPage extends Component {
       theme,
       onGitLogSettingsMenu,
       storage: {
+        commitIndex,
         logUpdateTime,
         getCommits,
         commitsCount,
@@ -110,15 +137,17 @@ class HistoryPage extends Component {
             <TopContainer className={className}>
               <InputWrapperStyle>
                 <InputGroup
+                  type="search"
                   style={{ backgroundColor: '#293742' }}
                   leftIcon="search"
-                  onChange={() => {}}
+                  onChange={this.onJumpShaChange}
                   placeholder="Jump to ..."
                   rightElement={null}
+                  onKeyPress={this.onJumpShaKeyPress}
                   small
                   fill
-                  round
-                  value={''}
+                  intent={this.state.jumpShaIntent}
+                  value={this.state.jumpSha}
                 />
               </InputWrapperStyle>
               <Button small minimal icon={IconNames.MORE} onClick={onGitLogSettingsMenu} style={menuButtonStyle} />
@@ -138,6 +167,7 @@ class HistoryPage extends Component {
                 maxOffset={maxOffset}
                 remoteHeads={remoteHeads}
                 tags={tags}
+                commitIndex={commitIndex}
                 onCommitSelect={onCommitSelect}
                 onContextMenu={this.props.onContextMenu}
                 selectedCommit={selectedCommit}

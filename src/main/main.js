@@ -331,6 +331,10 @@ answerRenderer(MESSAGES.VCS_GET_THEIR_TMP_FILE, async (browserWindow, filePath) 
   }
 })
 
+answerRenderer(MESSAGES.VCS_GET_COMMIT_INDEX, async (browserWindow, sha) => {
+  return gitLogResult.commits.findIndex(item => item.sha && item.sha.startsWith(sha))
+})
+
 // получение информации о коммите для отображения в списке
 answerRenderer(MESSAGES.VCS_GET_COMMIT_DIGEST, async (browserWindow, startIndex, endIndex) => {
   return gitLogResult.commits.slice(startIndex, endIndex + 1)

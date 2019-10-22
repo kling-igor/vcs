@@ -1,6 +1,6 @@
 const { remote } = window.require('electron')
 const noop = () => {}
-export default ({ vcs, workspace, project, Dialog }) => filePath => {
+export default ({ vcs, workspace, project, notifications, Dialog }) => filePath => {
   const { pendingOperation } = vcs
   const { status } = vcs.changedFiles.find(item => `${item.path}/${item.filename}` === filePath)
 
@@ -127,8 +127,8 @@ export default ({ vcs, workspace, project, Dialog }) => filePath => {
       {
         label: `Copy Path to Clipboard`,
         click: () => {
-          console.log('COPYING TO CLIPBOARD:', filePath)
           remote.clipboard.writeText(filePath)
+          notifications.addInfo('File path copied to clipboard.')
         }
       }
     ]

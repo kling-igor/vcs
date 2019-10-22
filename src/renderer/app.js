@@ -41,7 +41,8 @@ import {
   onStagedFileContextMenu,
   onStashContextMenu,
   onRemoteContextMenu,
-  onVcsContextMenu
+  onVcsContextMenu,
+  onCommitInfoContextMenu
 } from './components/vcs/context-menu'
 
 import { onGitLogSettingsMenu } from './components/vcs/header-menu'
@@ -201,7 +202,9 @@ export default class App extends Component {
         dock.addPane('vcs', {
           title: 'COMMIT INFO',
           elapsed: true,
-          component: <CommitInfo storage={vcs} />
+          component: (
+            <CommitInfo storage={vcs} onCommitContextMenu={onCommitInfoContextMenu({ workspace, notifications })} />
+          )
         })
 
         dock.addPane('vcs', {
@@ -279,7 +282,7 @@ export default class App extends Component {
     // ЭТО ДЕЛАТЬ В ОТВЕТ НА СОБЫТИЕ ОТКРЫТИЯ ПРОЕКТА
     replacePanes(vcs.mode)
 
-    const PROJECT_PATH = '/Users/user/Projects/testrepo' //resolve(__dirname, '../test-repo')
+    const PROJECT_PATH = '/Users/user/Projects/client' //resolve(__dirname, '../test-repo')
 
     await vcs.open(PROJECT_PATH)
     await project.open({ projectPath: PROJECT_PATH })
@@ -324,8 +327,8 @@ export default class App extends Component {
                 <VCSView
                   storage={vcs}
                   workspace={workspace}
-                  onGitLogContextMenu={onGitLogContextMenu({ vcs, workspace, Dialog })}
-                  onGitLogSettingsMenu={onGitLogSettingsMenu({ vcs, workspace, Dialog })}
+                  onGitLogContextMenu={onGitLogContextMenu({ vcs, workspace, notifications, Dialog })}
+                  onGitLogSettingsMenu={onGitLogSettingsMenu({ vcs, workspace, notifications, Dialog })}
                 />
               </Pane>
             </SplitPane>
