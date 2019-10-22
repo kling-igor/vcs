@@ -1118,7 +1118,7 @@ export class VCS extends Emitter {
 
   @action.bound
   async unstageFile(filePath) {
-    if (filePath === this.selectedStagedFile) {
+    if (filePath === this.selectedFilePath) {
       transaction(() => {
         this.selectedFilePath = null
         this.originalFile = null
@@ -1134,6 +1134,16 @@ export class VCS extends Emitter {
 
   @action.bound
   async discardLocalChanges(filePath) {
+    if (this.selectedFilePath === filePath) {
+      transaction(() => {
+        this.selectedFilePath = null
+        this.originalFile = null
+        this.modifiedFile = null
+        this.diffConflictedFile = false
+        this.diffConflictedFileMIME = null
+      })
+    }
+
     await callMain(MESSAGES.VCS_DISCARD_LOCAL_CHANGES, this.project.projectPath, cleanLeadingSlashes(filePath))
     await this.status()
   }

@@ -221,12 +221,12 @@ export const History = memo(
 
     const listRef = useRef(null)
 
-    // useEffect(() => {
-    //   if (listRef.current) {
-    //     rowsRef.current.rows = []
-    //     listRef.current.forceUpdateGrid()
-    //   }
-    // }, [logUpdateTime])
+    useEffect(() => {
+      if (listRef.current) {
+        rowsRef.current.rows = []
+        listRef.current.forceUpdateGrid()
+      }
+    }, [logUpdateTime])
 
     const [cachedCommitsCount, setCachedCommitsCount] = useState(0)
 
