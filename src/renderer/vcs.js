@@ -132,12 +132,13 @@ export class VCS extends Emitter {
 
   @observable pendingOperation = null
 
-  constructor({ workspace, project, applicationDelegate }) {
+  constructor({ workspace, project, applicationDelegate, notifications }) {
     super()
 
     this.workspace = workspace
     this.project = project
     this.applicationDelegate = applicationDelegate
+    this.notifications = notifications
 
     this.debouncedStatus = _.debounce(this.status, 1000)
 
@@ -570,7 +571,18 @@ export class VCS extends Emitter {
       }
     } else if (status === 'D') {
       if (mime === 'text/plain') {
+        const headBuffer = await callMain(MESSAGES.VCS_GET_COMMIT_FILE_BUFFER, 'HEAD', cleanLeadingSlashes(filePath))
+        left = FileWrapper.createTextFile({ path: filePath, content: headBuffer.toString() })
+        right = FileWrapper.createTextFile({ path: filePath, content: '' })
       } else if (mime.includes('image/')) {
+        const headTmpFilePath = await callMain(
+          MESSAGES.VCS_CREATE_COMMIT_TMP_FILE,
+          'HEAD',
+          cleanLeadingSlashes(filePath)
+        )
+        left = FileWrapper.createImageFile({ path: filePath, tmpPath: headTmpFilePath })
+        right = FileWrapper.createEmpty({ path: filePath })
+        disposableFiles = [headTmpFilePath]
       } else {
         left = FileWrapper.createBinaryDataFile({ path: filePath, mime })
         right = FileWrapper.createEmpty({ path: filePath })
@@ -578,7 +590,21 @@ export class VCS extends Emitter {
     } else {
       // M
       if (mime === 'text/plain') {
+        const indexBuffer = await callMain(MESSAGES.VCS_GET_INDEX_FILE_BUFFER, cleanLeadingSlashes(filePath))
+        const commitBuffer = await callMain(MESSAGES.VCS_GET_COMMIT_FILE_BUFFER, 'HEAD', cleanLeadingSlashes(filePath))
+        left = FileWrapper.createTextFile({ path: filePath, content: commitBuffer.toString() })
+        right = FileWrapper.createTextFile({ path: filePath, content: indexBuffer.toString() })
       } else if (mime.includes('image/')) {
+        const tmpFilePath = await callMain(MESSAGES.VCS_CREATE_INDEX_TMP_FILE, cleanLeadingSlashes(filePath))
+        const headTmpFilePath = await callMain(
+          MESSAGES.VCS_CREATE_COMMIT_TMP_FILE,
+          'HEAD',
+          cleanLeadingSlashes(filePath)
+        )
+
+        left = FileWrapper.createImageFile({ path: filePath, tmpPath: headTmpFilePath })
+        right = FileWrapper.createImageFile({ path: filePath, tmpPath: tmpFilePath })
+        disposableFiles = [tmpFilePath, headTmpFilePath]
       } else {
         left = FileWrapper.createBinaryDataFile({ path: filePath, mime })
         right = FileWrapper.createBinaryDataFile({ path: filePath, mime })
@@ -1386,7 +1412,7 @@ export class VCS extends Emitter {
   }
 
   @action
-  async stashChanges(message, keepStaged) {
+  async stashChanges(message, keepStagedChanges) {
     // если нет комитов, то отменить !!!
 
     let stashMessage = message
@@ -1402,7 +1428,7 @@ export class VCS extends Emitter {
       }
     }
 
-    await callMain(MESSAGES.VCS_SAVE_STASH, stashMessage, keepStaged)
+    await callMain(MESSAGES.VCS_SAVE_STASH, stashMessage, keepStagedChanges)
     await this.getLog()
     await this.status()
     await this.getStashes()

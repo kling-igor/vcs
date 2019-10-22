@@ -1,6 +1,6 @@
 const { remote } = window.require('electron')
 const noop = () => {}
-export default ({ vcs, workspace, Dialog }) => (index, message) => {
+export default ({ vcs, workspace, notifications, Dialog }) => (index, message) => {
   workspace.showContextMenu({
     items: [
       {
@@ -13,7 +13,9 @@ export default ({ vcs, workspace, Dialog }) => (index, message) => {
             await vcs.getStashes()
           } catch (e) {
             if (e.message === 'Merge conflict') {
-              console.log('MERGE CONFLICT!!!')
+              notifications.addError(
+                'Your local changes to the files would be overwritten by merge. Please commit your changes or stash them before you merge.'
+              )
             }
           }
         }

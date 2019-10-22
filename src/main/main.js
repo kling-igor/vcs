@@ -631,8 +631,8 @@ answerRenderer(MESSAGES.VCS_GET_STASHES, async browserWindow => {
   return await gitops.getStashes(repo)
 })
 
-answerRenderer(MESSAGES.VCS_SAVE_STASH, async (browserWindow, message, keepStaged) => {
-  await gitops.saveStash(repo, message, keepStaged)
+answerRenderer(MESSAGES.VCS_SAVE_STASH, async (browserWindow, message, keepStagedChanges) => {
+  await gitops.saveStash(repo, message, keepStagedChanges)
 })
 
 answerRenderer(MESSAGES.VCS_APPLY_STASH, async (browserWindow, index, dropAfter) => {

@@ -15,6 +15,7 @@ import theme from './themes/ui/dark'
 import { Project } from './project'
 import { ApplicationDelegate } from './application-delegate'
 import { Workspace } from './workspace'
+import { NotificationManager } from './notification-manager'
 import { VCS } from './vcs'
 
 import { Dock } from './components/dock'
@@ -49,8 +50,10 @@ import { onStagedFilesHeaderMenu, onChangedFilesHeaderMenu, onRemotesHeaderMenu 
 
 const applicationDelegate = new ApplicationDelegate()
 const project = new Project({ applicationDelegate })
-const workspace = new Workspace({ project, applicationDelegate })
-const vcs = new VCS({ workspace, project, applicationDelegate })
+const notifications = new NotificationManager()
+const workspace = new Workspace({ project, applicationDelegate, notifications })
+
+const vcs = new VCS({ workspace, project, applicationDelegate, notifications })
 
 // находится в workspace!!!
 const dock = new Dock()
@@ -123,7 +126,12 @@ export default class App extends Component {
         dock.addPane('vcs', {
           title: 'STAGED',
           elapsed: true,
-          component: <StagedFiles storage={vcs} onContextMenu={onStagedFileContextMenu({ vcs, workspace, Dialog })} />,
+          component: (
+            <StagedFiles
+              storage={vcs}
+              onContextMenu={onStagedFileContextMenu({ vcs, workspace, notifications, Dialog })}
+            />
+          ),
           paneHeaderButtons: [
             {
               icon: './assets/ui/ellipsis.svg',
@@ -137,7 +145,10 @@ export default class App extends Component {
           title: 'CHANGES',
           elapsed: true,
           component: (
-            <ChangedFiles storage={vcs} onContextMenu={onChangedFileContextMenu({ vcs, workspace, project, Dialog })} />
+            <ChangedFiles
+              storage={vcs}
+              onContextMenu={onChangedFileContextMenu({ vcs, workspace, project, notifications, Dialog })}
+            />
           ),
           paneHeaderButtons: [
             {
@@ -202,7 +213,12 @@ export default class App extends Component {
         dock.addPane('vcs', {
           title: 'BRANCHES',
           elapsed: false,
-          component: <BranchesList storage={vcs} onContextMenu={onBranchContextMenu({ vcs, workspace, Dialog })} />,
+          component: (
+            <BranchesList
+              storage={vcs}
+              onContextMenu={onBranchContextMenu({ vcs, workspace, notifications, Dialog })}
+            />
+          ),
           paneHeaderButtons: [
             {
               icon: './assets/ui/ellipsis.svg',
@@ -217,7 +233,9 @@ export default class App extends Component {
         dock.addPane('vcs', {
           title: 'TAGS',
           elapsed: false,
-          component: <TagsList storage={vcs} onContextMenu={onTagContextMenu({ vcs, workspace, Dialog })} />,
+          component: (
+            <TagsList storage={vcs} onContextMenu={onTagContextMenu({ vcs, workspace, notifications, Dialog })} />
+          ),
           paneHeaderButtons: [
             {
               icon: './assets/ui/ellipsis.svg',
@@ -232,14 +250,18 @@ export default class App extends Component {
         dock.addPane('vcs', {
           title: 'STASH',
           elapsed: false,
-          component: <StashList storage={vcs} onContextMenu={onStashContextMenu({ vcs, workspace, Dialog })} />,
+          component: (
+            <StashList storage={vcs} onContextMenu={onStashContextMenu({ vcs, workspace, notifications, Dialog })} />
+          ),
           paneHeaderButtons: []
         })
 
         dock.addPane('vcs', {
           title: 'REMOTES',
           elapsed: false,
-          component: <RemotesList storage={vcs} onContextMenu={onRemoteContextMenu({ vcs, workspace, Dialog })} />,
+          component: (
+            <RemotesList storage={vcs} onContextMenu={onRemoteContextMenu({ vcs, workspace, notifications, Dialog })} />
+          ),
           paneHeaderButtons: [
             {
               icon: './assets/ui/ellipsis.svg',

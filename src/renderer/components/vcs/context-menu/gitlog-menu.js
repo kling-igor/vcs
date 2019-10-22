@@ -169,14 +169,14 @@ export default ({ vcs, workspace, Dialog }) => sha => {
         enabled: !sha && !pendingOperation,
         click: async () => {
           try {
-            const keepChanges = await Dialog.confirmStashChanges()
+            const keepStagedChanges = await Dialog.confirmStashChanges()
             const stashMessage = await workspace.showInputBox({
               placeHolder: 'Message (optional)',
               validateInput: input => true
             })
 
             if (stashMessage != null) {
-              await vcs.stashChanges(stashMessage, keepChanges)
+              await vcs.stashChanges(stashMessage, keepStagedChanges)
             }
           } catch (_) {}
         }

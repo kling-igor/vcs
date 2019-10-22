@@ -10,10 +10,10 @@ export async function getStashes(repo) {
   return stashes
 }
 
-export async function saveStash(repo, message, keepStaged) {
-  console.log('saveStash', message, keepStaged)
+export async function saveStash(repo, message, keepStagedChanges) {
+  console.log('saveStash', message, keepStagedChanges)
   try {
-    const flags = keepStaged ? nodegit.Stash.FLAGS.KEEP_INDEX : nodegit.Stash.FLAGS.DEFAULT
+    const flags = keepStagedChanges ? nodegit.Stash.FLAGS.KEEP_INDEX : nodegit.Stash.FLAGS.DEFAULT
     const signature = await repo.defaultSignature()
     const oid = await nodegit.Stash.save(repo, signature, message, flags)
     console.log('STASH RESULT', oid.toString())
