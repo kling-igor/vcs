@@ -40,7 +40,7 @@
     "electron": "^5.0.10",
     "electron-rebuild": "^1.8.5",
     "extract-text-webpack-plugin": "^3.0.2",
-    "html-webpack-plugin": "^3.2.0",
+    "html-webpack-plugin": "^5.5.0",
     "mobx": "^5.9.0",
     "mobx-react": "^5.4.3",
     "mobx-react-lite": "^1.4.1",
